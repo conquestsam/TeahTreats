@@ -1,0 +1,10 @@
+{
+  "name": "@snacks/tsconfig",
+  "version": "0.1.0",
+  "private": true,
+  "exports": {
+    "./base": "./base.json",
+    "./next": "./next.json",
+    "./nest": "./nest.json"
+  }
+}

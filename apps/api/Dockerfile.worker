@@ -1,0 +1,2 @@
+FROM snacks-api:latest
+CMD ["pnpm", "--filter", "@snacks/api", "start:worker"]

@@ -1,0 +1,38 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 11.20.0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm db:validate
+      - run: pnpm db:generate
+      - run: pnpm format:check
+      - run: pnpm --filter @snacks/shared typecheck
+      - run: pnpm --filter @snacks/shared build
+      - run: pnpm --filter @snacks/shared test
+      - run: pnpm --filter @snacks/api typecheck
+      - run: pnpm --filter @snacks/api lint
+      - run: pnpm --filter @snacks/api build
+      - run: pnpm --filter @snacks/api test
+      - run: pnpm --filter @snacks/web typecheck
+      - run: pnpm --filter @snacks/web lint
+      - run: pnpm --filter @snacks/web build
+      - run: pnpm --filter @snacks/web test
+      - run: pnpm typecheck
+      - run: pnpm lint
+      - run: pnpm test

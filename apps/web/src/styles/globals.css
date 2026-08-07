@@ -1,0 +1,1491 @@
+@import "tailwindcss";
+@import "@mantine/core/styles.css";
+@import "@mantine/notifications/styles.css";
+
+/* ───────────────────────────────────────────────
+   TeahTreats Design Tokens
+   ─────────────────────────────────────────────── */
+
+:root {
+  /* TeahTreats brand palette */
+  --tt-obsidian: #0A0A0A;
+  --tt-black: #111111;
+  --tt-charcoal: #1A1A1A;
+  --tt-surface: #1E1E1E;
+  --tt-surface-elevated: #252525;
+  --tt-crimson: #9B1B30;
+  --tt-crimson-deep: #6B0F1F;
+  --tt-crimson-light: #B42E45;
+  --tt-gold: #B8933E;
+  --tt-gold-light: #D4AF37;
+  --tt-gold-muted: rgba(184, 147, 62, 0.35);
+  --tt-cream: #FAF7F2;
+  --tt-parchment: #EDE8E0;
+  --tt-cream-muted: rgba(250, 247, 242, 0.55);
+  --tt-cream-dim: rgba(250, 247, 242, 0.35);
+
+  /* Fonts */
+  --tt-font-display: 'DM Serif Display', 'Georgia', serif;
+  --tt-font-editorial: 'Playfair Display', 'Georgia', serif;
+  --tt-font-sans: 'Inter', ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+
+  /* Shadows */
+  --tt-shadow-card: 0 8px 32px rgba(0, 0, 0, 0.35);
+  --tt-shadow-elevated: 0 16px 48px rgba(0, 0, 0, 0.45);
+  --tt-shadow-glow-gold: 0 0 24px rgba(184, 147, 62, 0.15);
+  --tt-shadow-glow-crimson: 0 0 24px rgba(155, 27, 48, 0.18);
+
+  /* Transitions */
+  --tt-ease: cubic-bezier(0.22, 1, 0.36, 1);
+  --tt-duration: 0.35s;
+
+  /* Admin palette (preserved) */
+  color-scheme: light;
+  --background: #fffaf2;
+  --foreground: #172018;
+  --surface: #ffffff;
+  --surface-soft: #fff5e5;
+  --line: #eadfcf;
+  --brand: #146c43;
+  --brand-dark: #0d5131;
+  --accent: #f59e0b;
+  --berry: #be123c;
+  --ink-muted: #5f6f63;
+  --shadow-soft: 0 24px 80px rgba(23, 32, 24, 0.08);
+  --shadow-card: 0 18px 45px rgba(23, 32, 24, 0.1);
+}
+
+/* ───────────────────────────────────────────────
+   Base Resets
+   ─────────────────────────────────────────────── */
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  background:
+    radial-gradient(circle at top left, rgba(245, 158, 11, 0.18), transparent 34rem),
+    radial-gradient(circle at top right, rgba(20, 108, 67, 0.12), transparent 34rem),
+    linear-gradient(180deg, #fffaf2 0%, #fffdf8 42%, #f8fbf7 100%);
+  color: var(--foreground);
+  font-feature-settings: "kern";
+  text-rendering: optimizeLegibility;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+button,
+input,
+textarea,
+select {
+  font: inherit;
+}
+
+::selection {
+  background: rgba(184, 147, 62, 0.25);
+}
+
+/* ───────────────────────────────────────────────
+   TeahTreats Shell
+   ─────────────────────────────────────────────── */
+
+.tt-shell {
+  background: var(--tt-obsidian);
+  color: var(--tt-cream);
+  font-family: var(--tt-font-sans);
+  min-height: 100vh;
+}
+
+.tt-container {
+  width: min(1280px, calc(100vw - 32px));
+  margin-inline: auto;
+  padding-inline: 16px;
+}
+
+@media (min-width: 768px) {
+  .tt-container {
+    padding-inline: 24px;
+  }
+}
+
+/* ───────────────────────────────────────────────
+   TeahTreats Typography
+   ─────────────────────────────────────────────── */
+
+.tt-display {
+  font-family: var(--tt-font-display);
+  font-weight: 400;
+  line-height: 1.05;
+  letter-spacing: -0.01em;
+  color: var(--tt-cream);
+}
+
+.tt-editorial {
+  font-family: var(--tt-font-editorial);
+  font-weight: 600;
+  line-height: 1.15;
+  color: var(--tt-cream);
+}
+
+.tt-eyebrow {
+  font-family: var(--tt-font-sans);
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--tt-gold);
+}
+
+.tt-body {
+  font-family: var(--tt-font-sans);
+  font-size: 0.95rem;
+  line-height: 1.7;
+  color: var(--tt-cream-muted);
+}
+
+/* ───────────────────────────────────────────────
+   TeahTreats Logo
+   ─────────────────────────────────────────────── */
+
+.tt-logo {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  text-decoration: none;
+  color: var(--tt-cream);
+}
+
+.tt-logo-mark {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--tt-crimson), var(--tt-crimson-deep));
+  border: 1.5px solid var(--tt-gold-muted);
+  flex-shrink: 0;
+  overflow: hidden;
+  position: relative;
+}
+
+.tt-logo-snack {
+  display: block;
+  width: 20px;
+  height: 20px;
+  background: radial-gradient(circle at 35% 35%, var(--tt-gold-light), var(--tt-gold));
+  border-radius: 50%;
+  opacity: 0.85;
+}
+
+.tt-logo-word {
+  font-family: var(--tt-font-editorial) !important;
+  font-size: 1.15rem !important;
+  font-weight: 700 !important;
+  color: var(--tt-cream) !important;
+  letter-spacing: 0.01em;
+  line-height: 1.15;
+  display: block;
+}
+
+.tt-logo-kicker {
+  font-family: var(--tt-font-sans) !important;
+  font-size: 0.6rem !important;
+  font-weight: 500 !important;
+  color: var(--tt-gold) !important;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  display: block;
+  line-height: 1;
+  margin-top: 1px;
+}
+
+/* ───────────────────────────────────────────────
+   TeahTreats Navigation
+   ─────────────────────────────────────────────── */
+
+.tt-nav-link {
+  font-family: var(--tt-font-sans) !important;
+  font-size: 0.92rem !important;
+  font-weight: 600 !important;
+  color: var(--tt-cream-muted) !important;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  text-decoration: none !important;
+  padding: 8px 4px;
+  position: relative;
+  transition: color var(--tt-duration) var(--tt-ease);
+}
+
+.tt-nav-link::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 0;
+  height: 2px;
+  border-radius: 2px;
+  background: var(--tt-gold);
+  transition: width var(--tt-duration) var(--tt-ease);
+}
+
+.tt-nav-link:hover {
+  color: var(--tt-gold-light) !important;
+}
+
+.tt-nav-link:hover::after {
+  width: 100%;
+}
+
+.tt-nav-link-active {
+  color: var(--tt-gold-light) !important;
+}
+
+.tt-nav-link-active::after {
+  width: 100%;
+  background: var(--tt-gold);
+}
+
+/* ───────────────────────────────────────────────
+   TeahTreats Icon Actions (Header)
+   ─────────────────────────────────────────────── */
+
+.tt-icon-action {
+  color: var(--tt-cream) !important;
+  font-size: 0.88rem !important;
+  font-weight: 600 !important;
+  background: transparent !important;
+  border: none !important;
+  padding: 8px 14px !important;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  border-radius: 10px !important;
+}
+
+.tt-icon-action:hover {
+  color: var(--tt-gold-light) !important;
+  background: rgba(184, 147, 62, 0.1) !important;
+}
+
+.tt-cart-action {
+  color: var(--tt-cream) !important;
+  font-size: 0.88rem !important;
+  font-weight: 600 !important;
+  background: transparent !important;
+  border: none !important;
+  padding: 8px 14px !important;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  border-radius: 10px !important;
+}
+
+.tt-cart-action:hover {
+  color: var(--tt-gold-light) !important;
+  background: rgba(184, 147, 62, 0.1) !important;
+}
+
+/* ───────────────────────────────────────────────
+   TeahTreats Drawer
+   ─────────────────────────────────────────────── */
+
+.tt-drawer {
+  background: var(--tt-black) !important;
+  color: var(--tt-cream) !important;
+}
+
+.tt-drawer-header {
+  background: var(--tt-black) !important;
+  border-bottom: 1px solid var(--tt-gold-muted) !important;
+}
+
+/* ───────────────────────────────────────────────
+   TeahTreats Buttons
+   ─────────────────────────────────────────────── */
+
+.tt-btn-primary {
+  background: linear-gradient(135deg, var(--tt-crimson), var(--tt-crimson-deep)) !important;
+  color: var(--tt-cream) !important;
+  border: 1px solid rgba(155, 27, 48, 0.4) !important;
+  font-weight: 650 !important;
+  font-size: 0.88rem !important;
+  letter-spacing: 0.02em;
+  transition: all var(--tt-duration) var(--tt-ease) !important;
+  box-shadow: var(--tt-shadow-glow-crimson);
+  min-height: 44px;
+}
+
+.tt-btn-primary:hover {
+  background: linear-gradient(135deg, var(--tt-crimson-light), var(--tt-crimson)) !important;
+  box-shadow: 0 0 32px rgba(155, 27, 48, 0.3);
+  transform: translateY(-1px);
+}
+
+.tt-btn-secondary {
+  background: transparent !important;
+  color: var(--tt-gold) !important;
+  border: 1px solid var(--tt-gold-muted) !important;
+  font-weight: 600 !important;
+  font-size: 0.88rem !important;
+  letter-spacing: 0.02em;
+  transition: all var(--tt-duration) var(--tt-ease) !important;
+  min-height: 44px;
+}
+
+.tt-btn-secondary:hover {
+  background: rgba(184, 147, 62, 0.1) !important;
+  border-color: var(--tt-gold) !important;
+  color: var(--tt-gold-light) !important;
+}
+
+/* ───────────────────────────────────────────────
+   TeahTreats Cards
+   ─────────────────────────────────────────────── */
+
+.tt-card {
+  background: var(--tt-black) !important;
+  border: 1px solid rgba(184, 147, 62, 0.1) !important;
+  border-radius: 16px !important;
+  overflow: hidden;
+  transition: all var(--tt-duration) var(--tt-ease);
+  box-shadow: var(--tt-shadow-card);
+}
+
+.tt-card:hover {
+  border-color: rgba(184, 147, 62, 0.3) !important;
+  box-shadow: var(--tt-shadow-elevated), var(--tt-shadow-glow-gold);
+  transform: translateY(-4px);
+}
+
+.tt-card-inner {
+  padding: 16px;
+}
+
+.tt-card-image {
+  position: relative;
+  overflow: hidden;
+}
+
+.tt-card-image::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, transparent 50%, rgba(10, 10, 10, 0.6) 100%);
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity var(--tt-duration) var(--tt-ease);
+}
+
+.tt-card:hover .tt-card-image::after {
+  opacity: 1;
+}
+
+/* ───────────────────────────────────────────────
+   TeahTreats Sections
+   ─────────────────────────────────────────────── */
+
+.tt-section {
+  padding-block: 64px;
+}
+
+@media (min-width: 768px) {
+  .tt-section {
+    padding-block: 96px;
+  }
+}
+
+.tt-section-dark {
+  background: var(--tt-obsidian);
+}
+
+.tt-section-elevated {
+  background: var(--tt-black);
+}
+
+.tt-section-charcoal {
+  background: var(--tt-charcoal);
+}
+
+.tt-divider {
+  width: 100%;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--tt-gold-muted), transparent);
+}
+
+.tt-divider-solid {
+  width: 100%;
+  height: 1px;
+  background: var(--tt-gold-muted);
+}
+
+.tt-divider-short {
+  width: 60px;
+  height: 2px;
+  background: var(--tt-gold);
+  border-radius: 2px;
+}
+
+/* ───────────────────────────────────────────────
+   TeahTreats Hero
+   ─────────────────────────────────────────────── */
+
+.tt-hero {
+  position: relative;
+  min-height: 85vh;
+  display: flex;
+  align-items: center;
+  overflow: hidden;
+}
+
+@media (max-width: 767px) {
+  .tt-hero {
+    min-height: 75vh;
+  }
+}
+
+.tt-hero-bg {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+}
+
+.tt-hero-bg img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.tt-hero-overlay {
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(180deg, rgba(10, 10, 10, 0.45) 0%, rgba(10, 10, 10, 0.7) 60%, var(--tt-obsidian) 100%),
+    radial-gradient(ellipse at 30% 20%, rgba(155, 27, 48, 0.12), transparent 60%);
+  z-index: 1;
+}
+
+.tt-hero-content {
+  position: relative;
+  z-index: 2;
+  width: 100%;
+}
+
+/* ───────────────────────────────────────────────
+   TeahTreats Hero Stats
+   ─────────────────────────────────────────────── */
+
+.tt-stat {
+  text-align: center;
+  padding: 12px 16px;
+}
+
+.tt-stat-value {
+  font-family: var(--tt-font-editorial);
+  font-size: 1.4rem;
+  font-weight: 700;
+  color: var(--tt-gold-light);
+  line-height: 1.1;
+}
+
+.tt-stat-label {
+  font-size: 0.7rem;
+  color: var(--tt-cream-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  margin-top: 4px;
+}
+
+/* ───────────────────────────────────────────────
+   TeahTreats Category Mosaic
+   ─────────────────────────────────────────────── */
+
+.tt-mosaic {
+  display: grid;
+  gap: 12px;
+  grid-template-columns: 1fr;
+}
+
+@media (min-width: 640px) {
+  .tt-mosaic {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+@media (min-width: 1024px) {
+  .tt-mosaic {
+    grid-template-columns: 1.2fr 0.8fr 1fr;
+    grid-template-rows: auto auto;
+  }
+
+  .tt-mosaic-featured {
+    grid-row: span 2;
+  }
+}
+
+.tt-mosaic-tile {
+  position: relative;
+  border-radius: 16px;
+  overflow: hidden;
+  min-height: 200px;
+  cursor: pointer;
+  border: 1px solid rgba(184, 147, 62, 0.08);
+  transition: all var(--tt-duration) var(--tt-ease);
+}
+
+.tt-mosaic-tile:hover {
+  border-color: rgba(184, 147, 62, 0.25);
+  transform: scale(1.01);
+}
+
+.tt-mosaic-tile-bg {
+  position: absolute;
+  inset: 0;
+  background-size: cover;
+  background-position: center;
+  transition: transform 0.6s var(--tt-ease);
+}
+
+.tt-mosaic-tile:hover .tt-mosaic-tile-bg {
+  transform: scale(1.06);
+}
+
+.tt-mosaic-tile-overlay {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, transparent 30%, rgba(10, 10, 10, 0.75) 100%);
+}
+
+.tt-mosaic-tile-content {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  padding: 20px;
+  z-index: 1;
+}
+
+/* ───────────────────────────────────────────────
+   TeahTreats Marquee
+   ─────────────────────────────────────────────── */
+
+.tt-marquee {
+  overflow: hidden;
+  border-top: 1px solid var(--tt-gold-muted);
+  border-bottom: 1px solid var(--tt-gold-muted);
+  padding-block: 16px;
+  background: var(--tt-black);
+}
+
+.tt-marquee-track {
+  display: flex;
+  width: max-content;
+  animation: tt-marquee 35s linear infinite;
+  gap: 48px;
+  align-items: center;
+}
+
+.tt-marquee-track:hover {
+  animation-play-state: paused;
+}
+
+.tt-marquee-item {
+  font-family: var(--tt-font-editorial);
+  font-size: 1.1rem;
+  font-weight: 500;
+  color: var(--tt-cream-dim);
+  white-space: nowrap;
+  letter-spacing: 0.02em;
+}
+
+.tt-marquee-dot {
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: var(--tt-gold);
+  flex-shrink: 0;
+}
+
+@keyframes tt-marquee {
+  from {
+    transform: translateX(0);
+  }
+
+  to {
+    transform: translateX(-50%);
+  }
+}
+
+/* ───────────────────────────────────────────────
+   TeahTreats Testimonial
+   ─────────────────────────────────────────────── */
+
+.tt-testimonial {
+  background: var(--tt-charcoal);
+  border: 1px solid rgba(184, 147, 62, 0.1);
+  border-radius: 16px;
+  padding: 28px;
+  position: relative;
+}
+
+.tt-testimonial-quote {
+  font-family: var(--tt-font-editorial);
+  font-size: 4rem;
+  line-height: 1;
+  color: var(--tt-gold-muted);
+  position: absolute;
+  top: 12px;
+  left: 20px;
+}
+
+.tt-testimonial-text {
+  font-family: var(--tt-font-sans);
+  font-size: 0.95rem;
+  line-height: 1.7;
+  color: var(--tt-cream-muted);
+  font-style: italic;
+  margin-top: 24px;
+}
+
+.tt-testimonial-author {
+  font-weight: 700;
+  color: var(--tt-cream);
+  font-size: 0.85rem;
+  margin-top: 16px;
+}
+
+.tt-testimonial-stars {
+  color: var(--tt-gold);
+  font-size: 0.9rem;
+  letter-spacing: 2px;
+  margin-top: 4px;
+}
+
+/* ───────────────────────────────────────────────
+   TeahTreats Newsletter
+   ─────────────────────────────────────────────── */
+
+.tt-newsletter-input {
+  background: var(--tt-surface) !important;
+  border: 1px solid var(--tt-gold-muted) !important;
+  color: var(--tt-cream) !important;
+  border-radius: 8px !important;
+  min-height: 44px;
+}
+
+.tt-newsletter-input::placeholder {
+  color: var(--tt-cream-dim) !important;
+}
+
+.tt-newsletter-input:focus {
+  border-color: var(--tt-gold) !important;
+  box-shadow: 0 0 0 2px rgba(184, 147, 62, 0.15) !important;
+}
+
+/* ───────────────────────────────────────────────
+   TeahTreats Dark Form Fields
+   ─────────────────────────────────────────────── */
+
+.tt-input {
+  background: var(--tt-surface) !important;
+  border: 1px solid rgba(184, 147, 62, 0.15) !important;
+  color: var(--tt-cream) !important;
+  border-radius: 8px !important;
+}
+
+.tt-input::placeholder {
+  color: var(--tt-cream-dim) !important;
+}
+
+.tt-input:focus,
+.tt-input:focus-within {
+  border-color: var(--tt-gold) !important;
+  box-shadow: 0 0 0 2px rgba(184, 147, 62, 0.12) !important;
+}
+
+/* ───────────────────────────────────────────────
+   TeahTreats Dark Panels
+   ─────────────────────────────────────────────── */
+
+.tt-panel {
+  background: var(--tt-charcoal) !important;
+  border: 1px solid rgba(184, 147, 62, 0.1) !important;
+  border-radius: 16px !important;
+  box-shadow: var(--tt-shadow-card);
+}
+
+.tt-panel-elevated {
+  background: var(--tt-surface) !important;
+  border: 1px solid rgba(184, 147, 62, 0.12) !important;
+  border-radius: 16px !important;
+  box-shadow: var(--tt-shadow-elevated);
+}
+
+/* ───────────────────────────────────────────────
+   TeahTreats Product Image Placeholder
+   ─────────────────────────────────────────────── */
+
+.tt-image-placeholder {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, var(--tt-charcoal), var(--tt-black));
+  border-bottom: 1px solid rgba(184, 147, 62, 0.08);
+  position: relative;
+  overflow: hidden;
+}
+
+.tt-image-placeholder::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(circle at 30% 40%, rgba(155, 27, 48, 0.08), transparent 50%),
+    radial-gradient(circle at 70% 60%, rgba(184, 147, 62, 0.06), transparent 50%);
+}
+
+/* ───────────────────────────────────────────────
+   TeahTreats Availability Badge (dark)
+   ─────────────────────────────────────────────── */
+
+.tt-badge-in-stock {
+  background: rgba(34, 197, 94, 0.12) !important;
+  color: #4ade80 !important;
+  border: 1px solid rgba(34, 197, 94, 0.2) !important;
+  font-size: 0.7rem !important;
+  font-weight: 600 !important;
+}
+
+.tt-badge-low-stock {
+  background: rgba(251, 191, 36, 0.12) !important;
+  color: #fbbf24 !important;
+  border: 1px solid rgba(251, 191, 36, 0.2) !important;
+  font-size: 0.7rem !important;
+  font-weight: 600 !important;
+}
+
+.tt-badge-out-of-stock {
+  background: rgba(250, 247, 242, 0.06) !important;
+  color: var(--tt-cream-dim) !important;
+  border: 1px solid rgba(250, 247, 242, 0.1) !important;
+  font-size: 0.7rem !important;
+  font-weight: 600 !important;
+}
+
+.tt-badge-fresh {
+  background: rgba(251, 146, 60, 0.12) !important;
+  color: #fb923c !important;
+  border: 1px solid rgba(251, 146, 60, 0.2) !important;
+  font-size: 0.7rem !important;
+  font-weight: 600 !important;
+}
+
+.tt-badge-gold {
+  background: rgba(184, 147, 62, 0.1) !important;
+  color: var(--tt-gold-light) !important;
+  border: 1px solid var(--tt-gold-muted) !important;
+  font-size: 0.7rem !important;
+  font-weight: 600 !important;
+}
+
+
+/* ───────────────────────────────────────────────
+   TeahTreats Storefront Dark State Card
+   ─────────────────────────────────────────────── */
+
+.tt-state-card {
+  background: var(--tt-charcoal) !important;
+  border: 1px solid rgba(184, 147, 62, 0.1) !important;
+  border-radius: 16px !important;
+  padding: 32px !important;
+  text-align: center;
+}
+
+/* ───────────────────────────────────────────────
+   TeahTreats Page Header (Storefront)
+   ─────────────────────────────────────────────── */
+
+.tt-page-header {
+  padding-block: 48px 32px;
+  border-bottom: 1px solid var(--tt-gold-muted);
+}
+
+/* ───────────────────────────────────────────────
+   Reduced Motion
+   ─────────────────────────────────────────────── */
+
+@media (prefers-reduced-motion: reduce) {
+
+  .tt-marquee-track,
+  .marquee-track {
+    animation: none !important;
+  }
+
+  .tt-card:hover,
+  .tt-mosaic-tile:hover {
+    transform: none !important;
+  }
+
+  .tt-mosaic-tile:hover .tt-mosaic-tile-bg {
+    transform: none !important;
+  }
+
+  .tt-btn-primary:hover {
+    transform: none !important;
+  }
+
+  .magic-shine::after {
+    animation: none !important;
+  }
+}
+
+/* ───────────────────────────────────────────────
+   Admin Styles (preserved from original)
+   ─────────────────────────────────────────────── */
+
+.app-container {
+  width: min(1180px, calc(100vw - 32px));
+  margin-inline: auto;
+}
+
+.admin-container {
+  width: min(1280px, calc(100vw - 28px));
+  margin-inline: auto;
+  max-width: 100%;
+}
+
+.glass-panel {
+  border: 1px solid rgba(184, 147, 62, 0.15);
+  background: rgba(30, 30, 30, 0.78);
+  box-shadow: var(--tt-shadow-card);
+  backdrop-filter: blur(18px);
+  color: var(--tt-cream);
+}
+
+.enterprise-panel {
+  border: 1px solid rgba(184, 147, 62, 0.15);
+  background: linear-gradient(180deg, rgba(30, 30, 30, 0.95), rgba(20, 20, 20, 0.92));
+  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.45);
+  color: var(--tt-cream);
+  border-radius: 16px;
+}
+
+.magic-grid {
+  background-image:
+    linear-gradient(rgba(184, 147, 62, 0.06) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(184, 147, 62, 0.06) 1px, transparent 1px);
+  background-size: 42px 42px;
+  mask-image: radial-gradient(circle at center, black, transparent 76%);
+}
+
+.magic-shine {
+  position: relative;
+  overflow: hidden;
+}
+
+.magic-shine::after {
+  content: "";
+  position: absolute;
+  inset: -55% auto -55% -20%;
+  width: 42%;
+  transform: rotate(18deg);
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.25), transparent);
+  animation: shine 7s ease-in-out infinite;
+  pointer-events: none;
+}
+
+.soft-noise {
+  position: relative;
+}
+
+.soft-noise::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  opacity: 0.38;
+  pointer-events: none;
+  background-image:
+    radial-gradient(circle at 18% 18%, rgba(184, 147, 62, 0.12) 0 2px, transparent 2px),
+    radial-gradient(circle at 82% 28%, rgba(155, 27, 48, 0.1) 0 2px, transparent 2px),
+    radial-gradient(circle at 48% 82%, rgba(184, 147, 62, 0.08) 0 2px, transparent 2px);
+  background-size: 64px 64px, 88px 88px, 112px 112px;
+}
+
+.marquee-track {
+  display: flex;
+  width: max-content;
+  animation: marquee 26s linear infinite;
+}
+
+.marquee-track:hover {
+  animation-play-state: paused;
+}
+
+.admin-shell-grid {
+  display: grid;
+  grid-template-columns: var(--admin-sidebar-width, 260px) minmax(0, 1fr);
+  min-height: 100vh;
+  background: var(--tt-obsidian);
+  transition: grid-template-columns 0.25s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.admin-main-surface {
+  min-width: 0;
+  max-width: 100%;
+  overflow-x: hidden;
+  background:
+    radial-gradient(circle at 88% 8%, rgba(184, 147, 62, 0.06), transparent 28rem),
+    radial-gradient(circle at 12% 88%, rgba(155, 27, 48, 0.05), transparent 28rem),
+    var(--tt-obsidian);
+  color: var(--tt-cream);
+}
+
+/* ───────────────────────────────────────────────
+   Mantine Dark Overrides for Admin & Vendor Suites
+   ─────────────────────────────────────────────── */
+
+.admin-main-surface .mantine-Table-root,
+.admin-shell-grid .mantine-Table-root {
+  color: var(--tt-cream);
+}
+
+.admin-main-surface .mantine-Table-th,
+.admin-shell-grid .mantine-Table-th {
+  color: var(--tt-gold-light);
+  font-family: var(--tt-font-sans);
+  font-weight: 700;
+  font-size: 0.78rem;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  border-bottom: 1px solid rgba(184, 147, 62, 0.15);
+  background: rgba(17, 17, 17, 0.8);
+}
+
+.admin-main-surface .mantine-Table-td,
+.admin-shell-grid .mantine-Table-td {
+  color: var(--tt-cream);
+  border-bottom: 1px solid rgba(184, 147, 62, 0.08);
+  font-size: 0.88rem;
+}
+
+.admin-main-surface .mantine-Table-tr:hover,
+.admin-shell-grid .mantine-Table-tr:hover {
+  background: rgba(184, 147, 62, 0.04);
+}
+
+.admin-main-surface .mantine-Title-root,
+.admin-shell-grid .mantine-Title-root {
+  color: var(--tt-cream);
+  font-family: var(--tt-font-editorial);
+}
+
+.admin-main-surface .mantine-Text-root,
+.admin-shell-grid .mantine-Text-root {
+  color: inherit;
+}
+
+@media (max-width: 900px) {
+  .admin-shell-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@keyframes marquee {
+  from {
+    transform: translateX(0);
+  }
+
+  to {
+    transform: translateX(-50%);
+  }
+}
+
+@keyframes shine {
+
+  0%,
+  45% {
+    transform: translateX(-180%) rotate(18deg);
+  }
+
+  75%,
+  100% {
+    transform: translateX(360%) rotate(18deg);
+  }
+}
+
+/* ───────────────────────────────────────────────
+   Cart Badge Shake Animation
+   ─────────────────────────────────────────────── */
+
+@keyframes tt-cart-shake {
+  0% {
+    transform: rotate(0deg);
+  }
+
+  10% {
+    transform: rotate(-12deg) scale(1.2);
+  }
+
+  20% {
+    transform: rotate(12deg) scale(1.25);
+  }
+
+  30% {
+    transform: rotate(-10deg) scale(1.2);
+  }
+
+  40% {
+    transform: rotate(8deg) scale(1.15);
+  }
+
+  50% {
+    transform: rotate(-5deg) scale(1.1);
+  }
+
+  60% {
+    transform: rotate(3deg) scale(1.05);
+  }
+
+  70% {
+    transform: rotate(-1deg);
+  }
+
+  80% {
+    transform: rotate(0deg);
+  }
+
+  100% {
+    transform: rotate(0deg);
+  }
+}
+
+.tt-cart-shake {
+  animation: tt-cart-shake 0.75s cubic-bezier(0.36, 0.07, 0.19, 0.97) both;
+}
+
+@keyframes tt-cart-badge-continuous-shake {
+
+  0%,
+  80%,
+  100% {
+    transform: rotate(0deg) scale(1);
+  }
+
+  85% {
+    transform: rotate(-8deg) scale(1.1);
+  }
+
+  90% {
+    transform: rotate(8deg) scale(1.15);
+  }
+
+  95% {
+    transform: rotate(-5deg) scale(1.1);
+  }
+}
+
+.tt-cart-badge-continuous {
+  animation: tt-cart-badge-continuous-shake 3s cubic-bezier(0.36, 0.07, 0.19, 0.97) infinite;
+}
+
+@keyframes tt-cart-badge-pop {
+  0% {
+    transform: scale(1);
+  }
+
+  40% {
+    transform: scale(1.45);
+  }
+
+  70% {
+    transform: scale(0.85);
+  }
+
+  100% {
+    transform: scale(1);
+  }
+}
+
+.tt-cart-badge-pop {
+  animation: tt-cart-badge-pop 0.45s cubic-bezier(0.36, 0.07, 0.19, 0.97) both;
+}
+
+/* ───────────────────────────────────────────────
+   Enterprise Auth Pages
+   ─────────────────────────────────────────────── */
+
+.tt-auth-page {
+  min-height: 100vh;
+  display: grid;
+  grid-template-columns: 1fr;
+  background: var(--tt-obsidian);
+  overflow: hidden;
+}
+
+@media (min-width: 768px) {
+  .tt-auth-page {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+.tt-auth-hero {
+  display: none;
+  position: relative;
+  overflow: hidden;
+  background:
+    radial-gradient(ellipse at 30% 20%, rgba(155, 27, 48, 0.18), transparent 55%),
+    radial-gradient(ellipse at 70% 80%, rgba(184, 147, 62, 0.12), transparent 55%),
+    linear-gradient(135deg, #0d0d0d, #1a1a1a);
+}
+
+@media (min-width: 768px) {
+  .tt-auth-hero {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    padding: 48px;
+  }
+}
+
+.tt-auth-hero-grid {
+  position: absolute;
+  inset: 0;
+  background-image:
+    linear-gradient(rgba(184, 147, 62, 0.04) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(184, 147, 62, 0.04) 1px, transparent 1px);
+  background-size: 48px 48px;
+  mask-image: radial-gradient(circle at center, black, transparent 80%);
+}
+
+.tt-auth-hero-glow {
+  position: absolute;
+  width: 320px;
+  height: 320px;
+  border-radius: 50%;
+  filter: blur(100px);
+  opacity: 0.25;
+  animation: tt-auth-glow 8s ease-in-out infinite alternate;
+}
+
+.tt-auth-hero-glow-crimson {
+  background: var(--tt-crimson);
+  top: 20%;
+  left: 15%;
+}
+
+.tt-auth-hero-glow-gold {
+  background: var(--tt-gold);
+  bottom: 20%;
+  right: 15%;
+  animation-delay: 4s;
+}
+
+@keyframes tt-auth-glow {
+  0% {
+    transform: translate(0, 0) scale(1);
+  }
+
+  100% {
+    transform: translate(20px, -15px) scale(1.15);
+  }
+}
+
+.tt-auth-form-side {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 32px 24px;
+  position: relative;
+  background:
+    radial-gradient(ellipse at 80% 10%, rgba(184, 147, 62, 0.04), transparent 50%),
+    var(--tt-obsidian);
+}
+
+@media (min-width: 768px) {
+  .tt-auth-form-side {
+    padding: 48px;
+  }
+}
+
+.tt-auth-card {
+  width: 100%;
+  max-width: 420px;
+  background: rgba(26, 26, 26, 0.85);
+  backdrop-filter: blur(24px) saturate(1.3);
+  border: 1px solid rgba(184, 147, 62, 0.12);
+  border-radius: 20px;
+  padding: 36px 32px;
+  box-shadow:
+    0 24px 64px rgba(0, 0, 0, 0.5),
+    0 0 0 1px rgba(184, 147, 62, 0.06) inset;
+  position: relative;
+  overflow: hidden;
+}
+
+.tt-auth-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, var(--tt-gold), var(--tt-crimson), transparent);
+  opacity: 0.6;
+}
+
+.tt-auth-input {
+  background: rgba(30, 30, 30, 0.9) !important;
+  border: 1px solid rgba(184, 147, 62, 0.12) !important;
+  color: var(--tt-cream) !important;
+  border-radius: 10px !important;
+  padding: 12px 14px !important;
+  font-size: 0.88rem !important;
+  transition: all 0.25s var(--tt-ease) !important;
+  min-height: 46px !important;
+}
+
+.tt-auth-input::placeholder {
+  color: var(--tt-cream-dim) !important;
+}
+
+.tt-auth-input:focus,
+.tt-auth-input:focus-within {
+  border-color: var(--tt-gold) !important;
+  box-shadow: 0 0 0 3px rgba(184, 147, 62, 0.1), 0 0 20px rgba(184, 147, 62, 0.05) !important;
+}
+
+.tt-auth-label {
+  color: var(--tt-cream-muted) !important;
+  font-size: 0.78rem !important;
+  font-weight: 600 !important;
+  letter-spacing: 0.04em !important;
+  text-transform: uppercase !important;
+  margin-bottom: 6px !important;
+}
+
+.tt-auth-btn {
+  background: linear-gradient(135deg, var(--tt-crimson), var(--tt-crimson-deep)) !important;
+  color: var(--tt-cream) !important;
+  border: 1px solid rgba(155, 27, 48, 0.4) !important;
+  border-radius: 10px !important;
+  font-weight: 650 !important;
+  font-size: 0.9rem !important;
+  letter-spacing: 0.03em;
+  min-height: 48px !important;
+  transition: all var(--tt-duration) var(--tt-ease) !important;
+  box-shadow: var(--tt-shadow-glow-crimson), 0 4px 12px rgba(155, 27, 48, 0.2);
+  cursor: pointer;
+}
+
+.tt-auth-btn:hover {
+  background: linear-gradient(135deg, var(--tt-crimson-light), var(--tt-crimson)) !important;
+  box-shadow: 0 0 36px rgba(155, 27, 48, 0.35), 0 8px 24px rgba(155, 27, 48, 0.2);
+  transform: translateY(-1px);
+}
+
+.tt-auth-btn:active {
+  transform: translateY(0);
+}
+
+.tt-auth-feature {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 16px;
+  border-radius: 12px;
+  border: 1px solid rgba(184, 147, 62, 0.08);
+  background: rgba(184, 147, 62, 0.03);
+  transition: all 0.3s var(--tt-ease);
+}
+
+.tt-auth-feature:hover {
+  border-color: rgba(184, 147, 62, 0.18);
+  background: rgba(184, 147, 62, 0.06);
+}
+
+.tt-auth-feature-icon {
+  width: 38px;
+  height: 38px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, rgba(155, 27, 48, 0.2), rgba(155, 27, 48, 0.1));
+  border: 1px solid rgba(155, 27, 48, 0.15);
+  flex-shrink: 0;
+  color: var(--tt-crimson-light);
+}
+
+.tt-auth-trust-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 12px;
+  border-radius: 20px;
+  background: rgba(184, 147, 62, 0.06);
+  border: 1px solid rgba(184, 147, 62, 0.12);
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: var(--tt-gold);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+/*_______________________________________
+Fix Mantine Modal Content Heights and Proper Scrolling Effects
+____________________________________________ */
+.mantine-Modal-inner {
+  padding: 16px !important;
+}
+
+.mantine-Modal-content {
+  max-height: calc(100vh - 32px) !important;
+  display: flex !important;
+  flex-direction: column !important;
+  overflow: hidden !important;
+  border: 1px solid rgba(184, 147, 62, 0.25);
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.8) !important;
+}
+
+.mantine-Modal-header {
+  flex: 0 0 auto !important;
+  border-bottom: 1px solid rgba(184, 147, 62, 0.15) !important;
+  padding: 16px 24px;
+}
+
+.mantine-Modal-body {
+  flex: 1 1 auto !important;
+  min-height: 0 !important;
+  max-height: 100% !important;
+  overflow-y: auto !important;
+  padding: 24px !important;
+  scroll-behavior: smooth;
+}
+
+.mantine-Modal-body::-webkit-scrollbar {
+  width: 6px;
+}
+
+.mantine-Modal-body::-webkit-scrollbar-track {
+  background: rgba(0, 0, 0, 0.2);
+}
+
+.mantine-Modal-body::-webkit-scrollbar-thumb {
+  background: var(--tt-gold-muted);
+  border-radius: 3px;
+}
+
+.mantine-Paper-root,
+.tt-panel,
+.enterprise-panel {
+  min-width: 0 !important;
+  word-break: break-word !important;
+  overflow-wrap: anywhere !important;
+}
+
+
+/* ───────────────────────────────────────────────
+   Modernized Industry Standard Mantine Toaster
+   ─────────────────────────────────────────────── */
+
+.mantine-Notifications-root {
+  z-index: 99999 !important;
+  padding: 16px !important;
+}
+
+.mantine-Notification-root {
+  background: rgba(22, 22, 22, 0.92) !important;
+  backdrop-filter: blur(20px) saturate(1.4) !important;
+  -webkit-backdrop-filter: blur(20px) saturate(1.4) !important;
+  border: 1px solid rgba(184, 147, 62, 0.22) !important;
+  border-radius: 14px !important;
+  padding: 14px 18px !important;
+  box-shadow:
+    0 20px 48px rgba(0, 0, 0, 0.65),
+    0 0 24px rgba(184, 147, 62, 0.1) inset,
+    0 0 0 1px rgba(255, 255, 255, 0.05) inset !important;
+  color: var(--tt-cream) !important;
+  animation: tt-toast-slide 0.35s cubic-bezier(0.16, 1, 0.3, 1) both;
+  position: relative;
+  overflow: hidden;
+}
+
+.mantine-Notification-root::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  width: 4px;
+  background: var(--tt-gold);
+}
+
+.mantine-Notification-root[data-color="green"]::before {
+  background: #4ade80;
+  box-shadow: 0 0 12px rgba(74, 222, 128, 0.5);
+}
+
+.mantine-Notification-root[data-color="red"]::before {
+  background: var(--tt-crimson-light);
+  box-shadow: 0 0 12px rgba(180, 46, 69, 0.5);
+}
+
+.mantine-Notification-title {
+  color: var(--tt-cream) !important;
+  font-family: var(--tt-font-sans) !important;
+  font-weight: 700 !important;
+  font-size: 0.88rem !important;
+  letter-spacing: 0.01em !important;
+}
+
+.mantine-Notification-description {
+  color: var(--tt-cream-muted) !important;
+  font-size: 0.82rem !important;
+  line-height: 1.5 !important;
+  margin-top: 2px !important;
+}
+
+.mantine-Notification-closeButton {
+  color: var(--tt-cream-dim) !important;
+  border-radius: 8px !important;
+  transition: all 0.2s ease !important;
+}
+
+.mantine-Notification-closeButton:hover {
+  background: rgba(184, 147, 62, 0.15) !important;
+  color: var(--tt-gold-light) !important;
+}
+
+.mantine-Notification-icon {
+  background: rgba(184, 147, 62, 0.12) !important;
+  border-radius: 10px !important;
+}
+
+@keyframes tt-toast-slide {
+  from {
+    opacity: 0;
+    transform: translateX(30px) scale(0.95);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateX(0) scale(1);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+
+  .tt-cart-shake,
+  .tt-cart-badge-pop {
+    animation: none !important;
+  }
+
+  .tt-auth-hero-glow {
+    animation: none !important;
+  }
+}

@@ -1,0 +1,51 @@
+{
+  "name": "snacks-commerce",
+  "version": "0.1.0",
+  "private": true,
+  "packageManager": "pnpm@11.20.0",
+  "scripts": {
+    "build": "pnpm db:generate && turbo run build",
+    "dev": "turbo run dev --parallel",
+    "install:check": "pnpm install --frozen-lockfile",
+    "infra:start": "docker compose up -d",
+    "infra:stop": "docker compose down",
+    "infra:logs": "docker compose logs -f",
+    "dev:infra": "pnpm infra:start",
+    "dev:db:push": "prisma db push",
+    "dev:db:seed": "tsx prisma/seed.ts",
+    "dev:api": "pnpm db:generate && pnpm --filter @snacks/api dev",
+    "dev:web": "pnpm --filter @snacks/web dev",
+    "dev:worker": "pnpm db:generate && pnpm --filter @snacks/api dev:worker",
+    "dev:env": "node scripts/ensure-env.mjs",
+    "dev:bootstrap": "pnpm dev:env && pnpm infra:start && pnpm db:generate && pnpm dev:db:push && pnpm dev:db:seed",
+    "smoke:health": "node scripts/smoke.mjs health",
+    "smoke:storefront": "node scripts/smoke.mjs storefront",
+    "smoke:admin-login": "node scripts/smoke.mjs admin-login",
+    "smoke:customer-auth": "node scripts/smoke.mjs customer-auth",
+    "smoke:local": "node scripts/smoke.mjs all",
+    "lint": "turbo run lint",
+    "typecheck": "pnpm db:generate && turbo run typecheck",
+    "test": "turbo run test",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "db:validate": "prisma validate",
+    "db:generate": "prisma generate",
+    "db:migrate": "prisma migrate dev",
+    "db:deploy": "prisma migrate deploy",
+    "db:seed": "tsx prisma/seed.ts",
+    "db:backup": "node scripts/backup-postgres.mjs"
+  },
+  "dependencies": {
+    "@prisma/client": "^6.14.0"
+  },
+  "devDependencies": {
+    "@snacks/eslint-config": "workspace:*",
+    "@snacks/tsconfig": "workspace:*",
+    "eslint": "^9.33.0",
+    "prettier": "^3.6.2",
+    "prisma": "^6.14.0",
+    "tsx": "^4.20.3",
+    "turbo": "^2.5.5",
+    "typescript": "6.0.3"
+  }
+}

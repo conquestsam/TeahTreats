@@ -1,0 +1,40 @@
+services:
+  api:
+    build:
+      context: .
+      dockerfile: apps/api/Dockerfile
+    image: snacks-api:latest
+    restart: unless-stopped
+    env_file:
+      - path: .env.production.example
+      - path: .env.production
+        required: false
+    ports:
+      - "4000:4000"
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:4000/api/v1/health >/dev/null || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  worker:
+    image: snacks-api:latest
+    restart: unless-stopped
+    env_file:
+      - path: .env.production.example
+      - path: .env.production
+        required: false
+    command: ["pnpm", "--filter", "@snacks/api", "start:worker"]
+    depends_on:
+      api:
+        condition: service_started
+
+  migrate:
+    image: snacks-api:latest
+    env_file:
+      - path: .env.production.example
+      - path: .env.production
+        required: false
+    command: ["pnpm", "db:deploy"]
+    profiles:
+      - migrate

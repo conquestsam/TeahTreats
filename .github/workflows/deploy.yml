@@ -1,0 +1,72 @@
+name: Deploy
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+concurrency:
+  group: production-deploy
+  cancel-in-progress: false
+
+jobs:
+  deploy-web:
+    name: Deploy Web To Vercel
+    runs-on: ubuntu-latest
+    if: ${{ vars.ENABLE_VERCEL_DEPLOY == 'true' }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 11.20.0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm --filter @snacks/shared build
+      - run: pnpm --filter @snacks/web build
+        env:
+          NEXT_PUBLIC_API_BASE_URL: ${{ vars.NEXT_PUBLIC_API_BASE_URL }}
+          NEXT_PUBLIC_TENANT_ID: ${{ vars.NEXT_PUBLIC_TENANT_ID }}
+      - name: Deploy web
+        run: pnpm dlx vercel deploy --prod --token "$VERCEL_TOKEN" --cwd apps/web --yes
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+
+  deploy-server:
+    name: Deploy API And Worker To Server
+    runs-on: ubuntu-latest
+    if: ${{ vars.ENABLE_SERVER_DEPLOY == 'true' }}
+    steps:
+      - name: Install SSH key
+        run: |
+          mkdir -p ~/.ssh
+          printf '%s\n' "$SSH_PRIVATE_KEY" > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+          ssh-keyscan -H "$SSH_HOST" >> ~/.ssh/known_hosts
+        env:
+          SSH_HOST: ${{ secrets.SSH_HOST }}
+          SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
+
+      - name: Pull latest code and deploy compose services
+        run: |
+          ssh -i ~/.ssh/deploy_key "$SSH_USER@$SSH_HOST" "APP_DIR='$APP_DIR' bash -s" <<'REMOTE'
+            set -euo pipefail
+            cd "$APP_DIR"
+            git fetch origin main
+            git reset --hard origin/main
+            corepack enable
+            pnpm install --frozen-lockfile
+            pnpm db:generate
+            pnpm db:deploy
+            docker compose -f docker-compose.prod.yml up -d --build api worker
+            docker image prune -f
+          REMOTE
+        env:
+          SSH_HOST: ${{ secrets.SSH_HOST }}
+          SSH_USER: ${{ secrets.SSH_USER }}
+          APP_DIR: ${{ vars.SERVER_APP_DIR }}
