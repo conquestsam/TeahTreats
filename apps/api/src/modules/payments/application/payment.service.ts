@@ -298,6 +298,7 @@ export class PaymentService {
     amountCents: number;
     currency: string;
     providerRef: string | null;
+    metadata?: Prisma.JsonValue;
     reconciliationStatus?: string;
     reconciledAt?: Date | null;
     lastProviderEventId?: string | null;
@@ -310,6 +311,7 @@ export class PaymentService {
       amountCents: payment.amountCents,
       currency: payment.currency,
       providerRef: payment.providerRef,
+      metadata: payment.metadata ?? null,
       reconciliationStatus: payment.reconciliationStatus ?? 'pending',
       reconciledAt: payment.reconciledAt?.toISOString() ?? null,
       lastProviderEventId: payment.lastProviderEventId ?? null

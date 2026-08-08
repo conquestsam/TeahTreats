@@ -173,45 +173,9 @@ export function AdminPromotionContent() {
           }
         }}
       />
-      <AdminPromotionArchiveModal
-        opened={modals.mode === 'archive'}
-        promotionName={modals.selectedPromotion?.name ?? ''}
-        loading={mutations.archivePromotionMutation.isPending}
-        onClose={closeAndReset}
-        onConfirm={() => {
-          if (modals.selectedPromotion) {
-            mutations.archivePromotionMutation.mutate(modals.selectedPromotion.id);
-          }
-        }}
-      />
     </div>
   );
 }
-
-// <AdminPromotionFormModal
-//   mode="create"
-//   opened={modals.mode === 'create'}
-//   loading={mutations.createPromotionMutation.isPending}
-//   form={form}
-//   onClose={closeAndReset}
-//   onSubmit={() => mutations.createPromotionMutation.mutate(toPayload())}
-// />
-
-// <AdminPromotionFormModal
-//   mode="edit"
-//   opened={modals.mode === 'edit'}
-//   loading={mutations.updatePromotionMutation.isPending}
-//   form={form}
-//   onClose={closeAndReset}
-//   onSubmit={() => {
-//     if (modals.selectedPromotion) {
-//       mutations.updatePromotionMutation.mutate({
-//         promotionId: modals.selectedPromotion.id,
-//         input: toPayload()
-//       });
-//     }
-//   }}
-// />
 
 
 function toList(value: string) {

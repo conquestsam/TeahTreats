@@ -65,6 +65,18 @@ export class CustomerAuthService {
       userId: user.id,
       reason: 'customer-signup'
     });
+    await this.prisma.notification.create({
+      data: {
+        tenantId: resolvedTenantId,
+        channel: 'email',
+        recipient: user.email,
+        subject: 'Welcome to TeahTreats!',
+        body: `Hello ${user.name}, welcome to TeahTreats. Your customer account has been created successfully.`,
+        status: user.email ? 'pending' : 'skipped',
+        lastError: user.email ? null : 'Recipient is missing.',
+        metadata: { to: user.email, userId: user.id }
+      }
+    });
     return result;
   }
 

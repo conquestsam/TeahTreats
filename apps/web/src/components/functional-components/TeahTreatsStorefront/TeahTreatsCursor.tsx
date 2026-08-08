@@ -59,8 +59,8 @@ export function TeahTreatsCursor() {
   return (
     <>
       <motion.div
-        className="pointer-events-none fixed left-0 top-0 z-[9998] hidden items-center justify-center lg:flex"
-        style={{ x: springX, y: springY, translateX: '-50%', translateY: '-50%' }}
+        className="fixed left-0 top-0 z-[9998] hidden items-center justify-center lg:flex"
+        style={{ pointerEvents: 'none', x: springX, y: springY, translateX: '-50%', translateY: '-50%' }}
         animate={{ opacity: hidden ? 0 : 1 }}
       >
         <motion.div
@@ -71,14 +71,14 @@ export function TeahTreatsCursor() {
             borderColor: label ? '#D4AF37' : isPointer ? '#9B1B30' : 'rgba(184,147,62,0.62)'
           }}
           transition={{ type: 'spring', damping: 20, stiffness: 250 }}
-          style={{ border: '1px solid rgba(184,147,62,0.62)' }}
+          style={{ pointerEvents: 'none', border: '1px solid rgba(184,147,62,0.62)' }}
         >
           {label ? <span className="tt-cursor-label">{label}</span> : null}
         </motion.div>
       </motion.div>
       <motion.div
-        className="pointer-events-none fixed left-0 top-0 z-[9999] hidden rounded-full bg-[#B8933E] lg:block"
-        style={{ x: cursorX, y: cursorY, translateX: '-50%', translateY: '-50%' }}
+        className="fixed left-0 top-0 z-[9999] hidden rounded-full bg-[#B8933E] lg:block"
+        style={{ pointerEvents: 'none', x: cursorX, y: cursorY, translateX: '-50%', translateY: '-50%' }}
         animate={{ width: dotSize, height: dotSize, opacity: hidden ? 0 : 1 }}
       />
     </>

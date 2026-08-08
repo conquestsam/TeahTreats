@@ -189,6 +189,31 @@ export class CheckoutService {
         sideEffects: ['cart.cache.invalidate', 'sse.checkout.started']
       });
 
+      await tx.notification.createMany({
+        data: [
+          {
+            tenantId: resolvedTenantId,
+            channel: 'email',
+            recipient: customerEmail,
+            subject: 'Order Created & Inventory Reserved',
+            body: `Your order #${order.id.slice(0, 8)} has been created. Total: ${(order.totalCents / 100).toFixed(2)} ${order.currency}.`,
+            status: customerEmail ? 'pending' : 'skipped',
+            lastError: customerEmail ? null : 'Recipient is missing.',
+            metadata: { to: customerEmail, orderId: order.id, totalCents: order.totalCents }
+          },
+          {
+            tenantId: resolvedTenantId,
+            channel: 'sms',
+            recipient: dto.phone.trim(),
+            subject: 'Order Created',
+            body: `Order #${order.id.slice(0, 8)} created. Complete payment before reservation expires.`,
+            status: dto.phone.trim() ? 'pending' : 'skipped',
+            lastError: dto.phone.trim() ? null : 'Recipient is missing.',
+            metadata: { to: dto.phone.trim(), orderId: order.id }
+          }
+        ]
+      });
+
       const response = {
         orderId: order.id,
         status: order.status,
