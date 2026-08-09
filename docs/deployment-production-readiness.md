@@ -150,26 +150,83 @@ Step 1: create a Render account and connect GitHub.
 1. Open Render Dashboard.
 2. Connect the GitHub repository that contains this monorepo.
 3. Give Render permission to read the repository.
-4. Confirm Render can see the `render.yaml` file at the repository root.
+4. Confirm Render can see the repository.
 
-Step 2: create staging from the blueprint.
+Step 2: create PostgreSQL first.
 
-1. In Render, choose New, then Blueprint.
-2. Select this repository.
-3. Render should detect `render.yaml`.
-4. Review the services it wants to create:
-   - `teahtreats-postgres-staging`
-   - `teahtreats-redis-staging`
-   - `teahtreats-api-staging`
-   - `teahtreats-worker-staging`
-5. Keep the free/starter plans for staging unless traffic requires more.
-6. Click Apply.
+1. In Render, choose New.
+2. Choose PostgreSQL.
+3. Name it `teahtreats-postgres-staging`.
+4. Region: choose the same region you will use for API and worker, for example Oregon.
+5. Database name: `snacks_commerce`.
+6. User: `snacks`.
+7. Plan: Free for learning/staging, paid before real production.
+8. Click Create Database.
+9. After it is ready, copy the External Database URL. This becomes `DATABASE_URL`.
 
-Step 3: fill missing Render secrets.
+Step 3: create Redis/Key Value second.
+
+1. In Render, choose New.
+2. Choose Key Value.
+3. Name it `teahtreats-redis-staging`.
+4. Region: same as the database and API.
+5. Plan: Free for learning/staging, paid before real production.
+6. Maxmemory policy: `allkeys-lru` is acceptable for the MVP combined cache/queue setup.
+7. Click Create Key Value.
+8. Copy the Internal Redis URL if API/worker are also on Render. This becomes `REDIS_URL`.
+
+Step 4: create the API Web Service from the UI you are seeing.
+
+Render screen: Choose service, Configure, Deploy.
+
+Use these exact values:
+
+```txt
+Source Code: conquestsam/TeahTreats
+Name: teahtreats-api-staging
+Language: Node
+Branch: main
+Region: Oregon, or the same region as PostgreSQL and Redis
+Root Directory: leave empty
+Build Command: pnpm install --frozen-lockfile && pnpm db:generate && pnpm --filter @snacks/shared build && pnpm --filter @snacks/api build
+Start Command: pnpm --filter @snacks/api start
+Instance Type: Starter for staging, not Free for production
+```
+
+Why Root Directory must be empty:
+
+- This is a pnpm monorepo.
+- The API depends on the root `pnpm-lock.yaml`, root `prisma/schema.prisma`, and `packages/shared`.
+- If you set Root Directory to `apps/api`, Render will not see the workspace correctly.
+
+Replace Render's autofilled commands. Do not use:
+
+```txt
+Build Command: pnpm install --frozen-lockfile; pnpm run build
+Start Command: yarn start
+```
+
+Those commands are wrong for this monorepo because they either build the whole repo unnecessarily or use Yarn even though the project uses pnpm.
+
+Also do not add `corepack enable` to Render's build command. Render's Node image can already provide the pnpm shim, and `corepack enable` may fail with a read-only filesystem error like:
+
+```txt
+EROFS: read-only file system, unlink '/usr/bin/pnpm'
+```
+
+The repo pins Node with `.node-version`. If Render still chooses a different Node version, add this environment variable on both API and worker:
+
+```env
+NODE_VERSION=22
+```
+
+Step 5: add API environment variables before deploying.
 
 The blueprint marks sensitive values with `sync: false`. Render will create the service, but you must add real values before the API can work.
 
-Open `teahtreats-api-staging`, go to Environment, and set at least:
+In the Environment Variables section, click Add from `.env` or add values one by one.
+
+Set at least:
 
 ```env
 APP_CORS_ORIGIN=https://your-vercel-preview-or-staging-domain.vercel.app
@@ -187,6 +244,9 @@ PAYPAL_CLIENT_SECRET=paypal_sandbox_secret
 PAYPAL_ENVIRONMENT=sandbox
 PAYPAL_WEBHOOK_ID=paypal_sandbox_webhook_id
 NEXT_PUBLIC_PAYPAL_CLIENT_ID=paypal_sandbox_client_id
+DATABASE_URL=your_render_postgres_external_or_internal_url
+REDIS_URL=your_render_redis_internal_url
+NODE_VERSION=22
 ```
 
 Set notification/media variables if you want those flows to work in staging:
@@ -204,24 +264,45 @@ R2_SECRET_ACCESS_KEY=your_r2_secret
 R2_BUCKET=your_r2_bucket
 ```
 
-Open `teahtreats-worker-staging`, go to Environment, and set the same provider secrets. The worker needs payment, notification, media, Redis, database, and OpenSearch access because it processes outbox side effects.
+Click Deploy Web Service.
 
-Step 4: deploy API and worker once.
+Step 6: create the worker as a Background Worker.
+
+1. In Render, choose New.
+2. Choose Background Worker.
+3. Select `conquestsam/TeahTreats`.
+4. Use these exact values:
+
+```txt
+Name: teahtreats-worker-staging
+Language: Node
+Branch: main
+Region: same as API/PostgreSQL/Redis
+Root Directory: leave empty
+Build Command: pnpm install --frozen-lockfile && pnpm db:generate && pnpm --filter @snacks/shared build && pnpm --filter @snacks/api build
+Start Command: pnpm --filter @snacks/api start:worker
+Instance Type: Starter for staging, not Free for production
+```
+
+5. Add the same environment variables as the API service.
+6. Click Deploy Background Worker.
+
+The worker needs payment, notification, media, Redis, database, and OpenSearch access because it processes outbox side effects.
+
+Step 7: verify API and worker startup.
 
 1. In Render, open `teahtreats-api-staging`.
-2. Click Manual Deploy, then Deploy latest commit.
-3. Wait until the deploy logs show the service is live.
-4. Open the service URL and check:
+2. Wait until the deploy logs show the service is live.
+3. Open:
 
 ```txt
 https://teahtreats-api-staging.onrender.com/api/v1/health
 ```
 
-5. In Render, open `teahtreats-worker-staging`.
-6. Click Manual Deploy, then Deploy latest commit.
-7. Confirm the worker logs show the Nest worker started and BullMQ processors loaded.
+4. In Render, open `teahtreats-worker-staging`.
+5. Confirm the worker logs show the Nest worker started and BullMQ processors loaded.
 
-Step 5: run the first database migration.
+Step 8: run the first database migration.
 
 The first API boot may fail until migrations have run. Run migrations after Postgres exists and before relying on the API.
 
@@ -240,7 +321,7 @@ Option B, from GitHub Actions:
 
 For staging only, seeding is acceptable. Do not seed production unless the seed script is explicitly safe for production bootstrap.
 
-Step 6: connect Vercel to the Render API.
+Step 9: connect Vercel to the Render API.
 
 Set Vercel environment variables:
 
@@ -253,7 +334,7 @@ NEXT_PUBLIC_PAYPAL_CLIENT_ID=paypal_sandbox_client_id
 
 Redeploy Vercel after changing environment variables.
 
-Step 7: configure provider webhooks.
+Step 10: configure provider webhooks.
 
 Use the Render API public URL:
 
@@ -271,7 +352,7 @@ PAYPAL_WEBHOOK_ID=paypal_webhook_id
 
 Redeploy API and worker after changing webhook variables.
 
-Step 8: add Render deploy hooks to GitHub.
+Step 11: add Render deploy hooks to GitHub.
 
 1. In Render, open `teahtreats-api-staging`.
 2. Go to Settings.
@@ -288,7 +369,7 @@ ENABLE_VERCEL_DEPLOY=true
 
 After this, pushes to `main` can build web, run migrations, trigger Render API deploy, then trigger Render worker deploy. Keep production protected with GitHub Environments.
 
-Step 9: run smoke checks.
+Step 12: run smoke checks.
 
 From your local machine:
 
@@ -309,7 +390,22 @@ Then manually check:
 6. Manual proof upload creates admin notification.
 7. Worker logs show outbox and notification processing.
 
-Step 10: common Render failures.
+Optional Blueprint path:
+
+If you prefer Render's Blueprint flow later:
+
+1. In Render, choose New, then Blueprint.
+2. Select this repository.
+3. Render should detect `render.yaml`.
+4. Review the services it wants to create:
+   - `teahtreats-postgres-staging`
+   - `teahtreats-redis-staging`
+   - `teahtreats-api-staging`
+   - `teahtreats-worker-staging`
+5. Apply the blueprint.
+6. Still fill all `sync: false` secrets before trusting the deployment.
+
+Step 13: common Render failures.
 
 - Build fails with pnpm lock errors: run `pnpm install` locally and commit `pnpm-lock.yaml`.
 - API health fails: check `DATABASE_URL`, `REDIS_URL`, required auth secrets, and migrations.
