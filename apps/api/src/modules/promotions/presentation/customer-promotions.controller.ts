@@ -1,4 +1,5 @@
 import { Body, Controller, Post, Req, Res, UseGuards } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { ApiHeader, ApiOperation, ApiTags } from '@nestjs/swagger';
 import type { Request, Response } from 'express';
 import { randomUUID } from 'node:crypto';
@@ -17,7 +18,10 @@ const cartSessionCookie = 'cart_session_id';
 @UseGuards(OptionalCustomerAuthGuard, TenantScopeGuard)
 @Controller('shop/promotions')
 export class CustomerPromotionsController {
-  constructor(private readonly promotions: PromotionsService) {}
+  constructor(
+    private readonly promotions: PromotionsService,
+    private readonly config: ConfigService,
+  ) {}
 
   @Post('validate-coupon')
   @ApiOperation({ summary: 'Validate a coupon against the current cart.' })
@@ -41,12 +45,23 @@ export class CustomerPromotionsController {
 
     const sessionId = randomUUID();
     response.cookie(cartSessionCookie, sessionId, {
+      ...this.cartCookieOptions(),
       httpOnly: true,
-      sameSite: 'lax',
-      secure: process.env.NODE_ENV === 'production',
       maxAge: 30 * 24 * 60 * 60 * 1000,
       path: '/'
     });
     return sessionId;
+  }
+
+  private cartCookieOptions() {
+    const domain = this.config.get<string>('AUTH_COOKIE_DOMAIN');
+    const sameSite = this.config.get<'lax' | 'strict' | 'none'>('AUTH_COOKIE_SAMESITE') ?? 'lax';
+    const configuredSecure = this.config.get<boolean | undefined>('AUTH_COOKIE_SECURE');
+    const secure = configuredSecure ?? (this.config.get<string>('NODE_ENV') === 'production' || sameSite === 'none');
+    return {
+      sameSite,
+      secure,
+      ...(domain ? { domain } : {})
+    };
   }
 }

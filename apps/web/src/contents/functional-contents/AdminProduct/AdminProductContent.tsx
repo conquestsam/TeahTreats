@@ -135,7 +135,29 @@ export function AdminProductContent() {
   };
 
   const submitProductForm = () => {
-    if (modals.mode === 'create') {
+    const savedDraft = modals.selectedProduct;
+    const productPayload = {
+      name: productForm.values.name,
+      description: productForm.values.description,
+      status: productForm.values.status as AdminProductModel['status'],
+      brand: productForm.values.brand || null,
+      category: productForm.values.category || null,
+      tags: csv(productForm.values.tags),
+      flavor: productForm.values.flavor || null,
+      occasion: productForm.values.occasion || null,
+      ingredients: csv(productForm.values.ingredients),
+      allergens: csv(productForm.values.allergens),
+      nutritionFacts: keyValueLines(productForm.values.nutritionFacts),
+      dietaryLabels: csv(productForm.values.dietaryLabels),
+      isPerishable: productForm.values.isPerishable,
+      storageInstructions: productForm.values.storageInstructions || null,
+      shelfLifeNotes: productForm.values.shelfLifeNotes || null,
+      bundleEligible: productForm.values.bundleEligible,
+      seoTitle: productForm.values.seoTitle || null,
+      seoDescription: productForm.values.seoDescription || null
+    };
+
+    if (modals.mode === 'create' && !savedDraft) {
       mutations.createMutation.mutate({
         name: productForm.values.name,
         status: productForm.values.status as AdminProductModel['status'],
@@ -162,29 +184,10 @@ export function AdminProductContent() {
       return;
     }
 
-    if (modals.selectedProduct) {
+    if (savedDraft) {
       mutations.updateMutation.mutate({
-        productId: modals.selectedProduct.id,
-        product: {
-          name: productForm.values.name,
-          description: productForm.values.description,
-          status: productForm.values.status as AdminProductModel['status'],
-          brand: productForm.values.brand || null,
-          category: productForm.values.category || null,
-          tags: csv(productForm.values.tags),
-          flavor: productForm.values.flavor || null,
-          occasion: productForm.values.occasion || null,
-          ingredients: csv(productForm.values.ingredients),
-          allergens: csv(productForm.values.allergens),
-          nutritionFacts: keyValueLines(productForm.values.nutritionFacts),
-          dietaryLabels: csv(productForm.values.dietaryLabels),
-          isPerishable: productForm.values.isPerishable,
-          storageInstructions: productForm.values.storageInstructions || null,
-          shelfLifeNotes: productForm.values.shelfLifeNotes || null,
-          bundleEligible: productForm.values.bundleEligible,
-          seoTitle: productForm.values.seoTitle || null,
-          seoDescription: productForm.values.seoDescription || null
-        }
+        productId: savedDraft.id,
+        product: productPayload
       });
     }
   };

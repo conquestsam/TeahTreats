@@ -67,7 +67,7 @@ export function AdminProductFormModal({
 
   useEffect(() => {
     if (opened && isCreate && createdProduct && active === 0) {
-      setActive(3);
+      setActive(1);
     }
   }, [active, createdProduct, isCreate, opened]);
 
@@ -197,22 +197,33 @@ export function AdminProductFormModal({
             {active < 3 ? (
               <Button
                 onClick={() => {
-                  if (active < 2) {
+                  if (active === 0) {
+                    if (isCreate && !productIsSaved) {
+                      saveBasics();
+                      return;
+                    }
+                    saveBasics();
+                    nextStep();
+                    return;
+                  }
+                  if (active === 1) {
                     nextStep();
                     return;
                   }
                   if (active === 2) {
                     saveBasics();
-                    if (!isCreate) {
-                      nextStep();
-                    }
+                    nextStep();
                     return;
                   }
                   nextStep();
                 }}
-                loading={active === 2 && loading}
+                loading={(active === 0 || active === 2) && loading}
               >
-                {active === 2 ? (isCreate && !productIsSaved ? 'Create and Continue' : 'Save and Continue') : 'Next'}
+                {active === 0 && isCreate && !productIsSaved
+                  ? 'Create and Continue'
+                  : active === 0 || active === 2
+                  ? 'Save and Continue'
+                  : 'Next'}
               </Button>
             ) : null}
           </Group>

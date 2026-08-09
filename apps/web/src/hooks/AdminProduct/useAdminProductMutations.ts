@@ -57,7 +57,6 @@ export function useAdminProductMutations(input: {
     onSuccess: async () => {
       await invalidateProducts();
       notifySuccess('Product updated.');
-      input.onProductSaved();
     },
     onError: () => notifyError('Could not update product.')
   });
