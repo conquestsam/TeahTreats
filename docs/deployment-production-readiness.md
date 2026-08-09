@@ -409,6 +409,11 @@ Step 13: common Render failures.
 
 - Build fails with pnpm lock errors: run `pnpm install` locally and commit `pnpm-lock.yaml`.
 - API health fails: check `DATABASE_URL`, `REDIS_URL`, required auth secrets, and migrations.
+- API health is ok but admin login returns 500: run migrations against the Render database and seed staging data.
+  - From local: `DATABASE_URL='render_external_database_url' pnpm db:deploy`
+  - For staging only: `DATABASE_URL='render_external_database_url' pnpm db:seed`
+  - Then redeploy API and worker.
+  - Also confirm `AUTH_ACCESS_TOKEN_SECRET`, `AUTH_REFRESH_TOKEN_SECRET`, and `MFA_SECRET_ENCRYPTION_KEY` are set on the API.
 - Browser CORS error: set `APP_CORS_ORIGIN` to the exact Vercel domain, including `https://`.
 - Login cookie does not persist: set `AUTH_COOKIE_SAMESITE=none` and `AUTH_COOKIE_SECURE=true` for cross-domain HTTPS.
 - Payments show unavailable: confirm both backend secrets and browser public identifiers exist in Render/Vercel.
@@ -598,6 +603,8 @@ Recommended repository variables:
 ENABLE_VERCEL_DEPLOY=true
 ENABLE_RENDER_DEPLOY=true
 ENABLE_DB_MIGRATIONS=true
+ENABLE_RENDER_KEEPALIVE=true
+KEEPALIVE_URL=https://teahtreats-1.onrender.com/api/v1/health
 ENABLE_SERVER_DEPLOY=false
 NEXT_PUBLIC_API_BASE_URL=https://your-api.onrender.com/api/v1
 NEXT_PUBLIC_TENANT_ID=platform
@@ -626,6 +633,39 @@ TEAMS_WEBHOOK_URL
 ```
 
 Production deployment should be protected with a GitHub Environment approval. Do not auto-deploy production until migration rollback, backup restore rehearsal, provider webhooks, and admin MFA are confirmed.
+
+Render keepalive is in `.github/workflows/render-keepalive.yml`. It pings the API health endpoint every five minutes when `ENABLE_RENDER_KEEPALIVE=true`.
+
+Important:
+
+- Keepalive helps staging demos avoid cold starts.
+- It is not a production availability strategy.
+- For real production, use a paid always-on Render instance.
+
+## Vercel Environment Block
+
+For the current Render API URL, add these to Vercel:
+
+```env
+NEXT_PUBLIC_API_BASE_URL=https://teahtreats-1.onrender.com/api/v1
+NEXT_PUBLIC_TEMP_TENANT_ID=platform
+NEXT_PUBLIC_TENANT_ID=platform
+NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=pk_test_or_live_xxx
+NEXT_PUBLIC_PAYPAL_CLIENT_ID=paypal_browser_client_id
+```
+
+Only these payment values belong in Vercel:
+
+- `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY`
+- `NEXT_PUBLIC_PAYPAL_CLIENT_ID`
+
+Do not add these to Vercel:
+
+- `STRIPE_SECRET_KEY`
+- `STRIPE_WEBHOOK_SECRET`
+- `PAYPAL_CLIENT_SECRET`
+- `PAYPAL_WEBHOOK_ID`
+- database, Redis, auth, MFA, Cloudinary secret, R2 secret, Resend, Gmail, or Twilio secrets
 
 ## Database Deployment
 
