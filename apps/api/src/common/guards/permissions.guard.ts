@@ -1,4 +1,4 @@
-import { CanActivate, ExecutionContext, ForbiddenException, Injectable } from '@nestjs/common';
+import { CanActivate, ExecutionContext, ForbiddenException, Injectable, InternalServerErrorException } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import { REQUIRED_PERMISSIONS } from '../decorators/require-permissions.decorator.js';
 import type { AuthenticatedRequest } from '../types/authenticated-request.js';
@@ -15,6 +15,13 @@ export class PermissionsGuard implements CanActivate {
 
     if (!requiredPermissions?.length) {
       return true;
+    }
+
+    const invalidPermissions = requiredPermissions.filter(
+      (permission) => typeof permission !== 'string' || permission.trim().length === 0,
+    );
+    if (invalidPermissions.length > 0) {
+      throw new InternalServerErrorException('Route permission metadata is invalid.');
     }
 
     const request = context.switchToHttp().getRequest<AuthenticatedRequest>();

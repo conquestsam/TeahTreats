@@ -157,13 +157,14 @@ export class ReportsService {
   }
 
   private async revenueByDayByTenant(tenantId: string, range: DateRange): Promise<RevenueByDayReportItem[]> {
+    const revenueStatusSql = this.orderStatusListSql(revenueStatuses);
     const rows = await this.prisma.$queryRaw<Array<{ day: Date; revenue_cents: bigint | number | null; order_count: bigint | number }>>`
       SELECT date_trunc('day', "createdAt") AS day,
              COALESCE(SUM("totalCents"), 0) AS revenue_cents,
              COUNT(*) AS order_count
       FROM "Order"
       WHERE "tenantId" = ${tenantId}
-        AND "status" IN (${Prisma.join(revenueStatuses)})
+        AND "status" IN (${revenueStatusSql})
         AND "createdAt" >= ${range.from}
         AND "createdAt" <= ${range.to}
       GROUP BY day
@@ -195,6 +196,7 @@ export class ReportsService {
   }
 
   private async topProductsByTenant(tenantId: string, range: DateRange): Promise<TopProductReportItem[]> {
+    const revenueStatusSql = this.orderStatusListSql(revenueStatuses);
     const rows = await this.prisma.$queryRaw<Array<{
       product_name: string;
       sku_name: string;
@@ -208,7 +210,7 @@ export class ReportsService {
       FROM "OrderItem" oi
       INNER JOIN "Order" o ON o.id = oi."orderId"
       WHERE o."tenantId" = ${tenantId}
-        AND o."status" IN (${Prisma.join(revenueStatuses)})
+        AND o."status" IN (${revenueStatusSql})
         AND o."createdAt" >= ${range.from}
         AND o."createdAt" <= ${range.to}
       GROUP BY oi."productName", oi."skuName"
@@ -401,6 +403,10 @@ export class ReportsService {
         repeatOrderCount: dashboards.reduce((sum, dashboard) => sum + dashboard.repeatCustomers.repeatOrderCount, 0)
       }
     };
+  }
+
+  private orderStatusListSql(statuses: OrderStatus[]) {
+    return Prisma.join(statuses.map((status) => Prisma.sql`${status}::"OrderStatus"`));
   }
 }
 
