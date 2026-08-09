@@ -8,7 +8,11 @@ import type { AuthenticatedUser } from '../../../common/types/authenticated-requ
 const proofInclude = {
   payment: {
     include: {
-      order: true
+      order: {
+        include: {
+          items: true
+        }
+      }
     }
   },
   manualPaymentMethod: true
@@ -257,6 +261,7 @@ export class ManualPaymentReviewService {
 
     const customerName = typeof customer.name === 'string' ? customer.name : 'Customer';
     const customerEmail = typeof customer.email === 'string' ? customer.email : '';
+    const customerPhone = typeof customer.phone === 'string' ? customer.phone : '';
 
     return {
       id: proof.id,
@@ -265,6 +270,8 @@ export class ManualPaymentReviewService {
       methodLabel: proof.manualPaymentMethod.label,
       customerName,
       customerEmail,
+      customerPhone,
+      customerAddress: this.formatCustomerAddress(customer.address),
       amountCents: proof.payment.amountCents,
       currency: proof.payment.currency,
       paymentStatus: proof.payment.status,
@@ -274,6 +281,18 @@ export class ManualPaymentReviewService {
       lastProviderEventId: proof.payment.lastProviderEventId,
       receiptUrl: proof.receiptUrl,
       note: proof.note,
+      orderSubtotalCents: proof.payment.order.subtotalCents,
+      orderDiscountCents: proof.payment.order.discountCents,
+      orderTotalCents: proof.payment.order.totalCents,
+      orderCreatedAt: proof.payment.order.createdAt.toISOString(),
+      reservationExpiresAt: proof.payment.order.reservationExpiresAt?.toISOString() ?? null,
+      items: proof.payment.order.items.map((item) => ({
+        productName: item.productName,
+        skuName: item.skuName,
+        quantity: item.quantity,
+        unitPriceCents: item.unitPriceCents,
+        lineTotalCents: item.lineTotalCents
+      })),
       createdAt: proof.createdAt.toISOString()
     };
   }
@@ -357,6 +376,20 @@ export class ManualPaymentReviewService {
       email: typeof customer.email === 'string' ? customer.email : '',
       phone: typeof customer.phone === 'string' ? customer.phone : ''
     };
+  }
+
+  private formatCustomerAddress(value: unknown) {
+    if (typeof value === 'string') {
+      return value;
+    }
+    if (!value || typeof value !== 'object' || Array.isArray(value)) {
+      return '';
+    }
+    const address = value as Record<string, unknown>;
+    return ['line1', 'line2', 'city', 'state', 'postalCode', 'zip', 'country']
+      .map((key) => address[key])
+      .filter((part): part is string => typeof part === 'string' && part.trim().length > 0)
+      .join(', ');
   }
 }
 

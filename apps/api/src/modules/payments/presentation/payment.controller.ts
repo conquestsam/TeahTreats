@@ -8,7 +8,7 @@ import { RateLimitGuard } from '../../../common/guards/rate-limit.guard.js';
 import { TenantScopeGuard } from '../../../common/guards/tenant-scope.guard.js';
 import { PaymentReconciliationService } from '../application/payment-reconciliation.service.js';
 import { PaymentService } from '../application/payment.service.js';
-import { CreateReceiptUploadDto, InitiatePaymentDto, PaymentStatusLookupDto, SubmitManualProofDto } from './dto/payment.dto.js';
+import { CapturePaypalOrderDto, CreateReceiptUploadDto, InitiatePaymentDto, PaymentStatusLookupDto, SubmitManualProofDto } from './dto/payment.dto.js';
 
 @ApiTags('shop/payments')
 @ApiHeader({ name: 'x-tenant-id', required: true })
@@ -40,6 +40,16 @@ export class PaymentController {
     @Body() dto: InitiatePaymentDto,
   ) {
     return { data: await this.payments.initiatePayment(tenantId, idempotencyKey, dto) };
+  }
+
+  @Post('paypal/capture')
+  @ApiOperation({ summary: 'Capture an approved PayPal order through the backend.' })
+  async capturePaypal(
+    @CurrentTenant() tenantId: string,
+    @IdempotencyKey() idempotencyKey: string | undefined,
+    @Body() dto: CapturePaypalOrderDto,
+  ) {
+    return { data: await this.payments.capturePaypalOrder(tenantId, idempotencyKey, dto) };
   }
 
   @Post('receipt-upload')

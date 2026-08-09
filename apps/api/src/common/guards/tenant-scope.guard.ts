@@ -1,4 +1,5 @@
 import { CanActivate, ExecutionContext, ForbiddenException, Injectable } from '@nestjs/common';
+import { permissions } from '@snacks/shared';
 import { PrismaService } from '../../infrastructure/database/prisma.service.js';
 import type { AuthenticatedRequest } from '../types/authenticated-request.js';
 
@@ -24,6 +25,14 @@ export class TenantScopeGuard implements CanActivate {
         throw new ForbiddenException('Tenant context is required.');
       }
       request.tenantId = await this.resolveTenantId(tenantIdOrSlug);
+      return true;
+    }
+
+    if (tenantIdOrSlug === 'all') {
+      if (!request.user.permissions.includes(permissions.tenantsManage)) {
+        throw new ForbiddenException('You do not have access to all tenants.');
+      }
+      request.tenantId = 'all';
       return true;
     }
 

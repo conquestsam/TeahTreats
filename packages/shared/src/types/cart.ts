@@ -29,6 +29,11 @@ export interface CustomerCartSummary {
 export interface CheckoutStartedSummary {
   orderId: string;
   status: string;
+  customer: {
+    name: string;
+    email: string;
+    phone: string;
+  };
   subtotalCents: number;
   discountCents: number;
   totalCents: number;

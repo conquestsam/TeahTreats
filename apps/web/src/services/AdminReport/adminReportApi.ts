@@ -17,7 +17,9 @@ export function getAdminReportsDashboard(range: AdminReportDateRangeInput) {
     params.set('to', new Date(`${range.to}T23:59:59.999`).toISOString());
   }
   const query = params.toString() ? `?${params.toString()}` : '';
-  return apiFetch<ApiEnvelope<AdminReportsDashboardModel>>(`/admin/reports/dashboard${query}`).then(
+  return apiFetch<ApiEnvelope<AdminReportsDashboardModel>>(`/admin/reports/dashboard${query}`, {
+    headers: { 'x-tenant-id': 'all' }
+  }).then(
     (response) => response.data,
   );
 }

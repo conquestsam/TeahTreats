@@ -1,5 +1,6 @@
 'use client';
 
+import Link from 'next/link';
 import type { StorefrontProductCard as ProductCardModel } from '@/types/Storefront/storefrontTypes';
 import { StorefrontProductCard } from './StorefrontProductCard';
 
@@ -51,12 +52,12 @@ export function StorefrontProductGrid({
         <p className="tt-body" style={{ fontSize: '0.85rem', marginBottom: 20 }}>
           The API may be offline. Try again after the server is running.
         </p>
-        <a href="/products" className="tt-btn-secondary" style={{
+        <Link href="/products" className="tt-btn-secondary" style={{
           display: 'inline-flex', padding: '10px 22px', borderRadius: 8,
           textDecoration: 'none', fontSize: '0.85rem'
         }}>
           Browse Products
-        </a>
+        </Link>
       </div>
     );
   }
@@ -79,12 +80,12 @@ export function StorefrontProductGrid({
           Try a different search, category, or check back after new snacks are added.
         </p>
         <div style={{ display: 'flex', gap: 12, justifyContent: 'center' }}>
-          <a href="/products" className="tt-btn-primary" style={{
+          <Link href="/products" className="tt-btn-primary" style={{
             display: 'inline-flex', padding: '10px 22px', borderRadius: 8,
             textDecoration: 'none', fontSize: '0.85rem'
           }}>
             Reset All Filters
-          </a>
+          </Link>
         </div>
       </div>
     );

@@ -18,7 +18,12 @@ export interface SubmitManualProofInput extends CustomerPaymentVerificationInput
   manualPaymentMethodId: string;
   receiptUrl: string;
   contentType: string;
+  sizeBytes?: number;
   objectKey?: string;
   storageProvider?: string;
   note?: string;
+}
+
+export interface CapturePaypalOrderInput extends CustomerPaymentVerificationInput {
+  paypalOrderId: string;
 }

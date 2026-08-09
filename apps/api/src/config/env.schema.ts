@@ -37,7 +37,8 @@ const envSchema = z.object({
   PAYPAL_ENVIRONMENT: z.enum(['sandbox', 'production']).default('sandbox'),
   PAYPAL_WEBHOOK_ID: z.string().optional(),
   GMAIL_USER: z.string().optional(),
-  GMAIL_APP_PASSWORD: z.string().optional()
+  GMAIL_APP_PASSWORD: z.string().optional(),
+  GMAIL_FROM_EMAIL: z.string().optional()
 
 });
 

@@ -1,145 +1,170 @@
 'use client';
 
+import Link from 'next/link';
 import { motion } from 'motion/react';
-import { TeahTreatsHero } from '@/components/functional-components/TeahTreatsStorefront/TeahTreatsHero';
-import { TeahTreatsCategoryMosaic } from '@/components/functional-components/TeahTreatsStorefront/TeahTreatsCategoryMosaic';
-import { TeahTreatsMarquee } from '@/components/functional-components/TeahTreatsStorefront/TeahTreatsMarquee';
-import { TeahTreatsBrandStory } from '@/components/functional-components/TeahTreatsStorefront/TeahTreatsBrandStory';
-import { TeahTreatsTestimonials } from '@/components/functional-components/TeahTreatsStorefront/TeahTreatsTestimonials';
-import { TeahTreatsNewsletter } from '@/components/functional-components/TeahTreatsStorefront/TeahTreatsNewsletter';
 import { StorefrontProductGrid } from '@/components/functional-components/Storefront/StorefrontProductGrid';
+import { TeahTreatsBrandStory } from '@/components/functional-components/TeahTreatsStorefront/TeahTreatsBrandStory';
+import { TeahTreatsCategoryMosaic } from '@/components/functional-components/TeahTreatsStorefront/TeahTreatsCategoryMosaic';
+import { TeahTreatsHero } from '@/components/functional-components/TeahTreatsStorefront/TeahTreatsHero';
+import { TeahTreatsMarquee } from '@/components/functional-components/TeahTreatsStorefront/TeahTreatsMarquee';
+import { TeahTreatsNewsletter } from '@/components/functional-components/TeahTreatsStorefront/TeahTreatsNewsletter';
+import { TeahTreatsTestimonials } from '@/components/functional-components/TeahTreatsStorefront/TeahTreatsTestimonials';
 import {
   useStorefrontProductsQuery,
   useStorefrontRecommendationsQuery
 } from '@/hooks/Storefront/useStorefrontQuery';
+import type { StorefrontProductCard } from '@/types/Storefront/storefrontTypes';
+
+function ProductRail({
+  eyebrow,
+  title,
+  description,
+  products,
+  loading,
+  error,
+  tone = 'dark'
+}: Readonly<{
+  eyebrow: string;
+  title: string;
+  description: string;
+  products: StorefrontProductCard[];
+  loading?: boolean;
+  error?: Error | null;
+  tone?: 'dark' | 'elevated';
+}>) {
+  return (
+    <section className={`tt-section ${tone === 'elevated' ? 'tt-section-elevated' : 'tt-section-dark'} tt-product-rail-section`}>
+      <div className="tt-container">
+        <div className="tt-section-heading">
+          <div>
+            <p className="tt-eyebrow">{eyebrow}</p>
+            <h2 className="tt-display">{title}</h2>
+            <p className="tt-body">{description}</p>
+          </div>
+          <Link href="/products" className="tt-btn-secondary tt-section-link">
+            Browse all
+          </Link>
+        </div>
+        <StorefrontProductGrid products={products} loading={Boolean(loading)} error={error ?? null} />
+      </div>
+    </section>
+  );
+}
+
+function CommercePreviewSection() {
+  const previews = [
+    {
+      eyebrow: 'Bundles',
+      title: 'Build a Better Snack Box',
+      text: 'Bundle fresh pastries, chocolate bites, nuts, and office-safe favorites into one calm order.',
+      cta: 'Explore bundles',
+      href: '/bundles',
+      mark: 'B'
+    },
+    {
+      eyebrow: 'Office Plans',
+      title: 'Snack Planning Without Spreadsheets',
+      text: 'Plan by team size, budget, dietary needs, freshness window, and repeat favorites.',
+      cta: 'Plan office snacks',
+      href: '/office-snack-planner',
+      mark: 'O'
+    }
+  ];
+
+  return (
+    <section className="tt-section tt-section-elevated">
+      <div className="tt-container">
+        <div className="tt-section-heading">
+          <div>
+            <p className="tt-eyebrow">Planning</p>
+            <h2 className="tt-display">Made for More Than One Craving</h2>
+            <p className="tt-body">
+              TeahTreats supports quick personal orders, curated bundles, and office snack planning from the same product catalog.
+            </p>
+          </div>
+        </div>
+        <div className="tt-commerce-preview-grid">
+          {previews.map((preview, index) => (
+            <motion.a
+              key={preview.title}
+              href={preview.href}
+              className="tt-commerce-preview-card"
+              initial={{ opacity: 0, y: 18 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true, margin: '-80px' }}
+              whileHover={{ y: -4 }}
+              transition={{ duration: 0.25, delay: index * 0.08 }}
+              data-cursor="Open"
+            >
+              <span className="tt-commerce-preview-mark" aria-hidden="true">{preview.mark}</span>
+              <p className="tt-eyebrow">{preview.eyebrow}</p>
+              <h3 className="tt-editorial">{preview.title}</h3>
+              <p className="tt-body">{preview.text}</p>
+              <span className="tt-commerce-preview-cta">{preview.cta} {'->'}</span>
+            </motion.a>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}
 
 export function StorefrontHomeContent() {
-  const productsQuery = useStorefrontProductsQuery({ page: 1, pageSize: 4, sort: 'newest' });
+  const newArrivalsQuery = useStorefrontProductsQuery({ page: 1, pageSize: 4, sort: 'newest' });
   const recommendationsQuery = useStorefrontRecommendationsQuery();
   const recommendationSections = recommendationsQuery.data ?? [];
-  const featuredProducts = productsQuery.data?.items ?? [];
+  const fallbackProducts = newArrivalsQuery.data?.items ?? [];
+  const popularProducts = recommendationSections.find((section) => section.key === 'popular')?.items ?? fallbackProducts;
+  const freshProducts = recommendationSections.find((section) => section.key === 'fresh')?.items ?? fallbackProducts;
+  const bundleProducts = recommendationSections.find((section) => section.key === 'dynamic-bundles')?.items ?? popularProducts;
 
   return (
     <div>
-      {/* ── Hero ── */}
       <TeahTreatsHero />
-
-      {/* ── Marquee ── */}
       <TeahTreatsMarquee />
 
-      {/* ── Category Mosaic ── */}
+      <ProductRail
+        eyebrow="New Arrivals"
+        title="Fresh Snacks Just Landed"
+        description="Newly added treats with current pricing, visibility, and availability from the storefront catalog."
+        products={fallbackProducts}
+        loading={newArrivalsQuery.isLoading}
+        error={newArrivalsQuery.error}
+      />
+
+      <ProductRail
+        eyebrow="Popular Snacks"
+        title="Customer Favorites"
+        description="A practical first pass at popularity using backend recommendation signals, ready for deeper engagement scoring later."
+        products={popularProducts.slice(0, 4)}
+        loading={recommendationsQuery.isLoading}
+        error={recommendationsQuery.error}
+        tone="elevated"
+      />
+
+      <ProductRail
+        eyebrow="Fresh Picks"
+        title="Picked for Today"
+        description="Fresh and fast-moving options for personal cravings, office trays, and quick curated gifts."
+        products={freshProducts.slice(0, 4)}
+        loading={recommendationsQuery.isLoading}
+        error={recommendationsQuery.error}
+      />
+
+      <ProductRail
+        eyebrow="Bundles"
+        title="Bundle-Ready Treats"
+        description="A focused rail for snacks that can become dynamic bundles without changing checkout inventory rules."
+        products={bundleProducts.slice(0, 4)}
+        loading={recommendationsQuery.isLoading}
+        error={recommendationsQuery.error}
+        tone="elevated"
+      />
+
+      <CommercePreviewSection />
       <TeahTreatsCategoryMosaic />
-
-      {/* ── Trending Products ── */}
-      <section className="tt-section tt-section-dark">
-        <div className="tt-container">
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: 36, flexWrap: 'wrap', gap: 16 }}>
-            <div>
-              <p className="tt-eyebrow" style={{ marginBottom: 10 }}>New Arrivals</p>
-              <h2 className="tt-display" style={{ fontSize: 'clamp(1.6rem, 3vw, 2.6rem)' }}>
-                Fresh snacks to start with
-              </h2>
-            </div>
-            <a href="/products" className="tt-btn-secondary" style={{
-              display: 'inline-flex', alignItems: 'center', padding: '10px 22px',
-              borderRadius: 8, textDecoration: 'none', fontSize: '0.85rem'
-            }}>
-              Browse All
-            </a>
-          </div>
-          <StorefrontProductGrid products={featuredProducts} loading={productsQuery.isLoading} error={productsQuery.error} />
-        </div>
-      </section>
-
-      {/* ── Feature Teasers ── */}
-      <section className="tt-section tt-section-elevated">
-        <div className="tt-container">
-          <div className="tt-features-grid" style={{ display: 'grid', gap: 20, gridTemplateColumns: '1fr' }}>
-            {[
-              {
-                eyebrow: 'Bundles',
-                title: 'Smart Bundles',
-                text: 'Build a custom bundle from fresh and shelf-stable items. Dynamic bundles grow from real product engagement.',
-                cta: 'Explore Bundles',
-                href: '/bundles'
-              },
-              {
-                eyebrow: 'Office',
-                title: 'Office Snack Planning',
-                text: 'Plan team snacks around size, freshness, dietary needs, and repeat orders — without the spreadsheet.',
-                cta: 'Plan Snacks',
-                href: '/office-snack-planner'
-              },
-              {
-                eyebrow: 'Gifting',
-                title: 'Thoughtful Gifting',
-                text: 'Curate a snack gift for any occasion. Add a note, pick the flavors, and we handle the freshness.',
-                cta: 'Send a Gift',
-                href: '/products?occasion=Gift'
-              }
-            ].map((feature) => (
-              <motion.a
-                key={feature.title}
-                href={feature.href}
-                whileHover={{ y: -3 }}
-                transition={{ duration: 0.2 }}
-                style={{
-                  display: 'block', padding: 28, borderRadius: 16,
-                  background: 'var(--tt-charcoal)',
-                  border: '1px solid rgba(184, 147, 62, 0.08)',
-                  textDecoration: 'none', color: 'inherit',
-                  transition: 'border-color 0.3s ease'
-                }}
-              >
-                <p className="tt-eyebrow" style={{ marginBottom: 10 }}>{feature.eyebrow}</p>
-                <h3 className="tt-editorial" style={{ fontSize: '1.3rem', marginBottom: 10 }}>
-                  {feature.title}
-                </h3>
-                <p className="tt-body" style={{ marginBottom: 16, fontSize: '0.88rem' }}>
-                  {feature.text}
-                </p>
-                <span style={{
-                  color: 'var(--tt-gold)', fontSize: '0.82rem', fontWeight: 600,
-                  letterSpacing: '0.02em'
-                }}>
-                  {feature.cta} →
-                </span>
-              </motion.a>
-            ))}
-          </div>
-        </div>
-
-        <style>{`
-          @media (min-width: 768px) {
-            .tt-features-grid {
-              grid-template-columns: 1fr 1fr 1fr !important;
-            }
-          }
-        `}</style>
-      </section>
-
-      {/* ── Brand Story ── */}
       <TeahTreatsBrandStory />
-
-      {/* ── Recommendations ── */}
-      {recommendationSections.map((section) => (
-        <section key={section.key} className="tt-section tt-section-dark">
-          <div className="tt-container">
-            <div style={{ marginBottom: 32 }}>
-              <p className="tt-eyebrow" style={{ marginBottom: 10 }}>For You</p>
-              <h2 className="tt-display" style={{ fontSize: 'clamp(1.4rem, 2.5vw, 2.2rem)' }}>
-                {section.title}
-              </h2>
-            </div>
-            <StorefrontProductGrid products={section.items} loading={recommendationsQuery.isLoading} />
-          </div>
-        </section>
-      ))}
-
-      {/* ── Testimonials ── */}
       <TeahTreatsTestimonials />
-
-      {/* ── Newsletter ── */}
       <TeahTreatsNewsletter />
     </div>
   );

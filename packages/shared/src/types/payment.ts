@@ -38,6 +38,8 @@ export interface ManualPaymentProofSummary {
   methodLabel: string;
   customerName: string;
   customerEmail: string;
+  customerPhone: string;
+  customerAddress: string;
   amountCents: number;
   currency: string;
   paymentStatus: string;
@@ -47,5 +49,19 @@ export interface ManualPaymentProofSummary {
   lastProviderEventId: string | null;
   receiptUrl: string;
   note: string | null;
+  orderSubtotalCents: number;
+  orderDiscountCents: number;
+  orderTotalCents: number;
+  orderCreatedAt: string;
+  reservationExpiresAt: string | null;
+  items: ManualPaymentProofOrderItemSummary[];
   createdAt: string;
+}
+
+export interface ManualPaymentProofOrderItemSummary {
+  productName: string;
+  skuName: string;
+  quantity: number;
+  unitPriceCents: number;
+  lineTotalCents: number;
 }

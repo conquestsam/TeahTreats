@@ -49,15 +49,19 @@ export class SseController {
   }
 
   @Get('customer-order/verify')
-  @UseGuards(OptionalCustomerAuthGuard, TenantScopeGuard)
-  @ApiHeader({ name: 'x-tenant-id', required: true })
+  @UseGuards(OptionalCustomerAuthGuard)
+  @ApiHeader({ name: 'x-tenant-id', required: false, description: 'EventSource verification uses tenantId query fallback.' })
   @ApiOperation({ summary: 'Verify a customer order stream before opening SSE.' })
   async verifyCustomerOrder(
     @CurrentUser() user: AuthenticatedUser | undefined,
-    @CurrentTenant() tenantId: string,
+    @Query('tenantId') tenantId: string,
     @Query() dto: CustomerOrderStreamDto,
   ) {
-    await this.ensureCustomerCanStream(tenantId, dto, user);
+    const resolvedTenantId = tenantId || user?.tenantIds[0];
+    if (!resolvedTenantId) {
+      throw new BadRequestException('Tenant context is required.');
+    }
+    await this.ensureCustomerCanStream(resolvedTenantId, dto, user);
     return { data: { ok: true } };
   }
 

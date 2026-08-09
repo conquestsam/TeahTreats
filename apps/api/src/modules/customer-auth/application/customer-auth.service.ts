@@ -59,23 +59,13 @@ export class CustomerAuthService {
     await this.cart.mergeGuestCartIntoCustomer(resolvedTenantId, sessionId, user.id);
     await this.writeOutbox(resolvedTenantId, user.id, domainEvents.customerSignedUp, {
       userId: user.id,
-      email: user.email
+      email: user.email,
+      phone: user.phone,
+      customerName: user.name
     });
     await this.writeOutbox(resolvedTenantId, user.id, domainEvents.cartMigrated, {
       userId: user.id,
       reason: 'customer-signup'
-    });
-    await this.prisma.notification.create({
-      data: {
-        tenantId: resolvedTenantId,
-        channel: 'email',
-        recipient: user.email,
-        subject: 'Welcome to TeahTreats!',
-        body: `Hello ${user.name}, welcome to TeahTreats. Your customer account has been created successfully.`,
-        status: user.email ? 'pending' : 'skipped',
-        lastError: user.email ? null : 'Recipient is missing.',
-        metadata: { to: user.email, userId: user.id }
-      }
     });
     return result;
   }
@@ -95,7 +85,10 @@ export class CustomerAuthService {
     await this.cart.mergeGuestCartIntoCustomer(resolvedTenantId, sessionId, user.id);
     await this.writeOutbox(resolvedTenantId, user.id, domainEvents.customerLoggedIn, {
       userId: user.id,
-      sessionId: result.user.sessionId
+      sessionId: result.user.sessionId,
+      email: user.email,
+      phone: user.phone,
+      customerName: user.name
     });
     await this.writeOutbox(resolvedTenantId, user.id, domainEvents.cartMigrated, {
       userId: user.id,

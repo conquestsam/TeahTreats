@@ -30,6 +30,22 @@ export function CustomerCartContent() {
   const displayDiscount = activeDiscount?.discountCents ?? cart?.discountCents ?? 0;
   const displayTotal = activeDiscount?.totalCents ?? cart?.totalCents ?? 0;
 
+  const rememberCheckoutContact = (checkout: CheckoutStartedModel) => {
+    if (typeof window === 'undefined') {
+      return;
+    }
+
+    window.sessionStorage.setItem(
+      `teahTreats.checkout.${checkout.orderId}`,
+      JSON.stringify({
+        orderId: checkout.orderId,
+        email: checkout.customer.email,
+        phone: checkout.customer.phone,
+        name: checkout.customer.name
+      })
+    );
+  };
+
   return (
     <div>
       {/* Page header */}
@@ -222,6 +238,7 @@ export function CustomerCartContent() {
         onSubmit={() =>
           mutations.checkoutMutation.mutate({ ...checkoutForm.values, ...(activeDiscount?.code ? { couponCode: activeDiscount.code } : {}) }, {
             onSuccess: (checkout) => {
+              rememberCheckoutContact(checkout);
               setCheckoutSummary(checkout);
               setCouponPreview(null);
               setCouponCode('');

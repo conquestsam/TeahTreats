@@ -9,6 +9,7 @@ export const permissions = {
   promotionsWrite: 'promotions:write',
   manualPaymentsReview: 'manual-payments:review',
   notificationsRead: 'notifications:read',
+  dashboardRead: 'dashboard:read',
   reportsRead: 'reports:read',
   usersManage: 'users:manage',
   rolesManage: 'roles:manage',

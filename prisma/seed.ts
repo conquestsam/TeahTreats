@@ -172,6 +172,7 @@ async function main() {
     permissions.promotionsWrite,
     permissions.manualPaymentsReview,
     permissions.notificationsRead,
+    permissions.dashboardRead,
     permissions.reportsRead,
     permissions.usersManage,
     permissions.auditRead
@@ -190,6 +191,7 @@ async function main() {
     permissions.productsRead,
     permissions.ordersRead,
     permissions.notificationsRead,
+    permissions.dashboardRead,
     permissions.reportsRead,
     permissions.manualPaymentsReview
   ]);

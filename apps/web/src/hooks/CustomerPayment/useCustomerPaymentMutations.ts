@@ -3,12 +3,13 @@
 import { notifications } from '@mantine/notifications';
 import { useMutation } from '@tanstack/react-query';
 import {
+  capturePaypalOrder,
   createReceiptUpload,
-  initiateManualPayment,
   initiatePayment,
   submitManualPaymentProof
 } from '@/services/CustomerPayment/customerPaymentApi';
 import type {
+  CapturePaypalOrderInput,
   CustomerPaymentVerificationInput,
   SubmitManualProofInput
 } from '@/types/CustomerPayment/customerPaymentTypes';
@@ -29,9 +30,14 @@ export function useCustomerPaymentMutations(onProofSubmitted: () => void) {
   });
 
   const uploadMutation = useMutation({
-    mutationFn: (input: CustomerPaymentVerificationInput & { contentType: string }) =>
+    mutationFn: (input: CustomerPaymentVerificationInput & { contentType: string; sizeBytes?: number }) =>
       createReceiptUpload(input),
     onError: (error) => fail(error, 'Could not create upload link.')
+  });
+
+  const paypalCaptureMutation = useMutation({
+    mutationFn: (input: CapturePaypalOrderInput) => capturePaypalOrder(input),
+    onError: (error) => fail(error, 'Could not capture PayPal payment.')
   });
 
   const proofMutation = useMutation({
@@ -47,5 +53,5 @@ export function useCustomerPaymentMutations(onProofSubmitted: () => void) {
     onError: (error) => fail(error, 'Could not submit receipt.')
   });
 
-  return { initiateMutation, uploadMutation, proofMutation };
+  return { initiateMutation, paypalCaptureMutation, uploadMutation, proofMutation };
 }

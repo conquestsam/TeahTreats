@@ -272,14 +272,16 @@ export function AdminShell({ children, userName, signingOut, onSignOut }: AdminS
   );
 
   return (
-    <div className="admin-shell-grid" style={{ '--admin-sidebar-width': collapsed ? '78px' : '260px' } as React.CSSProperties}>
+    <div
+  className="admin-shell-grid"
+  data-no-lenis
+  style={{ '--admin-sidebar-width': collapsed ? '78px' : '260px' } as React.CSSProperties}
+>
       <aside className="sticky top-0 hidden h-screen border-r border-[rgba(184,147,62,0.14)] bg-[#0e0e0e] md:flex md:flex-col z-20 overflow-hidden">
         {/* Top Header */}
         <div className="p-3 pb-2 border-b border-[rgba(184,147,62,0.1)] flex-shrink-0">
           <Group justify={collapsed ? 'center' : 'space-between'} align="center">
-            <Link href="/admin/dashboard" style={{ textDecoration: 'none', display: 'flex', alignItems: 'center', gap: 10, minWidth: 0 }}>
-              <TeahTreatsLogo />
-            </Link>
+            <TeahTreatsLogo  href="/admin/dashboard" />
             {!collapsed ? (
               <ActionIcon
                 variant="subtle"

@@ -15,14 +15,21 @@ export function TeahTreatsCursor() {
   const [isDown, setIsDown] = useState(false);
 
   useEffect(() => {
-    const canUseCursor =
-      window.matchMedia('(pointer: fine)').matches && !window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-    setEnabled(canUseCursor);
-    if (!canUseCursor) {
-      return;
-    }
+    const pointerMedia = window.matchMedia('(hover: hover) and (pointer: fine)');
+    const motionMedia = window.matchMedia('(prefers-reduced-motion: reduce)');
+
+    const resolveEnabled = () => {
+      const canUseCursor = pointerMedia.matches && !motionMedia.matches && window.innerWidth >= 1024;
+      setEnabled(canUseCursor);
+      return canUseCursor;
+    };
+
+    let canUseCursor = resolveEnabled();
 
     const move = (event: MouseEvent) => {
+      if (!canUseCursor) {
+        return;
+      }
       cursorX.set(event.clientX);
       cursorY.set(event.clientY);
       const element = document.elementFromPoint(event.clientX, event.clientY) as HTMLElement | null;
@@ -34,18 +41,32 @@ export function TeahTreatsCursor() {
     const up = () => setIsDown(false);
     const leave = () => setHidden(true);
     const enter = () => setHidden(false);
+    const refresh = () => {
+      canUseCursor = resolveEnabled();
+      if (!canUseCursor) {
+        setHidden(true);
+        setLabel('');
+        setIsPointer(false);
+      }
+    };
 
-    window.addEventListener('mousemove', move);
-    window.addEventListener('mousedown', down);
-    window.addEventListener('mouseup', up);
+    window.addEventListener('pointermove', move);
+    window.addEventListener('pointerdown', down);
+    window.addEventListener('pointerup', up);
     window.addEventListener('mouseleave', leave);
     window.addEventListener('mouseenter', enter);
+    window.addEventListener('resize', refresh);
+    pointerMedia.addEventListener('change', refresh);
+    motionMedia.addEventListener('change', refresh);
     return () => {
-      window.removeEventListener('mousemove', move);
-      window.removeEventListener('mousedown', down);
-      window.removeEventListener('mouseup', up);
+      window.removeEventListener('pointermove', move);
+      window.removeEventListener('pointerdown', down);
+      window.removeEventListener('pointerup', up);
       window.removeEventListener('mouseleave', leave);
       window.removeEventListener('mouseenter', enter);
+      window.removeEventListener('resize', refresh);
+      pointerMedia.removeEventListener('change', refresh);
+      motionMedia.removeEventListener('change', refresh);
     };
   }, [cursorX, cursorY]);
 
@@ -59,7 +80,8 @@ export function TeahTreatsCursor() {
   return (
     <>
       <motion.div
-        className="fixed left-0 top-0 z-[9998] hidden items-center justify-center lg:flex"
+        aria-hidden="true"
+        className="fixed left-0 top-0 z-[70] hidden items-center justify-center pointer-events-none lg:flex"
         style={{ pointerEvents: 'none', x: springX, y: springY, translateX: '-50%', translateY: '-50%' }}
         animate={{ opacity: hidden ? 0 : 1 }}
       >
@@ -77,7 +99,8 @@ export function TeahTreatsCursor() {
         </motion.div>
       </motion.div>
       <motion.div
-        className="fixed left-0 top-0 z-[9999] hidden rounded-full bg-[#B8933E] lg:block"
+        aria-hidden="true"
+        className="fixed left-0 top-0 z-[71] hidden rounded-full bg-[#B8933E] pointer-events-none lg:block"
         style={{ pointerEvents: 'none', x: cursorX, y: cursorY, translateX: '-50%', translateY: '-50%' }}
         animate={{ width: dotSize, height: dotSize, opacity: hidden ? 0 : 1 }}
       />

@@ -37,15 +37,30 @@ export class NotificationTemplateService {
 
     const payload = this.object(event.payload);
     const orderId = typeof payload.orderId === 'string' ? payload.orderId : undefined;
+    const userId = typeof payload.userId === 'string' ? payload.userId : undefined;
     const tenant = await this.prisma.tenant.findUnique({ where: { id: event.tenantId } });
     const order = orderId
       ? await this.prisma.order.findFirst({ where: { id: orderId, tenantId: event.tenantId } })
       : null;
+    const user = userId
+      ? await this.prisma.user.findUnique({
+          where: { id: userId },
+          select: { id: true, email: true, phone: true, name: true }
+        })
+      : null;
     const customer = order ? this.object(order.customer) : {};
     const tenantSettings = this.tenantSettings(tenant);
-    const isAdminAlert = templateKey === 'payment-proof-submitted-admin-alert' || templateKey === 'refund-placeholder';
-    const customerEmail = typeof customer.email === 'string' ? customer.email : undefined;
-    const customerPhone = typeof customer.phone === 'string' ? customer.phone : undefined;
+    const isAdminAlert = this.isAdminAlert(templateKey);
+    const payloadEmail = this.string(payload.email);
+    const payloadPhone = this.string(payload.phone);
+    const customerEmail = payloadEmail ?? (typeof customer.email === 'string' ? customer.email : undefined) ?? user?.email ?? undefined;
+    const customerPhone = payloadPhone ?? (typeof customer.phone === 'string' ? customer.phone : undefined) ?? user?.phone ?? undefined;
+    const customerName =
+      this.string(payload.customerName) ??
+      this.string(payload.name) ??
+      (typeof customer.name === 'string' ? customer.name : undefined) ??
+      user?.name ??
+      undefined;
     const adminEmail = tenant?.businessEmail ?? tenantSettings.adminEmail;
     const adminPhone = tenant?.businessPhone ?? tenantSettings.adminPhone;
     const channels = isAdminAlert ? tenantSettings.adminAlertChannels : tenantSettings.customerChannels;
@@ -63,8 +78,11 @@ export class NotificationTemplateService {
       context: {
         ...payload,
         orderId,
-        customerName: typeof customer.name === 'string' ? customer.name : undefined,
-        reason: typeof payload.reason === 'string' ? payload.reason : undefined
+        customerName,
+        reason: this.string(payload.reason),
+        title: this.string(payload.title),
+        message: this.string(payload.message),
+        actionUrl: this.string(payload.actionUrl)
       },
       metadata: {
         source: 'outbox',
@@ -174,6 +192,22 @@ export class NotificationTemplateService {
       ...(typeof metadata.adminEmail === 'string' ? { adminEmail: metadata.adminEmail } : {}),
       ...(typeof metadata.adminPhone === 'string' ? { adminPhone: metadata.adminPhone } : {})
     };
+  }
+
+  private isAdminAlert(templateKey: NotificationTemplateKey) {
+    return [
+      'payment-proof-submitted-admin-alert',
+      'payment-requires-attention',
+      'refund-placeholder',
+      'tenant-update',
+      'settings-update',
+      'vendor-access-update',
+      'inventory-alert'
+    ].includes(templateKey);
+  }
+
+  private string(value: unknown) {
+    return typeof value === 'string' && value.trim() ? value.trim() : undefined;
   }
 
   private deliveryKey(

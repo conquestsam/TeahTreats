@@ -14,6 +14,7 @@ import { PrismaService } from '../../../infrastructure/database/prisma.service.j
 import { OpenSearchService } from '../../../infrastructure/search/opensearch.service.js';
 import { StorefrontPolicy } from '../domain/storefront-policy.js';
 import type { StorefrontProductListQueryDto } from '../presentation/dto/storefront-query.dto.js';
+import type { NewsletterSubscribeDto } from '../presentation/dto/newsletter-subscribe.dto.js';
 
 const productInclude = {
   images: { orderBy: { sortOrder: 'asc' as const } },
@@ -148,6 +149,55 @@ export class StorefrontService {
     ];
   }
 
+  async subscribeToNewsletter(tenantId: string, dto: NewsletterSubscribeDto) {
+    const resolvedTenantId = await this.resolveTenantId(tenantId);
+    const email = dto.email.trim().toLowerCase();
+    const subscription = await this.prisma.newsletterSubscription.upsert({
+      where: {
+        tenantId_email: {
+          tenantId: resolvedTenantId,
+          email
+        }
+      },
+      update: {
+        status: 'subscribed',
+        unsubscribedAt: null,
+        source: dto.source?.trim() || 'storefront',
+        metadata: {
+          lastSource: dto.source?.trim() || 'storefront',
+          lastSubscribedAt: new Date().toISOString()
+        }
+      },
+      create: {
+        tenantId: resolvedTenantId,
+        email,
+        source: dto.source?.trim() || 'storefront',
+        metadata: {
+          source: dto.source?.trim() || 'storefront'
+        }
+      }
+    });
+
+    await this.prisma.outboxEvent.create({
+      data: {
+        tenantId: resolvedTenantId,
+        aggregateId: subscription.id,
+        name: 'newsletter.subscribed',
+        payload: {
+          email,
+          source: subscription.source,
+          sideEffects: ['notification.welcome.optional', 'analytics.newsletter.aggregate']
+        }
+      }
+    });
+
+    return {
+      id: subscription.id,
+      email: subscription.email,
+      status: subscription.status
+    };
+  }
+
   private async findProducts(tenantId: string, query: Partial<StorefrontProductListQueryDto>) {
     const where: Prisma.ProductWhereInput = {
       tenantId,
@@ -225,12 +275,6 @@ export class StorefrontService {
     const card = this.toProductCard(product);
     return {
       ...card,
-      images: product.images.map((image) => ({
-        id: image.id,
-        url: image.url,
-        alt: image.alt,
-        sortOrder: image.sortOrder
-      })),
       skus: product.skus.map((sku) => this.toSkuSummary(sku))
     };
   }
@@ -238,7 +282,13 @@ export class StorefrontService {
   private toProductCard(product: StorefrontProductRecord): StorefrontProductCard {
     const skus = product.skus.map((sku) => this.toSkuSummary(sku));
     const availableQuantity = skus.reduce((total, sku) => total + sku.availableQuantity, 0);
-    const image = product.images[0];
+    const images = product.images.map((image) => ({
+      id: image.id,
+      url: image.url,
+      alt: image.alt,
+      sortOrder: image.sortOrder
+    }));
+    const image = images[0];
     return {
       id: product.id,
       name: product.name,
@@ -251,14 +301,8 @@ export class StorefrontService {
       isPerishable: this.booleanFromMetadata(product.metadata, 'isPerishable'),
       flavor: this.textFromMetadata(product.metadata, 'flavor'),
       occasion: this.textFromMetadata(product.metadata, 'occasion'),
-      image: image
-        ? {
-            id: image.id,
-            url: image.url,
-            alt: image.alt,
-            sortOrder: image.sortOrder
-          }
-        : null,
+      image: image ?? null,
+      images,
       startingPriceCents: skus.length > 0 ? Math.min(...skus.map((sku) => sku.priceCents)) : null,
       currency: skus[0]?.currency ?? 'USD',
       availability: this.availabilityFromQuantity(availableQuantity),

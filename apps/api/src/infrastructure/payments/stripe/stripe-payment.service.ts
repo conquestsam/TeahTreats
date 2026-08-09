@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import Stripe from 'stripe';
 
@@ -15,17 +15,35 @@ export class StripePaymentService {
     return this.stripe !== null;
   }
 
-  async createPaymentIntent(input: { amountCents: number; currency: string; orderId: string }) {
+  async createPaymentIntent(input: {
+    amountCents: number;
+    currency: string;
+    orderId: string;
+    tenantId: string;
+    idempotencyKey?: string;
+  }) {
     if (!this.stripe) {
-      return { skipped: true, reason: 'STRIPE_SECRET_KEY is not configured' };
+      throw new BadRequestException('Stripe is not configured for this store.');
     }
 
-    return this.stripe.paymentIntents.create({
-      amount: input.amountCents,
-      currency: input.currency.toLowerCase(),
-      metadata: {
-        orderId: input.orderId
-      }
-    });
+    const intent = await this.stripe.paymentIntents.create(
+      {
+        amount: input.amountCents,
+        currency: input.currency.toLowerCase(),
+        automatic_payment_methods: { enabled: true },
+        capture_method: 'automatic',
+        metadata: {
+          tenantId: input.tenantId,
+          orderId: input.orderId
+        }
+      },
+      input.idempotencyKey ? { idempotencyKey: input.idempotencyKey } : undefined,
+    );
+
+    if (!intent.client_secret) {
+      throw new BadRequestException('Stripe did not return a client secret. Check the Stripe account configuration.');
+    }
+
+    return intent;
   }
 }

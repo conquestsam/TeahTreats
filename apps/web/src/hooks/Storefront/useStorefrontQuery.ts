@@ -32,11 +32,11 @@ export function useStorefrontSearchQuery(query: StorefrontProductQuery, enabled:
   });
 }
 
-export function useStorefrontProductDetailQuery(slug: string) {
+export function useStorefrontProductDetailQuery(slug: string, enabled = true) {
   return useQuery({
     queryKey: [...storefrontProductDetailQueryKey, slug],
     queryFn: () => getStorefrontProduct(slug),
-    enabled: Boolean(slug)
+    enabled: Boolean(slug) && enabled
   });
 }
 

@@ -1,6 +1,6 @@
 'use client';
 
-import { SegmentedControl, SimpleGrid, Stack } from '@mantine/core';
+import { Button, Group, SegmentedControl, SimpleGrid, Stack } from '@mantine/core';
 import { useState } from 'react';
 
 import { AdminNotificationRetryModal } from '@/components/functional-components/AdminNotification/AdminNotificationRetryModal';
@@ -33,6 +33,20 @@ export function AdminNotificationContent() {
           description="Track email, SMS, WhatsApp, and in-app delivery for this tenant."
           badge={`${notifications.length} loaded`}
         />
+
+        <Group justify="flex-end">
+          <Button
+            variant="light"
+            loading={mutations.smokeTestMutation.isPending}
+            onClick={() => {
+              mutations.smokeTestMutation.mutate({
+                channels: ['email', 'sms', 'whatsapp', 'in_app']
+              });
+            }}
+          >
+            Send Smoke Test
+          </Button>
+        </Group>
 
         <SimpleGrid cols={{ base: 1, sm: 3 }}>
           <MetricCard label="Pending" value={pendingCount} hint="Waiting for worker" tone="orange" />

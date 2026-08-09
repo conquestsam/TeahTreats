@@ -456,6 +456,26 @@ Admin visual boundary:
 - Admin remains work-focused: practical density, clear tables/cards, restrained motion, Mantine components, and simple grammar.
 - Brand accents may appear in admin navigation, badges, buttons, and empty states, but admin usability wins over decoration.
 
+First UI modernization pass acceptance:
+
+- The home page must be reorganized into clear product and commerce sections: Hero, New Arrivals, Popular Snacks, Fresh Picks, Bundles, Office Snack Planning, Categories, Brand Story, Testimonials, and Newsletter/Footer.
+- Product cards must support API-provided multi-image media. The primary image is shown by default, the secondary image appears on hover-capable devices, and indicators show when multiple images exist.
+- Product cards must provide explicit actions for viewing details and adding to cart. Details open a focused modal/drawer with image gallery, SKU selection, price, availability, tags, and backend-owned add-to-cart behavior.
+- Missing product media must render a branded fallback treatment with snack/category cues. Do not show broken images, empty blocks, or skeletal placeholder cards as final UI.
+- The optional custom cursor must never interfere with click or tap behavior. It must be disabled on touch/mobile devices and when reduced motion is preferred, use `pointer-events: none`, and use a conservative z-index below app overlays.
+- The first admin polish pass must connect the dashboard to existing report data, refresh the admin auth experience, normalize page headers/states, and make modals/drawers scroll internally instead of pushing body scroll.
+- Admin pages may receive shared shell/state improvements in this pass, but deep redesign of every admin domain belongs to later slices.
+
+Second UI/operations correction pass:
+
+- Category discovery may use remote snack imagery with motion treatment, but the images must remain content, not empty decoration. Hover and scroll motion must be disabled or softened for reduced-motion users.
+- The brand story and testimonials should be interactive but lightweight: scroll reveal, parallax media, rotating testimonial cards, and culturally relevant customer names for the target audience.
+- Newsletter subscription is a real backend action. The storefront posts to a tenant-scoped newsletter endpoint and persists subscription status; it must not be only local React state.
+- Dashboard and reports must surface the real API error when tenant access, session, or permissions are missing. The UI must not hide authorization failures behind generic unavailable copy.
+- Notification delivery must be smoke-testable from admin. A smoke test creates normal notification log records and attempts provider delivery for email, SMS, WhatsApp, and in-app channels.
+- Reservation expiry must release held stock transactionally when an order expires in payment flow; Redis/OpenSearch/outbox side effects are not allowed to be the only release mechanism.
+- Admin product creation should move toward a single multistep wizard with product basics, snack metadata, SKUs, and multi-image upload in one guided flow.
+
 ## Mantine vs shadcn/ui Decision
 
 Choose Mantine for MVP.
@@ -1205,14 +1225,23 @@ Local development:
 Recommended MVP hosting:
 
 - Next.js: Vercel.
-- NestJS API: Render, Fly.io, Railway, or a small VPS running Docker.
-- NestJS worker: same backend host as a separate process/container.
+- NestJS API: Render Web Service for staging and low-friction MVP deployment; Fly.io, Railway, or a small VPS remain alternatives.
+- NestJS worker: Render Background Worker for staging/MVP, or the same backend host as a separate process/container.
 - PostgreSQL: Supabase, Neon, Railway, or managed PostgreSQL.
 - Redis: Upstash or self-hosted Redis.
 - OpenSearch: self-hosted for MVP if budget requires.
 - Object storage: Cloudflare R2.
 - Email: Resend.
 - SMS/WhatsApp: Twilio.
+
+Hybrid deployment decision:
+
+- Vercel owns the browser-facing Next.js runtime and only receives browser-safe public identifiers such as `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY`, `NEXT_PUBLIC_PAYPAL_CLIENT_ID`, `NEXT_PUBLIC_API_BASE_URL`, and the temporary public tenant identifier.
+- Render owns the API and worker runtimes for staging and budget-conscious MVP production. API and worker share the same Docker image but run different commands.
+- PostgreSQL, Redis, and OpenSearch should be managed services where practical. OpenSearch may be postponed in the lowest-budget MVP because storefront search has a PostgreSQL fallback.
+- Provider secrets for Stripe, PayPal, Cloudinary, R2, Resend/Gmail, Twilio, cookies, CSRF, and MFA remain backend-only in Render or the backend secret manager.
+- GitHub Actions may trigger Vercel and Render deployments from `main`, but production should use protected environments and migration/backup gates before broad launch.
+- The full operational guide lives in `docs/deployment-production-readiness.md`.
 
 Production deployment should prefer:
 

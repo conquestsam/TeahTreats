@@ -99,7 +99,9 @@ export class CheckoutService {
           category: item.sku.product.category
         }
       }));
+      const customerName = user?.userType === 'customer' ? user.name : dto.name.trim();
       const customerEmail = user?.userType === 'customer' ? user.email : dto.email.toLowerCase();
+      const customerPhone = dto.phone.trim();
       const discount = await this.promotions.calculateCouponDiscount({
         tenantId: resolvedTenantId,
         items: pricingItems,
@@ -126,9 +128,9 @@ export class CheckoutService {
             discountLines: discount.summary.discountLines
           },
           customer: {
-            name: user?.userType === 'customer' ? user.name : dto.name.trim(),
+            name: customerName,
             email: customerEmail,
-            phone: dto.phone.trim(),
+            phone: customerPhone,
             address: dto.address.trim()
           },
           items: {
@@ -189,34 +191,14 @@ export class CheckoutService {
         sideEffects: ['cart.cache.invalidate', 'sse.checkout.started']
       });
 
-      await tx.notification.createMany({
-        data: [
-          {
-            tenantId: resolvedTenantId,
-            channel: 'email',
-            recipient: customerEmail,
-            subject: 'Order Created & Inventory Reserved',
-            body: `Your order #${order.id.slice(0, 8)} has been created. Total: ${(order.totalCents / 100).toFixed(2)} ${order.currency}.`,
-            status: customerEmail ? 'pending' : 'skipped',
-            lastError: customerEmail ? null : 'Recipient is missing.',
-            metadata: { to: customerEmail, orderId: order.id, totalCents: order.totalCents }
-          },
-          {
-            tenantId: resolvedTenantId,
-            channel: 'sms',
-            recipient: dto.phone.trim(),
-            subject: 'Order Created',
-            body: `Order #${order.id.slice(0, 8)} created. Complete payment before reservation expires.`,
-            status: dto.phone.trim() ? 'pending' : 'skipped',
-            lastError: dto.phone.trim() ? null : 'Recipient is missing.',
-            metadata: { to: dto.phone.trim(), orderId: order.id }
-          }
-        ]
-      });
-
       const response = {
         orderId: order.id,
         status: order.status,
+        customer: {
+          name: customerName,
+          email: customerEmail,
+          phone: customerPhone
+        },
         subtotalCents: totalCents,
         discountCents,
         totalCents: order.totalCents,

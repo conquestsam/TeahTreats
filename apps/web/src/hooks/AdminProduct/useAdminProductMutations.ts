@@ -31,6 +31,7 @@ function notifyError(message: string) {
 
 export function useAdminProductMutations(input: {
   onProductSaved: () => void;
+  onProductCreated?: (product: AdminProductModel) => void;
   onSkuSaved: () => void;
 }) {
   const queryClient = useQueryClient();
@@ -38,9 +39,13 @@ export function useAdminProductMutations(input: {
 
   const createMutation = useMutation({
     mutationFn: (payload: CreateAdminProductInput) => createAdminProduct(payload),
-    onSuccess: async () => {
+    onSuccess: async (product) => {
       await invalidateProducts();
       notifySuccess('Product created.');
+      if (input.onProductCreated) {
+        input.onProductCreated(product);
+        return;
+      }
       input.onProductSaved();
     },
     onError: () => notifyError('Could not create product.')

@@ -26,16 +26,9 @@ export class PaypalPaymentService {
     return this.client !== null;
   }
 
-  async createOrderIntent(input: { amountCents: number; currency: string; orderId: string }) {
+  async createOrderIntent(input: { amountCents: number; currency: string; orderId: string; tenantId: string }) {
     if (!this.client) {
-      return {
-        id: `paypal_local_${input.orderId}`,
-        provider: 'paypal',
-        status: 'skipped',
-        reason: 'PAYPAL_CLIENT_ID or PAYPAL_CLIENT_SECRET is not configured',
-        custom_id: input.orderId,
-        ...input
-      };
+      throw new BadRequestException('PayPal is not configured for this store.');
     }
     try {
       const response = await new OrdersController(this.client).createOrder({
@@ -47,6 +40,7 @@ export class PaypalPaymentService {
             {
               referenceId: input.orderId,
               customId: input.orderId,
+              invoiceId: input.orderId,
               amount: {
                 currencyCode: input.currency.toUpperCase(),
                 value: (input.amountCents / 100).toFixed(2)
@@ -66,6 +60,32 @@ export class PaypalPaymentService {
       };
     } catch (error: any) {
       const description = error?.result?.error_description || error?.message || 'Paypal authentication failed.';
+      throw new BadRequestException(`Paypal gateway error: ${description}`);
+    }
+  }
+
+  async captureOrder(input: { paypalOrderId: string; orderId: string }) {
+    if (!this.client) {
+      throw new BadRequestException('PayPal is not configured for this store.');
+    }
+
+    try {
+      const response = await new OrdersController(this.client).captureOrder({
+        id: input.paypalOrderId,
+        paypalRequestId: `${input.orderId}:capture`,
+        prefer: 'return=representation',
+        body: {}
+      });
+
+      return {
+        id: response.result.id,
+        status: response.result.status,
+        orderId: input.orderId,
+        paypalOrderId: input.paypalOrderId,
+        result: response.result
+      };
+    } catch (error: any) {
+      const description = error?.result?.error_description || error?.message || 'Paypal capture failed.';
       throw new BadRequestException(`Paypal gateway error: ${description}`);
     }
   }

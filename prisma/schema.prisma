@@ -159,9 +159,26 @@ model Tenant {
   snackPlans                    SnackPlan[]
   groupCarts                    GroupCart[]
   roleChangeApprovals           RoleChangeApproval[]
+  newsletterSubscriptions       NewsletterSubscription[]
 
   @@index([active, slug])
   @@index([active, name])
+}
+
+model NewsletterSubscription {
+  id             String    @id @default(uuid())
+  tenantId       String
+  email          String
+  source         String    @default("storefront")
+  status         String    @default("subscribed")
+  subscribedAt   DateTime  @default(now())
+  unsubscribedAt DateTime?
+  metadata       Json      @default("{}")
+  tenant         Tenant    @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@unique([tenantId, email])
+  @@index([tenantId, status])
+  @@index([tenantId, subscribedAt])
 }
 
 model User {

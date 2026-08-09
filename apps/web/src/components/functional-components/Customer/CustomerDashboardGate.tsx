@@ -1,6 +1,5 @@
 'use client'
 
-import { useCustomerLoginMutation, useCustomerLogoutMutation } from "@/hooks/CustomerAuth/useCustomerAuthMutations";
 import { useCurrentCustomerQuery } from "@/hooks/CustomerAuth/useCustomerAuthQuery";
 import { useEffect } from "react";
 
@@ -9,14 +8,11 @@ interface customerDashboardProps {
 }
 
 export function CustomerDashboardGate({ children }: customerDashboardProps) {
-  return <>{children}</>;
-
  const currentUserQuery = useCurrentCustomerQuery (true); 
- const logoutMutation = useCustomerLogoutMutation (); 
 
  useEffect (() => {
     if (currentUserQuery.isError) { 
-        window.location.replace('customer/login'); 
+        window.location.replace('/login'); 
     }
  }, [currentUserQuery.isError]); 
 if (currentUserQuery.isLoading || currentUserQuery.isError) {

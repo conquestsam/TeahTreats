@@ -11,6 +11,27 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
+  deploy-database-migrations:
+    name: Run Prisma Migrations
+    runs-on: ubuntu-latest
+    if: ${{ vars.ENABLE_DB_MIGRATIONS == 'true' }}
+    environment: production
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 11.20.0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm db:validate
+      - run: pnpm db:generate
+      - run: pnpm db:deploy
+        env:
+          DATABASE_URL: ${{ secrets.PRODUCTION_DATABASE_URL }}
+
   deploy-web:
     name: Deploy Web To Vercel
     runs-on: ubuntu-latest
@@ -37,10 +58,42 @@ jobs:
           VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
           VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
 
+  deploy-render-api:
+    name: Deploy API To Render
+    runs-on: ubuntu-latest
+    needs:
+      - deploy-web
+      - deploy-database-migrations
+    if: ${{ always() && !failure() && !cancelled() && vars.ENABLE_RENDER_DEPLOY == 'true' }}
+    environment: production
+    steps:
+      - name: Trigger Render API deploy hook
+        run: |
+          test -n "$RENDER_API_DEPLOY_HOOK_URL"
+          curl -fsS -X POST "$RENDER_API_DEPLOY_HOOK_URL"
+        env:
+          RENDER_API_DEPLOY_HOOK_URL: ${{ secrets.RENDER_API_DEPLOY_HOOK_URL }}
+
+  deploy-render-worker:
+    name: Deploy Worker To Render
+    runs-on: ubuntu-latest
+    needs: deploy-render-api
+    if: ${{ always() && !failure() && !cancelled() && vars.ENABLE_RENDER_DEPLOY == 'true' }}
+    environment: production
+    steps:
+      - name: Trigger Render worker deploy hook
+        run: |
+          test -n "$RENDER_WORKER_DEPLOY_HOOK_URL"
+          curl -fsS -X POST "$RENDER_WORKER_DEPLOY_HOOK_URL"
+        env:
+          RENDER_WORKER_DEPLOY_HOOK_URL: ${{ secrets.RENDER_WORKER_DEPLOY_HOOK_URL }}
+
   deploy-server:
     name: Deploy API And Worker To Server
     runs-on: ubuntu-latest
-    if: ${{ vars.ENABLE_SERVER_DEPLOY == 'true' }}
+    needs:
+      - deploy-database-migrations
+    if: ${{ always() && !failure() && !cancelled() && vars.ENABLE_SERVER_DEPLOY == 'true' }}
     steps:
       - name: Install SSH key
         run: |

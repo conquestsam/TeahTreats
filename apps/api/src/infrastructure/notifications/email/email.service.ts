@@ -2,8 +2,6 @@ import { Injectable, Logger } from "@nestjs/common";
 import { Resend } from 'resend';
 import * as nodemailer from 'nodemailer';
 import { ConfigService } from "@nestjs/config";
-import { string } from "zod";
-
 @Injectable()
 export class EmailService {
   private readonly logger = new Logger(EmailService.name);
@@ -14,11 +12,14 @@ export class EmailService {
 
   constructor(config: ConfigService) {
     const resendApiKey = config.get<string>('RESEND_API_KEY');
-    this.fromEmail = config.get<string>('RESEND_FROM_EMAIL') || 'Snacks Commerce <orders@snacks.local>';
+    this.fromEmail =
+      config.get<string>('RESEND_FROM_EMAIL') ||
+      config.get<string>('GMAIL_FROM_EMAIL') ||
+      'TeahTreats <orders@teah-treats.local>';
     this.resend = resendApiKey ? new Resend(resendApiKey) : null;
 
     const gmailUser = config.get<string>('GMAIL_USER');
-    const gmailPass = config.get<string>('GMAIL_PASS');
+    const gmailPass = config.get<string>('GMAIL_APP_PASSWORD');
 
     this.gmailTransporter = (gmailUser && gmailPass) ? nodemailer.createTransport({
       service: 'gmail',

@@ -66,3 +66,11 @@ export function addStorefrontItemToCart(input: StorefrontAddToCartInput) {
     body: JSON.stringify(input)
   }).then((response) => response.data);
 }
+
+export function subscribeToStorefrontNewsletter(input: { email: string; source?: string }) {
+  return apiFetch<ApiEnvelope<{ id: string; email: string; status: string }>>('/shop/storefront/newsletter', {
+    method: 'POST',
+    headers: tenantHeaders,
+    body: JSON.stringify(input)
+  }).then((response) => response.data);
+}

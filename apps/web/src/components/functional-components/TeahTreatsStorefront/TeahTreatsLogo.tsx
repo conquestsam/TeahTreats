@@ -2,9 +2,14 @@
 
 import Link from 'next/link';
 
-export function TeahTreatsLogo() {
+interface TeahTreatsLogoProps {
+  href?: string;
+  linked?: boolean;
+}
+
+function LogoContent() {
   return (
-    <Link href="/" className="tt-logo group min-w-0" aria-label="TeahTreats home">
+    <>
       <span className="tt-logo-mark" aria-hidden="true">
         <svg viewBox="0 0 24 24" fill="none" width="20" height="20">
           <circle cx="12" cy="12" r="10" fill="url(#tt-grad)" opacity="0.85" />
@@ -19,10 +24,27 @@ export function TeahTreatsLogo() {
           </defs>
         </svg>
       </span>
+
       <span className="min-w-0">
         <span className="tt-logo-word">TeahTreats</span>
         <span className="tt-logo-kicker">Premium curated snacks</span>
       </span>
+    </>
+  );
+}
+
+export function TeahTreatsLogo({ href = '/', linked = true }: TeahTreatsLogoProps) {
+  if (!linked) {
+    return (
+      <span className="tt-logo group min-w-0" aria-label="TeahTreats">
+        <LogoContent />
+      </span>
+    );
+  }
+
+  return (
+    <Link href={href as never} className="tt-logo group min-w-0" aria-label="TeahTreats home">
+      <LogoContent />
     </Link>
   );
 }

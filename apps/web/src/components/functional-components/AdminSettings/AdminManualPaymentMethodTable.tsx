@@ -17,8 +17,8 @@ export function AdminManualPaymentMethodTable({
   onDeactivate
 }: AdminManualPaymentMethodTableProps) {
   return (
-    <Paper withBorder className="overflow-hidden">
-      <Table highlightOnHover verticalSpacing="sm">
+    <Paper withBorder className="enterprise-panel overflow-hidden admin-table-panel">
+      <Table highlightOnHover verticalSpacing="sm" className="admin-unified-table">
         <Table.Thead>
           <Table.Tr>
             <Table.Th>Name</Table.Th>

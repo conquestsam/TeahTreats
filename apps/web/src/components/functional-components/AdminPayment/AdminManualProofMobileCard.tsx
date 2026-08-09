@@ -20,6 +20,9 @@ export function AdminManualProofMobileCard({
           <Text size="sm" c="dimmed">
             {proof.methodLabel} - ${(proof.amountCents / 100).toFixed(2)}
           </Text>
+          <Text size="xs" c="dimmed">
+            {proof.customerPhone || proof.customerEmail || 'No contact saved'}
+          </Text>
         </div>
         <Group gap="xs">
           <Badge variant="light">{proof.paymentStatus.replaceAll('_', ' ')}</Badge>

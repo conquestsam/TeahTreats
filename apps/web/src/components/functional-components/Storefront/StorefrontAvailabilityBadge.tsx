@@ -1,6 +1,6 @@
 'use client';
 
-type AvailabilityStatus = 'in_stock' | 'low_stock' | 'out_of_stock' | string;
+type AvailabilityStatus = string;
 
 export function StorefrontAvailabilityBadge({ availability }: Readonly<{ availability: AvailabilityStatus }>) {
   const config: Record<string, { className: string; label: string }> = {

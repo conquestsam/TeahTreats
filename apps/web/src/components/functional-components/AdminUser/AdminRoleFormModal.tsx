@@ -5,6 +5,25 @@ import type { UseFormReturnType } from '@mantine/form';
 import { motion } from 'motion/react';
 import type { AdminRoleFormValues } from '@/validation/AdminUser/adminUserValidation';
 
+const permissionLabels: Record<string, string> = {
+  'dashboard:read': 'Dashboard access',
+  'reports:read': 'Reports access',
+  'products:read': 'View products',
+  'products:write': 'Manage products',
+  'inventory:read': 'View inventory',
+  'inventory:write': 'Manage inventory',
+  'orders:read': 'View orders',
+  'orders:write': 'Manage orders',
+  'promotions:read': 'View promotions',
+  'promotions:write': 'Manage promotions',
+  'manual-payments:review': 'Review manual payments',
+  'notifications:read': 'View notifications',
+  'users:manage': 'Manage users',
+  'roles:manage': 'Manage roles',
+  'tenants:manage': 'Manage tenants',
+  'audit:read': 'View audit logs'
+};
+
 interface AdminRoleFormModalProps {
   opened: boolean;
   loading: boolean;
@@ -30,7 +49,7 @@ export function AdminRoleFormModal({
           <Checkbox.Group label="Permissions" withAsterisk {...form.getInputProps('permissions')}>
             <SimpleGrid cols={{ base: 1, sm: 2 }} mt="xs">
               {permissions.map((permission) => (
-                <Checkbox key={permission} value={permission} label={permission} />
+                <Checkbox key={permission} value={permission} label={permissionLabels[permission] ?? permission} />
               ))}
             </SimpleGrid>
           </Checkbox.Group>

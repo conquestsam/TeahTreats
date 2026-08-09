@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect } from 'react';
+import Link from 'next/link';
 import { StorefrontAddToCartDrawer } from '@/components/functional-components/Storefront/StorefrontAddToCartDrawer';
 import { StorefrontAvailabilityBadge } from '@/components/functional-components/Storefront/StorefrontAvailabilityBadge';
 import { useStorefrontAddToCartForm } from '@/hooks/Storefront/useStorefrontForm';
@@ -59,10 +60,10 @@ export function StorefrontProductDetailContent({ slug }: Readonly<{ slug: string
           <p className="tt-body" style={{ fontSize: '0.85rem', marginBottom: 20 }}>
             It may be archived, out of stock, or no longer visible in the storefront.
           </p>
-          <a href="/products" className="tt-btn-secondary" style={{
+          <Link href="/products" className="tt-btn-secondary" style={{
             display: 'inline-flex', padding: '10px 22px', borderRadius: 8,
             textDecoration: 'none', fontSize: '0.85rem'
-          }}>Browse Products</a>
+          }}>Browse Products</Link>
         </div>
       </div>
     );

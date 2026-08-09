@@ -9,7 +9,10 @@ export function connectAdminRealtime(onEvent: (event: RealtimeEnvelope) => void)
 }
 
 export function verifyCustomerOrderStream(input: { orderId: string; email: string; phone: string }) {
-  const params = new URLSearchParams(input);
+  const params = new URLSearchParams({
+    ...input,
+    ...(temporaryTenantId ? { tenantId: temporaryTenantId } : {})
+  });
   return apiFetch<{ data: { ok: boolean } }>(`/realtime/customer-order/verify?${params.toString()}`);
 }
 

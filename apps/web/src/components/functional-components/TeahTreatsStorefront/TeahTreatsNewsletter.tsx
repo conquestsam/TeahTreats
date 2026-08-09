@@ -1,15 +1,37 @@
 'use client';
 
 import { useState } from 'react';
+import { notifications } from '@mantine/notifications';
+import { useMutation } from '@tanstack/react-query';
+import { subscribeToStorefrontNewsletter } from '@/services/Storefront/storefrontApi';
 
 export function TeahTreatsNewsletter() {
   const [email, setEmail] = useState('');
   const [submitted, setSubmitted] = useState(false);
+  const subscribeMutation = useMutation({
+    mutationFn: subscribeToStorefrontNewsletter,
+    onSuccess: () => {
+      setSubmitted(true);
+      notifications.show({
+        color: 'green',
+        title: 'Subscribed',
+        message: 'You are on the TeahTreats list.'
+      });
+    },
+    onError: (error) => {
+      notifications.show({
+        color: 'red',
+        title: 'Could not subscribe',
+        message: error instanceof Error ? error.message : 'Try again.'
+      });
+    }
+  });
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (email.trim()) {
-      setSubmitted(true);
+    const nextEmail = email.trim();
+    if (nextEmail) {
+      subscribeMutation.mutate({ email: nextEmail, source: 'homepage-footer' });
     }
   };
 
@@ -57,12 +79,14 @@ export function TeahTreatsNewsletter() {
             <button
               type="submit"
               className="tt-btn-primary"
+              disabled={subscribeMutation.isPending}
               style={{
                 padding: '10px 24px', borderRadius: 8, cursor: 'pointer',
-                fontSize: '0.88rem', letterSpacing: '0.02em'
+                fontSize: '0.88rem', letterSpacing: '0.02em',
+                opacity: subscribeMutation.isPending ? 0.72 : 1
               }}
             >
-              Subscribe
+              {subscribeMutation.isPending ? 'Subscribing...' : 'Subscribe'}
             </button>
           </form>
         )}

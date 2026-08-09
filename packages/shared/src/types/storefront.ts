@@ -32,6 +32,7 @@ export interface StorefrontProductCard {
   flavor: string | null;
   occasion: string | null;
   image: StorefrontProductImage | null;
+  images: StorefrontProductImage[];
   startingPriceCents: number | null;
   currency: string;
   availability: StorefrontAvailabilityStatus;
@@ -41,7 +42,6 @@ export interface StorefrontProductCard {
 }
 
 export interface StorefrontProductDetail extends StorefrontProductCard {
-  images: StorefrontProductImage[];
   skus: StorefrontSkuSummary[];
 }
 

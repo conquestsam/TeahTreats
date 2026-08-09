@@ -1,4 +1,4 @@
-import { Controller, Get, Param, Query, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, Param, Post, Query, UseGuards } from '@nestjs/common';
 import { ApiHeader, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { CurrentTenant } from '../../../common/decorators/current-tenant.decorator.js';
 import { Public } from '../../../common/decorators/public.decorator.js';
@@ -6,6 +6,7 @@ import { RateLimit } from '../../../common/decorators/rate-limit.decorator.js';
 import { RateLimitGuard } from '../../../common/guards/rate-limit.guard.js';
 import { TenantScopeGuard } from '../../../common/guards/tenant-scope.guard.js';
 import { StorefrontService } from '../application/storefront.service.js';
+import { NewsletterSubscribeDto } from './dto/newsletter-subscribe.dto.js';
 import { StorefrontProductListQueryDto, StorefrontSearchQueryDto } from './dto/storefront-query.dto.js';
 
 @Public()
@@ -55,6 +56,16 @@ export class StorefrontController {
   async listRecommendations(@CurrentTenant() tenantId: string) {
     return {
       data: await this.storefront.listRecommendations(tenantId)
+    };
+  }
+
+  @Post('newsletter')
+  @RateLimit({ limit: 10, windowSeconds: 60, keyPrefix: 'storefront-newsletter' })
+  @UseGuards(RateLimitGuard, TenantScopeGuard)
+  @ApiOperation({ summary: 'Subscribe an email to storefront newsletter updates.' })
+  async subscribeToNewsletter(@CurrentTenant() tenantId: string, @Body() dto: NewsletterSubscribeDto) {
+    return {
+      data: await this.storefront.subscribeToNewsletter(tenantId, dto)
     };
   }
 }

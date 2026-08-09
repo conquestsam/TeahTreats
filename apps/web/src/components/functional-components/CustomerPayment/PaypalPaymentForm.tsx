@@ -3,17 +3,27 @@
 import { PayPalButtons, PayPalScriptProvider } from '@paypal/react-paypal-js';
 import { notifications } from '@mantine/notifications';
 
-const paypalClientId = process.env.NEXT_PUBLIC_PAYPAL_CLIENT_ID || 'test';
-
 interface PaypalPaymentFormProps {
   paypalOrderId?: string | undefined;
+  clientId?: string | null | undefined;
   onCreateOrder: () => Promise<string>;
-  onSuccess: () => void;
+  onApproveOrder: (paypalOrderId: string) => Promise<void>;
 }
 
-export function PaypalPaymentForm({ paypalOrderId, onCreateOrder, onSuccess }: PaypalPaymentFormProps) {
+export function PaypalPaymentForm({ paypalOrderId, clientId, onCreateOrder, onApproveOrder }: PaypalPaymentFormProps) {
+  if (!clientId) {
+    return (
+      <div className="tt-state-card" style={{ padding: 24 }}>
+        <p style={{ color: 'var(--tt-cream)', fontWeight: 700, margin: '0 0 6px' }}>PayPal buttons are not ready.</p>
+        <p style={{ color: 'var(--tt-cream-muted)', fontSize: '0.85rem', margin: 0 }}>
+          PayPal is enabled on the server, but this in-browser PayPal button has not been configured for the current environment.
+        </p>
+      </div>
+    );
+  }
+
   return (
-    <PayPalScriptProvider options={{ clientId: paypalClientId, currency: 'USD' }}>
+    <PayPalScriptProvider options={{ clientId, currency: 'USD' }}>
       <div style={{ marginTop: 8 }}>
         <PayPalButtons
           style={{
@@ -28,24 +38,25 @@ export function PaypalPaymentForm({ paypalOrderId, onCreateOrder, onSuccess }: P
               const orderId = await onCreateOrder();
               return orderId;
             } catch (err) {
+              const message = err instanceof Error ? err.message : 'Could not create PayPal checkout order.';
               notifications.show({
                 color: 'red',
                 title: 'PayPal Error',
-                message: 'Could not create PayPal checkout order.'
+                message
               });
               throw err;
             }
           }}
-          onApprove={async (_data, actions) => {
-            if (actions.order) {
-              await actions.order.capture();
+          onApprove={async (data) => {
+            if (!data.orderID) {
+              throw new Error('PayPal did not return an approved order ID.');
             }
+            await onApproveOrder(data.orderID);
             notifications.show({
               color: 'green',
-              title: 'PayPal Order Approved',
-              message: 'Your payment was processed successfully.'
+              title: 'PayPal Payment Captured',
+              message: 'Your payment was captured and is being confirmed.'
             });
-            onSuccess();
           }}
           onError={(err) => {
             notifications.show({

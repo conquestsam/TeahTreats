@@ -81,3 +81,15 @@ export class PaymentStatusLookupDto extends CustomerVerificationDto {
   @IsUUID()
   orderId!: string;
 }
+
+export class CapturePaypalOrderDto extends CustomerVerificationDto {
+  @ApiProperty()
+  @IsUUID()
+  orderId!: string;
+
+  @ApiProperty()
+  @IsString()
+  @MinLength(3)
+  @MaxLength(128)
+  paypalOrderId!: string;
+}

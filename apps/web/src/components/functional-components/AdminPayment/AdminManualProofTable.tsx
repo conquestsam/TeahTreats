@@ -31,6 +31,9 @@ export function AdminManualProofTable({ proofs, onView, onApprove, onReject }: A
                   <Text size="sm" c="dimmed">
                     {proof.customerEmail}
                   </Text>
+                  <Text size="xs" c="dimmed">
+                    {proof.customerPhone || 'No phone'}
+                  </Text>
                 </Table.Td>
                 <Table.Td>{proof.methodLabel}</Table.Td>
                 <Table.Td>${(proof.amountCents / 100).toFixed(2)}</Table.Td>

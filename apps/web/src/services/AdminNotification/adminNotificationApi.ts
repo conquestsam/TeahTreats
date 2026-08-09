@@ -21,3 +21,17 @@ export function retryAdminNotification(notificationId: string) {
     { method: 'POST' },
   ).then((response) => response.data);
 }
+
+export function smokeTestAdminNotifications(input: {
+  channels: Array<'email' | 'sms' | 'whatsapp' | 'in_app'>;
+  email?: string;
+  phone?: string;
+}) {
+  return apiFetch<ApiEnvelope<{ created: number; results: Array<{ channel: string; status: string; message: string }> }>>(
+    '/admin/notifications/smoke-test',
+    {
+      method: 'POST',
+      body: JSON.stringify(input)
+    },
+  ).then((response) => response.data);
+}

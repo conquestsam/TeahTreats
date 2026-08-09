@@ -8,12 +8,18 @@ export class PaymentPolicy {
     }
 
     const customer = orderCustomer as Record<string, unknown>;
-    if (
-      String(customer.email).toLowerCase() !== input.email.toLowerCase() ||
-      String(customer.phone) !== input.phone
-    ) {
+    const expectedEmail = String(customer.email).trim().toLowerCase();
+    const actualEmail = input.email.trim().toLowerCase();
+    const expectedPhone = this.normalizePhone(String(customer.phone));
+    const actualPhone = this.normalizePhone(input.phone);
+
+    if (expectedEmail !== actualEmail || expectedPhone !== actualPhone) {
       throw new ForbiddenException('Order verification failed.');
     }
+  }
+
+  private static normalizePhone(value: string) {
+    return value.replace(/[^\d+]/g, '').replace(/(?!^)\+/g, '');
   }
 
   static ensurePayable(order: {

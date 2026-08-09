@@ -1,8 +1,10 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { domainEvents } from '@snacks/shared';
 import { randomUUID } from 'node:crypto';
 import {
   OrderStatus,
+  InventoryAdjustmentType,
   PaymentProvider,
   PaymentStatus,
   Prisma
@@ -13,7 +15,8 @@ import { R2StorageService } from '../../../infrastructure/storage/r2.service.js'
 import { PaypalPaymentService } from '../../../infrastructure/payments/paypal/paypal-payment.service.js';
 import { StripePaymentService } from '../../../infrastructure/payments/stripe/stripe-payment.service.js';
 import { PaymentPolicy } from '../domain/payment-policy.js';
-import type { CreateReceiptUploadDto, InitiatePaymentDto, SubmitManualProofDto } from '../presentation/dto/payment.dto.js';
+import { PaymentReconciliationService } from './payment-reconciliation.service.js';
+import type { CapturePaypalOrderDto, CreateReceiptUploadDto, InitiatePaymentDto, SubmitManualProofDto } from '../presentation/dto/payment.dto.js';
 
 @Injectable()
 export class PaymentService {
@@ -23,6 +26,8 @@ export class PaymentService {
     private readonly r2: R2StorageService,
     private readonly stripe: StripePaymentService,
     private readonly paypal: PaypalPaymentService,
+    private readonly reconciliation: PaymentReconciliationService,
+    private readonly config: ConfigService,
   ) { }
 
   async listManualMethods(tenantId: string) {
@@ -45,10 +50,25 @@ export class PaymentService {
       where: { tenantId: resolvedTenantId, active: true },
     });
 
+    const stripeAvailable = this.stripe.isConfigured();
+    const paypalAvailable = this.paypal.isConfigured();
+    const manualAvailable = manualCount > 0;
+
     return {
-      stripe: { isAvailable: this.stripe.isConfigured() },
-      paypal: { isAvailable: this.paypal.isConfigured() },
-      manual: { isAvailable: manualCount > 0 },
+      stripe: {
+        isAvailable: stripeAvailable,
+        reason: stripeAvailable ? null : 'Stripe is not configured on the API server.',
+        publishableKey: this.config.get<string>('NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY') ?? null
+      },
+      paypal: {
+        isAvailable: paypalAvailable,
+        reason: paypalAvailable ? null : 'PayPal is not configured on the API server.',
+        clientId: this.config.get<string>('NEXT_PUBLIC_PAYPAL_CLIENT_ID') ?? this.config.get<string>('PAYPAL_CLIENT_ID') ?? null
+      },
+      manual: {
+        isAvailable: manualAvailable,
+        reason: manualAvailable ? null : 'No active manual payment method exists for this tenant.'
+      },
     };
   }
 
@@ -61,11 +81,14 @@ export class PaymentService {
 
     const order = await this.findVerifiedOrder(resolvedTenantId, dto.orderId, dto);
     PaymentPolicy.ensurePayable(order);
-    const providerResult = await this.createProviderIntent(dto.provider, {
+    const providerInput = {
       amountCents: order.totalCents,
       currency: order.currency,
-      orderId: order.id
-    });
+      orderId: order.id,
+      tenantId: resolvedTenantId,
+      ...(idempotencyKey ? { idempotencyKey } : {})
+    };
+    const providerResult = await this.createProviderIntent(dto.provider, providerInput);
 
     const payment = await this.prisma.$transaction(async (tx) => {
       const created = await tx.payment.create({
@@ -159,10 +182,6 @@ export class PaymentService {
     if (!method) {
       throw new NotFoundException('Manual payment method was not found.');
     }
-    const tenant = await this.prisma.tenant.findUnique({ where: { id: resolvedTenantId } });
-    const adminEmail = tenant?.businessEmail ?? null;
-    const adminPhone = tenant?.businessPhone ?? null;
-
     const proof = await this.prisma.$transaction(async (tx) => {
       const payment =
         order.payments.find((item) => item.provider === PaymentProvider.manual && item.status !== PaymentStatus.failed) ??
@@ -211,41 +230,8 @@ export class PaymentService {
       await this.writeOutbox(tx, resolvedTenantId, createdProof.id, domainEvents.manualProofSubmitted, {
         proofId: createdProof.id,
         orderId: order.id,
+        paymentId: payment.id,
         notify: ['admin.email', 'admin.sms', 'admin.whatsapp']
-      });
-      await tx.notification.createMany({
-        data: [
-          {
-            tenantId: resolvedTenantId,
-            channel: 'email',
-            recipient: adminEmail,
-            subject: 'Manual payment proof needs review',
-            body: `Order ${order.id} has a new manual payment receipt.`,
-            status: adminEmail ? 'pending' : 'skipped',
-            lastError: adminEmail ? null : 'Recipient is missing.',
-            metadata: { to: adminEmail, orderId: order.id, proofId: createdProof.id }
-          },
-          {
-            tenantId: resolvedTenantId,
-            channel: 'sms',
-            recipient: adminPhone,
-            subject: 'Manual payment proof needs review',
-            body: `Order ${order.id} has a new manual payment receipt.`,
-            status: adminPhone ? 'pending' : 'skipped',
-            lastError: adminPhone ? null : 'Recipient is missing.',
-            metadata: { to: adminPhone, orderId: order.id, proofId: createdProof.id }
-          },
-          {
-            tenantId: resolvedTenantId,
-            channel: 'whatsapp',
-            recipient: adminPhone,
-            subject: 'Manual payment proof needs review',
-            body: `Order ${order.id} has a new manual payment receipt.`,
-            status: adminPhone ? 'pending' : 'skipped',
-            lastError: adminPhone ? null : 'Recipient is missing.',
-            metadata: { to: adminPhone, orderId: order.id, proofId: createdProof.id }
-          }
-        ]
       });
       return createdProof;
     });
@@ -261,6 +247,41 @@ export class PaymentService {
     return response;
   }
 
+  async capturePaypalOrder(tenantId: string, idempotencyKey: string | undefined, dto: CapturePaypalOrderDto) {
+    const resolvedTenantId = await this.resolveTenantId(tenantId);
+    const existing = await this.findIdempotent(resolvedTenantId, idempotencyKey, 'paypal-capture');
+    if (existing) {
+      return existing;
+    }
+
+    const order = await this.findVerifiedOrder(resolvedTenantId, dto.orderId, dto);
+    const payment = order.payments.find(
+      (item) => item.provider === PaymentProvider.paypal && item.providerRef === dto.paypalOrderId,
+    );
+    if (!payment) {
+      throw new NotFoundException('PayPal payment attempt was not found for this order.');
+    }
+
+    const capture = await this.paypal.captureOrder({
+      paypalOrderId: dto.paypalOrderId,
+      orderId: order.id
+    });
+
+    const result = await this.reconciliation.reconcileProviderSuccess({
+      provider: PaymentProvider.paypal,
+      eventId: `paypal-capture:${dto.paypalOrderId}`,
+      eventType: 'CHECKOUT.ORDER.CAPTURED_BY_BACKEND',
+      providerRef: dto.paypalOrderId,
+      orderId: order.id,
+      amountCents: order.totalCents,
+      currency: order.currency,
+      payload: capture as Record<string, unknown>
+    });
+
+    await this.storeIdempotent(resolvedTenantId, idempotencyKey, 'paypal-capture', result);
+    return result;
+  }
+
   private async findVerifiedOrder(tenantId: string, orderId: string, verification: { email: string; phone: string }) {
     const order = await this.prisma.order.findFirst({
       where: { id: orderId, tenantId },
@@ -273,7 +294,13 @@ export class PaymentService {
     return order;
   }
 
-  private async createProviderIntent(provider: PaymentProvider, input: { amountCents: number; currency: string; orderId: string }) {
+  private async createProviderIntent(provider: PaymentProvider, input: {
+    amountCents: number;
+    currency: string;
+    orderId: string;
+    tenantId: string;
+    idempotencyKey?: string;
+  }) {
     if (provider === PaymentProvider.stripe) {
       return this.stripe.createPaymentIntent(input);
     }
@@ -319,16 +346,72 @@ export class PaymentService {
   }
 
   private async expireOrder(tenantId: string, orderId: string) {
-    await this.prisma.order.update({ where: { id: orderId }, data: { status: OrderStatus.expired } });
-    await this.prisma.outboxEvent.create({
-      data: {
-        id: randomUUID(),
-        tenantId,
-        aggregateId: orderId,
-        name: domainEvents.orderPaymentFailed,
-        payload: { orderId, reason: 'reservation-expired', sideEffects: ['inventory.release.placeholder'] }
-      }
+    await this.prisma.$transaction(async (tx) => {
+      await this.releaseReservations(tx, tenantId, orderId, 'Reservation expired during payment.');
+      await tx.order.update({ where: { id: orderId }, data: { status: OrderStatus.expired } });
+      await tx.orderStatusHistory.create({
+        data: { orderId, status: OrderStatus.expired, reason: 'Reservation expired during payment.' }
+      });
+      await tx.outboxEvent.create({
+        data: {
+          id: randomUUID(),
+          tenantId,
+          aggregateId: orderId,
+          name: domainEvents.orderPaymentFailed,
+          payload: { orderId, reason: 'reservation-expired', sideEffects: ['inventory.release', 'sse.order.status.changed'] }
+        }
+      });
     });
+  }
+
+  private async releaseReservations(
+    tx: Prisma.TransactionClient,
+    tenantId: string,
+    orderId: string,
+    reason: string,
+  ) {
+    const reservations = await tx.inventoryReservation.findMany({
+      where: { tenantId, orderId, committed: false, releasedAt: null },
+      include: { batch: true }
+    });
+
+    for (const reservation of reservations) {
+      const updatedBatch = await tx.inventoryBatch.updateMany({
+        where: { id: reservation.batchId, reserved: { gte: reservation.quantity } },
+        data: { reserved: { decrement: reservation.quantity } }
+      });
+      if (updatedBatch.count === 0) {
+        throw new BadRequestException('Reserved inventory could not be released.');
+      }
+      await tx.inventoryReservation.update({
+        where: { id: reservation.id },
+        data: { committed: true, releasedAt: new Date() }
+      });
+      await tx.inventoryAdjustment.create({
+        data: {
+          tenantId,
+          batchId: reservation.batchId,
+          skuId: reservation.batch.skuId,
+          quantityDelta: 0,
+          type: InventoryAdjustmentType.release,
+          reason
+        }
+      });
+      await tx.outboxEvent.create({
+        data: {
+          id: randomUUID(),
+          tenantId,
+          aggregateId: reservation.id,
+          name: domainEvents.inventoryReservationReleased,
+          payload: {
+            reservationId: reservation.id,
+            orderId,
+            batchId: reservation.batchId,
+            quantity: reservation.quantity
+          }
+        }
+      });
+    }
   }
 
   private async resolveTenantId(tenantIdOrSlug: string) {

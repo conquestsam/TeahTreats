@@ -28,6 +28,28 @@ const openManualPaymentStatuses: PaymentStatus[] = [
 export class ReportsService {
   constructor(private readonly prisma: PrismaService) {}
 
+  async dashboardForScope(
+    tenantIdOrSlug: string,
+    accessibleTenantIds: string[],
+    input: { from?: string; to?: string },
+    canManageAllTenants = false,
+  ): Promise<AdminReportsDashboardSummary> {
+    if (tenantIdOrSlug !== 'all') {
+      return this.dashboard(tenantIdOrSlug, input);
+    }
+    const tenantIds = canManageAllTenants
+      ? (await this.prisma.tenant.findMany({
+        where: { active: true },
+        select: { id: true }
+      })).map((tenant) => tenant.id)
+      : [...new Set(accessibleTenantIds)].filter(Boolean);
+    if (tenantIds.length === 0) {
+      throw new BadRequestException('No tenant access is available for reporting.');
+    }
+    const dashboards = await Promise.all(tenantIds.map((tenantId) => this.dashboard(tenantId, input)));
+    return this.mergeDashboards(dashboards);
+  }
+
   async dashboard(tenantIdOrSlug: string, input: { from?: string; to?: string }): Promise<AdminReportsDashboardSummary> {
     const tenantId = await this.resolveTenantId(tenantIdOrSlug);
     const range = this.dateRange(input);
@@ -315,6 +337,70 @@ export class ReportsService {
       throw new BadRequestException('Tenant was not found.');
     }
     return tenant.id;
+  }
+
+  private mergeDashboards(dashboards: AdminReportsDashboardSummary[]): AdminReportsDashboardSummary {
+    const first = dashboards[0];
+    if (!first) {
+      throw new BadRequestException('No report data is available.');
+    }
+    const currency = first.salesSummary.currency;
+    const sales = dashboards.reduce(
+      (acc, dashboard) => ({
+        grossRevenueCents: acc.grossRevenueCents + dashboard.salesSummary.grossRevenueCents,
+        netRevenueCents: acc.netRevenueCents + dashboard.salesSummary.netRevenueCents,
+        discountCents: acc.discountCents + dashboard.salesSummary.discountCents,
+        orderCount: acc.orderCount + dashboard.salesSummary.orderCount,
+        paidOrderCount: acc.paidOrderCount + dashboard.salesSummary.paidOrderCount
+      }),
+      { grossRevenueCents: 0, netRevenueCents: 0, discountCents: 0, orderCount: 0, paidOrderCount: 0 },
+    );
+
+    const revenueByDate = new Map<string, RevenueByDayReportItem>();
+    for (const item of dashboards.flatMap((dashboard) => dashboard.revenueByDay)) {
+      const current = revenueByDate.get(item.date) ?? { date: item.date, revenueCents: 0, orderCount: 0 };
+      current.revenueCents += item.revenueCents;
+      current.orderCount += item.orderCount;
+      revenueByDate.set(item.date, current);
+    }
+
+    const statusCounts = new Map<string, number>();
+    for (const item of dashboards.flatMap((dashboard) => dashboard.ordersByStatus)) {
+      statusCounts.set(item.status, (statusCounts.get(item.status) ?? 0) + item.count);
+    }
+
+    const topProducts = new Map<string, TopProductReportItem>();
+    for (const item of dashboards.flatMap((dashboard) => dashboard.topProducts)) {
+      const key = `${item.productName}:${item.skuName}`;
+      const current = topProducts.get(key) ?? { ...item, quantitySold: 0, revenueCents: 0 };
+      current.quantitySold += item.quantitySold;
+      current.revenueCents += item.revenueCents;
+      topProducts.set(key, current);
+    }
+
+    return {
+      salesSummary: {
+        range: first.salesSummary.range,
+        grossRevenueCents: sales.grossRevenueCents,
+        netRevenueCents: sales.netRevenueCents,
+        discountCents: sales.discountCents,
+        orderCount: sales.orderCount,
+        paidOrderCount: sales.paidOrderCount,
+        averageOrderValueCents: sales.paidOrderCount > 0 ? Math.round(sales.netRevenueCents / sales.paidOrderCount) : 0,
+        currency
+      },
+      revenueByDay: [...revenueByDate.values()].sort((left, right) => left.date.localeCompare(right.date)),
+      ordersByStatus: [...statusCounts.entries()].map(([status, count]) => ({ status, count })).sort((left, right) => left.status.localeCompare(right.status)),
+      topProducts: [...topProducts.values()].sort((left, right) => right.quantitySold - left.quantitySold).slice(0, 10),
+      lowStock: dashboards.flatMap((dashboard) => dashboard.lowStock).slice(0, 20),
+      expiredStock: dashboards.flatMap((dashboard) => dashboard.expiredStock).slice(0, 20),
+      manualPaymentPendingCount: dashboards.reduce((sum, dashboard) => sum + dashboard.manualPaymentPendingCount, 0),
+      repeatCustomers: {
+        knownCustomerCount: dashboards.reduce((sum, dashboard) => sum + dashboard.repeatCustomers.knownCustomerCount, 0),
+        repeatCustomerCount: dashboards.reduce((sum, dashboard) => sum + dashboard.repeatCustomers.repeatCustomerCount, 0),
+        repeatOrderCount: dashboards.reduce((sum, dashboard) => sum + dashboard.repeatCustomers.repeatOrderCount, 0)
+      }
+    };
   }
 }
 

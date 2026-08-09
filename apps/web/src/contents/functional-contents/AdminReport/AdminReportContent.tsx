@@ -30,10 +30,22 @@ export function AdminReportContent() {
     );
   }
 
+  if (reportsQuery.isError) {
+    return (
+      <div className="admin-container py-6 md:py-8">
+        <StateCard
+          title="Reports unavailable."
+          description={reportsQuery.error instanceof Error ? reportsQuery.error.message : 'Check your session, tenant header, and reports permission.'}
+          tone="warning"
+        />
+      </div>
+    );
+  }
+
   if (!report) {
     return (
       <div className="admin-container py-6 md:py-8">
-        <StateCard title="Reports unavailable." description="Check your session and tenant access, then try again." tone="warning" />
+        <StateCard title="Reports unavailable." description="No report data was returned for this tenant." tone="warning" />
       </div>
     );
   }

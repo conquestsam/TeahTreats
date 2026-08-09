@@ -1,6 +1,7 @@
 import { customerTenantId } from '@/constants/CustomerCart/customerCartConstants';
 import { apiFetch } from '@/lib/api/client';
 import type {
+  CapturePaypalOrderInput,
   CustomerPaymentModel,
   CustomerPaymentVerificationInput,
   ManualPaymentMethodModel,
@@ -10,6 +11,13 @@ import type {
 
 interface ApiEnvelope<TData> {
   data: TData;
+}
+
+interface PaymentGatewayAvailability {
+  isAvailable: boolean;
+  reason?: string | null;
+  publishableKey?: string | null;
+  clientId?: string | null;
 }
 
 const tenantHeaders = { 'x-tenant-id': customerTenantId };
@@ -28,11 +36,19 @@ export function initiatePayment(input: CustomerPaymentVerificationInput & { prov
   }).then((response) => response.data);
 }
 
+export function capturePaypalOrder(input: CapturePaypalOrderInput) {
+  return apiFetch<ApiEnvelope<CustomerPaymentModel>>('/shop/payments/paypal/capture', {
+    method: 'POST',
+    headers: { ...tenantHeaders, 'idempotency-key': crypto.randomUUID() },
+    body: JSON.stringify(input)
+  }).then((response) => response.data);
+}
+
 export function getPaymentGatewayStatus() {
   return apiFetch<ApiEnvelope<{
-    stripe: { isAvailable: boolean };
-    paypal: { isAvailable: boolean };
-    manual: { isAvailable: boolean };
+    stripe: PaymentGatewayAvailability;
+    paypal: PaymentGatewayAvailability;
+    manual: PaymentGatewayAvailability;
   }>>('/shop/payments/gateway-status', {
     headers: tenantHeaders
   }).then((response) => response.data);
@@ -43,7 +59,7 @@ export function initiateManualPayment(input: CustomerPaymentVerificationInput) {
   return initiatePayment({ ...input, provider: 'manual' });
 }
 
-export function createReceiptUpload(input: CustomerPaymentVerificationInput & { contentType: string }) {
+export function createReceiptUpload(input: CustomerPaymentVerificationInput & { contentType: string; sizeBytes?: number }) {
   return apiFetch<ApiEnvelope<ReceiptUploadModel>>('/shop/payments/receipt-upload', {
     method: 'POST',
     headers: tenantHeaders,

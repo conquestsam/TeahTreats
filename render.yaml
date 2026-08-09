@@ -1,0 +1,174 @@
+databases:
+  - name: teahtreats-postgres-staging
+    databaseName: snacks_commerce
+    user: snacks
+    plan: free
+
+services:
+  - type: keyvalue
+    name: teahtreats-redis-staging
+    plan: free
+    maxmemoryPolicy: allkeys-lru
+    ipAllowList: []
+
+  - type: web
+    name: teahtreats-api-staging
+    runtime: docker
+    dockerfilePath: ./apps/api/Dockerfile
+    healthCheckPath: /api/v1/health
+    plan: starter
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: HOST
+        value: 0.0.0.0
+      - key: PORT
+        value: 4000
+      - key: DATABASE_URL
+        fromDatabase:
+          name: teahtreats-postgres-staging
+          property: connectionString
+      - key: REDIS_URL
+        fromService:
+          type: keyvalue
+          name: teahtreats-redis-staging
+          property: connectionString
+      - key: APP_CORS_ORIGIN
+        sync: false
+      - key: AUTH_ACCESS_TOKEN_SECRET
+        sync: false
+      - key: AUTH_REFRESH_TOKEN_SECRET
+        sync: false
+      - key: AUTH_COOKIE_SAMESITE
+        value: none
+      - key: AUTH_COOKIE_SECURE
+        value: "true"
+      - key: MFA_ISSUER
+        value: TeahTreats
+      - key: MFA_SECRET_ENCRYPTION_KEY
+        sync: false
+      - key: OPENSEARCH_NODE
+        sync: false
+      - key: OPENSEARCH_USERNAME
+        sync: false
+      - key: OPENSEARCH_PASSWORD
+        sync: false
+      - key: CLOUDINARY_CLOUD_NAME
+        sync: false
+      - key: CLOUDINARY_API_KEY
+        sync: false
+      - key: CLOUDINARY_API_SECRET
+        sync: false
+      - key: R2_ACCOUNT_ID
+        sync: false
+      - key: R2_ACCESS_KEY_ID
+        sync: false
+      - key: R2_SECRET_ACCESS_KEY
+        sync: false
+      - key: R2_BUCKET
+        sync: false
+      - key: RESEND_API_KEY
+        sync: false
+      - key: RESEND_FROM_EMAIL
+        sync: false
+      - key: GMAIL_USER
+        sync: false
+      - key: GMAIL_APP_PASSWORD
+        sync: false
+      - key: GMAIL_FROM_EMAIL
+        sync: false
+      - key: TWILIO_ACCOUNT_SID
+        sync: false
+      - key: TWILIO_AUTH_TOKEN
+        sync: false
+      - key: TWILIO_FROM_SMS
+        sync: false
+      - key: TWILIO_FROM_WHATSAPP
+        sync: false
+      - key: STRIPE_SECRET_KEY
+        sync: false
+      - key: STRIPE_WEBHOOK_SECRET
+        sync: false
+      - key: NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY
+        sync: false
+      - key: PAYPAL_CLIENT_ID
+        sync: false
+      - key: PAYPAL_CLIENT_SECRET
+        sync: false
+      - key: PAYPAL_ENVIRONMENT
+        value: sandbox
+      - key: PAYPAL_WEBHOOK_ID
+        sync: false
+      - key: NEXT_PUBLIC_PAYPAL_CLIENT_ID
+        sync: false
+
+  - type: worker
+    name: teahtreats-worker-staging
+    runtime: docker
+    dockerfilePath: ./apps/api/Dockerfile
+    dockerCommand: pnpm --filter @snacks/api start:worker
+    plan: starter
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: DATABASE_URL
+        fromDatabase:
+          name: teahtreats-postgres-staging
+          property: connectionString
+      - key: REDIS_URL
+        fromService:
+          type: keyvalue
+          name: teahtreats-redis-staging
+          property: connectionString
+      - key: APP_CORS_ORIGIN
+        sync: false
+      - key: AUTH_ACCESS_TOKEN_SECRET
+        sync: false
+      - key: AUTH_REFRESH_TOKEN_SECRET
+        sync: false
+      - key: MFA_SECRET_ENCRYPTION_KEY
+        sync: false
+      - key: OPENSEARCH_NODE
+        sync: false
+      - key: OPENSEARCH_USERNAME
+        sync: false
+      - key: OPENSEARCH_PASSWORD
+        sync: false
+      - key: CLOUDINARY_CLOUD_NAME
+        sync: false
+      - key: CLOUDINARY_API_KEY
+        sync: false
+      - key: CLOUDINARY_API_SECRET
+        sync: false
+      - key: R2_ACCOUNT_ID
+        sync: false
+      - key: R2_ACCESS_KEY_ID
+        sync: false
+      - key: R2_SECRET_ACCESS_KEY
+        sync: false
+      - key: R2_BUCKET
+        sync: false
+      - key: RESEND_API_KEY
+        sync: false
+      - key: RESEND_FROM_EMAIL
+        sync: false
+      - key: TWILIO_ACCOUNT_SID
+        sync: false
+      - key: TWILIO_AUTH_TOKEN
+        sync: false
+      - key: TWILIO_FROM_SMS
+        sync: false
+      - key: TWILIO_FROM_WHATSAPP
+        sync: false
+      - key: STRIPE_SECRET_KEY
+        sync: false
+      - key: STRIPE_WEBHOOK_SECRET
+        sync: false
+      - key: PAYPAL_CLIENT_ID
+        sync: false
+      - key: PAYPAL_CLIENT_SECRET
+        sync: false
+      - key: PAYPAL_ENVIRONMENT
+        value: sandbox
+      - key: PAYPAL_WEBHOOK_ID
+        sync: false

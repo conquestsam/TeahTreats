@@ -2,12 +2,14 @@ import { Controller, Get, Query, UseGuards } from '@nestjs/common';
 import { ApiCookieAuth, ApiHeader, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { permissions } from '@snacks/shared';
 import { CurrentTenant } from '../../../common/decorators/current-tenant.decorator.js';
+import { CurrentUser } from '../../../common/decorators/current-user.decorator.js';
 import { RequirePermissions } from '../../../common/decorators/require-permissions.decorator.js';
 import { JwtAccessAuthGuard } from '../../../common/guards/jwt-access-auth.guard.js';
 import { PermissionsGuard } from '../../../common/guards/permissions.guard.js';
 import { TenantScopeGuard } from '../../../common/guards/tenant-scope.guard.js';
 import { ReportsService } from '../application/reports.service.js';
 import { ReportDateRangeQueryDto } from './dto/report-query.dto.js';
+import type { AuthenticatedUser } from '../../../common/types/authenticated-request.js';
 
 @ApiTags('admin/reports')
 @ApiCookieAuth('access_token')
@@ -19,9 +21,21 @@ export class ReportsController {
   constructor(private readonly reports: ReportsService) {}
 
   @Get('dashboard')
+  @RequirePermissions(permissions.dashboardRead)
   @ApiOperation({ summary: 'Get tenant reporting dashboard aggregates.' })
-  async dashboard(@CurrentTenant() tenantId: string, @Query() query: ReportDateRangeQueryDto) {
-    return { data: await this.reports.dashboard(tenantId, query) };
+  async dashboard(
+    @CurrentTenant() tenantId: string,
+    @CurrentUser() user: AuthenticatedUser,
+    @Query() query: ReportDateRangeQueryDto,
+  ) {
+    return {
+      data: await this.reports.dashboardForScope(
+        tenantId,
+        user.tenantIds,
+        query,
+        user.permissions.includes(permissions.tenantsManage),
+      )
+    };
   }
 
   @Get('sales-summary')

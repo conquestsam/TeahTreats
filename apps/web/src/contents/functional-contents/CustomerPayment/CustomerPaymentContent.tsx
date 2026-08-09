@@ -2,13 +2,14 @@
 
 import { useEffect, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
-import { Button, TextInput } from '@mantine/core';
+import { Button, Group, Modal, Stack, Text, TextInput } from '@mantine/core';
 import { notifications } from '@mantine/notifications';
 import { StripePaymentWrapper } from '@/components/functional-components/CustomerPayment/StripePaymentForm';
 import { PaypalPaymentForm } from '@/components/functional-components/CustomerPayment/PaypalPaymentForm';
 import { useCustomerPaymentMutations } from '@/hooks/CustomerPayment/useCustomerPaymentMutations';
 import { useCustomerPaymentStatusQuery, useManualPaymentMethodQuery, usePaymentGatewaysQuery } from '@/hooks/CustomerPayment/useCustomerPaymentQuery';
 import { useCurrentCustomerQuery } from '@/hooks/CustomerAuth/useCustomerAuthQuery';
+import { useCustomerOrderDetailsQuery } from '@/hooks/CustomerOrder/useCustomerOrderQuery';
 import { useCustomerOrderRealtime } from '@/hooks/Realtime/useCustomerOrderRealtime';
 import type { CustomerPaymentModel } from '@/types/CustomerPayment/customerPaymentTypes';
 
@@ -21,24 +22,59 @@ export function CustomerPaymentContent() {
   const methodsQuery = useManualPaymentMethodQuery();
   const gatewaysQuery = usePaymentGatewaysQuery();
   const gateways = gatewaysQuery.data;
+  const methods = methodsQuery.data ?? [];
+  const orderDetailsQuery = useCustomerOrderDetailsQuery(customerQuery.data ? orderId : null);
 
   const customer = customerQuery.data;
-  const customerEmail = customer?.email ?? '';
+  const orderCustomer = orderDetailsQuery.data?.customer;
+  const [savedContact, setSavedContact] = useState<{ email: string; phone: string; name?: string } | null>(null);
 
   const [enteredPhone, setEnteredPhone] = useState('');
   useEffect(() => {
-    if (customer?.phone) {
-      setEnteredPhone(customer.phone);
+    if (!orderId || typeof window === 'undefined') {
+      return;
     }
-  }, [customer?.phone]);
 
+    const raw = window.sessionStorage.getItem(`teahTreats.checkout.${orderId}`);
+    if (!raw) {
+      return;
+    }
+
+    try {
+      const parsed = JSON.parse(raw) as { email?: string; phone?: string; name?: string };
+      if (parsed.email && parsed.phone) {
+        setSavedContact({
+          email: parsed.email,
+          phone: parsed.phone,
+          ...(parsed.name ? { name: parsed.name } : {})
+        });
+      }
+    } catch {
+      window.sessionStorage.removeItem(`teahTreats.checkout.${orderId}`);
+    }
+  }, [orderId]);
+
+  useEffect(() => {
+    const preferredPhone = savedContact?.phone ?? orderCustomer?.phone ?? customer?.phone ?? '';
+    if (preferredPhone && !enteredPhone) {
+      setEnteredPhone(preferredPhone);
+    }
+  }, [customer?.phone, enteredPhone, orderCustomer?.phone, savedContact?.phone]);
+
+  const customerEmail = savedContact?.email ?? orderCustomer?.email ?? customer?.email ?? '';
   const activePhone = enteredPhone.trim();
+  const contactIsPrefilled = Boolean(savedContact?.phone || orderCustomer?.phone || customer?.phone);
+  const stripeAvailable = Boolean(gateways?.stripe?.isAvailable);
+  const paypalAvailable = Boolean(gateways?.paypal?.isAvailable);
+  const manualAvailable = Boolean(gateways?.manual?.isAvailable && methods.length > 0);
 
   const [activeTab, setActiveTab] = useState<PaymentProviderTab>('stripe');
   const [stripeClientSecret, setStripeClientSecret] = useState<string | null>(null);
   const [paypalOrderId, setPaypalOrderId] = useState<string | null>(null);
   const [selectedMethodId, setSelectedMethodId] = useState<string | null>(null);
   const [pending, setPending] = useState(false);
+  const [successModalOpen, setSuccessModalOpen] = useState(false);
+  const [providerError, setProviderError] = useState<string | null>(null);
 
   // Manual payment receipt image upload state
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
@@ -62,27 +98,86 @@ export function CustomerPaymentContent() {
     enabled: pending
   });
 
-  const mutations = useCustomerPaymentMutations(() => {
+  const showPaymentSuccess = () => {
     setPending(true);
-  });
+    setProviderError(null);
+    setSuccessModalOpen(true);
+  };
 
-  const methods = methodsQuery.data ?? [];
+  const mutations = useCustomerPaymentMutations(showPaymentSuccess);
+
   const selectedMethod = methods.find((m) => m.id === selectedMethodId) ?? methods[0];
+  const bestAvailableTab: PaymentProviderTab =
+    stripeAvailable ? 'stripe' : paypalAvailable ? 'paypal' : 'manual';
 
-  // Helper to initialize Stripe PaymentIntent
-  const handleInitiateStripe = () => {
-    if (!orderId) {
-      notifications.show({ color: 'red', title: 'Invalid Order', message: 'No Order ID provided.' });
+  useEffect(() => {
+    if (!gatewaysQuery.isSuccess && !methodsQuery.isSuccess) {
       return;
     }
-    if (!activePhone) {
+
+    if (activeTab === 'stripe' && !stripeAvailable) {
+      setActiveTab(bestAvailableTab);
+    }
+    if (activeTab === 'paypal' && !paypalAvailable) {
+      setActiveTab(bestAvailableTab);
+    }
+    if (activeTab === 'manual' && !manualAvailable && (stripeAvailable || paypalAvailable)) {
+      setActiveTab(bestAvailableTab);
+    }
+  }, [
+    activeTab,
+    bestAvailableTab,
+    gatewaysQuery.isSuccess,
+    manualAvailable,
+    methodsQuery.isSuccess,
+    paypalAvailable,
+    stripeAvailable
+  ]);
+
+  useEffect(() => {
+    if (!selectedMethodId && methods[0]) {
+      setSelectedMethodId(methods[0].id);
+    }
+  }, [methods, selectedMethodId]);
+
+  const ensurePaymentContact = () => {
+    if (!orderId) {
+      notifications.show({ color: 'red', title: 'Invalid Order', message: 'No order was found for payment.' });
+      return false;
+    }
+    if (!customerEmail) {
+      notifications.show({
+        color: 'red',
+        title: 'Sign In Required',
+        message: 'Please sign in or return from checkout so we can verify this order.'
+      });
+      return false;
+    }
+    if (!activePhone || activePhone.length < 7) {
       notifications.show({
         color: 'red',
         title: 'Phone Number Required',
-        message: 'Please enter a valid contact phone number so our team can coordinate your order.'
+        message: 'Please enter the phone number used at checkout.'
+      });
+      return false;
+    }
+    return true;
+  };
+
+  // Helper to initialize Stripe PaymentIntent
+  const handleInitiateStripe = () => {
+    if (!stripeAvailable) {
+      notifications.show({
+        color: 'red',
+        title: 'Card Payment Unavailable',
+        message: gateways?.stripe?.reason ?? 'Stripe is not enabled for this store.'
       });
       return;
     }
+    if (!ensurePaymentContact()) {
+      return;
+    }
+    setProviderError(null);
     mutations.initiateMutation.mutate(
       {
         orderId,
@@ -96,30 +191,30 @@ export function CustomerPaymentContent() {
           if (secret) {
             setStripeClientSecret(secret);
           } else {
-            setPending(true);
+            setProviderError('Stripe started, but no secure card form was returned. Please use another payment method or contact support.');
           }
+        },
+        onError: (error) => {
+          setProviderError(error instanceof Error ? error.message : 'Could not start Stripe payment.');
         }
       }
     );
   };
 
-  // Auto-initiate Stripe intent when Credit Card tab is selected
-  useEffect(() => {
-    if (activeTab === 'stripe' && !stripeClientSecret && canCheckStatus && !mutations.initiateMutation.isPending) {
-      handleInitiateStripe();
-    }
-  }, [activeTab, canCheckStatus]);
-
   // Helper to initialize PayPal order
   const handleInitiatePaypal = async (): Promise<string> => {
-    if (!activePhone) {
+    if (!paypalAvailable) {
       notifications.show({
         color: 'red',
-        title: 'Phone Number Required',
-        message: 'Please enter a valid contact phone number so our team can coordinate your order.'
+        title: 'PayPal Unavailable',
+        message: gateways?.paypal?.reason ?? 'PayPal is not enabled for this store.'
       });
-      throw new Error('Phone number is required.');
+      throw new Error('PayPal is unavailable.');
     }
+    if (!ensurePaymentContact()) {
+      throw new Error('Order verification is incomplete.');
+    }
+    setProviderError(null);
     const payment = await mutations.initiateMutation.mutateAsync({
       orderId,
       email: customerEmail,
@@ -129,6 +224,20 @@ export function CustomerPaymentContent() {
     const pId = (payment.metadata as { id?: string })?.id || payment.providerRef || payment.id;
     setPaypalOrderId(pId);
     return pId;
+  };
+
+  const handleCapturePaypal = async (approvedPaypalOrderId: string) => {
+    if (!ensurePaymentContact()) {
+      throw new Error('Order verification is incomplete.');
+    }
+    setProviderError(null);
+    await mutations.paypalCaptureMutation.mutateAsync({
+      orderId,
+      email: customerEmail,
+      phone: activePhone,
+      paypalOrderId: approvedPaypalOrderId
+    });
+    showPaymentSuccess();
   };
 
   // Handle image file selection
@@ -142,12 +251,7 @@ export function CustomerPaymentContent() {
 
   // Submit manual proof with direct image upload
   const handleSubmitManualProof = async () => {
-    if (!activePhone) {
-      notifications.show({
-        color: 'red',
-        title: 'Phone Number Required',
-        message: 'Please enter a valid contact phone number so our team can coordinate your order.'
-      });
+    if (!ensurePaymentContact()) {
       return;
     }
     if (!selectedFile || !selectedMethod) {
@@ -160,16 +264,38 @@ export function CustomerPaymentContent() {
         orderId,
         email: customerEmail,
         phone: activePhone,
-        contentType: selectedFile.type || 'image/jpeg'
+        contentType: selectedFile.type || 'image/jpeg',
+        sizeBytes: selectedFile.size
       });
 
-      // Execute HTTP upload if signed URL exists
+      let receiptUrl = upload.publicUrl;
+
       if (upload.uploadUrl && !upload.uploadUrl.includes('placeholder')) {
-        await fetch(upload.uploadUrl, {
-          method: 'PUT',
-          headers: { 'Content-Type': selectedFile.type },
-          body: selectedFile
-        });
+        if (upload.provider === 'cloudinary') {
+          const formData = new FormData();
+          for (const [key, value] of Object.entries(upload.fields)) {
+            formData.append(key, String(value));
+          }
+          formData.append('file', selectedFile);
+          const uploadResponse = await fetch(upload.uploadUrl, {
+            method: 'POST',
+            body: formData
+          });
+          if (!uploadResponse.ok) {
+            throw new Error('Cloudinary receipt upload failed.');
+          }
+          const body = (await uploadResponse.json()) as { secure_url?: string; url?: string };
+          receiptUrl = body.secure_url ?? body.url ?? upload.publicUrl;
+        } else {
+          const uploadResponse = await fetch(upload.uploadUrl, {
+            method: 'PUT',
+            headers: { 'Content-Type': selectedFile.type },
+            body: selectedFile
+          });
+          if (!uploadResponse.ok) {
+            throw new Error('Receipt upload failed.');
+          }
+        }
       }
 
       await mutations.proofMutation.mutateAsync({
@@ -177,7 +303,7 @@ export function CustomerPaymentContent() {
         email: customerEmail,
         phone: activePhone,
         manualPaymentMethodId: selectedMethod.id,
-        receiptUrl: upload.publicUrl,
+        receiptUrl,
         contentType: selectedFile.type || 'image/jpeg',
         ...(upload.objectKey ? { objectKey: upload.objectKey } : {}),
         ...(upload.provider ? { storageProvider: upload.provider } : {})
@@ -188,7 +314,7 @@ export function CustomerPaymentContent() {
         title: 'Payment Proof Submitted',
         message: 'Your receipt was uploaded successfully and is under review.'
       });
-      setPending(true);
+      showPaymentSuccess();
     } catch (err) {
       notifications.show({
         color: 'red',
@@ -207,6 +333,28 @@ export function CustomerPaymentContent() {
 
   return (
     <div>
+      <Modal
+        opened={successModalOpen}
+        onClose={() => setSuccessModalOpen(false)}
+        title="Payment Submitted"
+        centered
+        size="md"
+      >
+        <Stack gap="md">
+          <Text c="dimmed">
+            Thank you. Your payment step is complete. You can track this order from your order history.
+          </Text>
+          <Group justify="flex-end">
+            <Button variant="light" component="a" href={`/account/orders/${orderId}`}>
+              View Order
+            </Button>
+            <Button component="a" href="/account/orders">
+              Payment History
+            </Button>
+          </Group>
+        </Stack>
+      </Modal>
+
       {/* Page Header */}
       <div className="tt-page-header" style={{ background: 'var(--tt-black)' }}>
         <div className="tt-container">
@@ -239,16 +387,16 @@ export function CustomerPaymentContent() {
               <div>
                 <span style={{ fontSize: '0.75rem', color: 'var(--tt-cream-muted)', textTransform: 'uppercase', letterSpacing: '0.04em' }}>Customer Email</span>
                 <p style={{ margin: '2px 0 0', fontSize: '0.9rem', fontWeight: 600, color: 'var(--tt-cream)' }}>
-                  {customerEmail || 'Session Email Unresolved'}
+                  {customerEmail || 'Sign in or return from checkout'}
                 </p>
               </div>
               <div>
                 <span style={{ fontSize: '0.75rem', color: 'var(--tt-cream-muted)', textTransform: 'uppercase', letterSpacing: '0.04em' }}>Contact Phone</span>
-                {customer?.phone ? (
-                  <p style={{ margin: '2px 0 0', fontSize: '0.9rem', fontWeight: 600, color: 'var(--tt-cream)' }}>{customer.phone}</p>
+                {contactIsPrefilled ? (
+                  <p style={{ margin: '2px 0 0', fontSize: '0.9rem', fontWeight: 600, color: 'var(--tt-cream)' }}>{activePhone}</p>
                 ) : (
                   <TextInput
-                    placeholder="Enter phone number (+1...)"
+                    placeholder="Phone used at checkout"
                     value={enteredPhone}
                     onChange={(e) => setEnteredPhone(e.currentTarget.value)}
                     size="xs"
@@ -264,6 +412,11 @@ export function CustomerPaymentContent() {
                 )}
               </div>
             </div>
+            {savedContact || orderCustomer ? (
+              <p style={{ margin: '10px 0 0', fontSize: '0.78rem', color: 'var(--tt-cream-dim)' }}>
+                We filled these details from checkout so you do not have to enter them again.
+              </p>
+            ) : null}
           </div>
 
           {/* Payment Success Screen */}
@@ -309,57 +462,60 @@ export function CustomerPaymentContent() {
                 {/* Option 1: Credit Card */}
                 <button
                   type="button"
-                  disabled={gateways && !gateways.stripe?.isAvailable}
+                  disabled={!stripeAvailable}
                   onClick={() => setActiveTab('stripe')}
                   style={{
                     padding: '16px 18px',
                     borderRadius: 14,
                     border: activeTab === 'stripe' ? '2px solid var(--tt-gold)' : '1px solid rgba(184, 147, 62, 0.18)',
                     background: activeTab === 'stripe' ? 'rgba(184, 147, 62, 0.12)' : 'var(--tt-surface)',
-                    opacity: (gateways && !gateways.stripe?.isAvailable) ? 0.5 : 1,
-                    cursor: (gateways && !gateways.stripe?.isAvailable) ? 'not-allowed' : 'pointer',
+                    opacity: stripeAvailable ? 1 : 0.5,
+                    cursor: stripeAvailable ? 'pointer' : 'not-allowed',
                     textAlign: 'left'
                   }}
                 >
                   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
                     <span style={{ fontWeight: 700, fontSize: '0.95rem', color: 'var(--tt-cream)' }}>Credit / Debit Card</span>
-                    {gateways && !gateways.stripe?.isAvailable && (
+                    {!stripeAvailable && (
                       <span style={{ fontSize: '0.7rem', color: 'var(--tt-crimson-light)', background: 'rgba(225,29,72,0.12)', padding: '2px 8px', borderRadius: 6 }}>
                         Unavailable
                       </span>
                     )}
                   </div>
                   <span style={{ fontSize: '0.78rem', color: 'var(--tt-cream-muted)' }}>
-                    {gateways?.stripe?.isAvailable ? 'Visa, Mastercard, Amex, Apple Pay' : 'Stripe credentials missing in .env'}
+                    {stripeAvailable
+                      ? 'Visa, Mastercard, Amex, Apple Pay'
+                      : gateways?.stripe?.reason ?? 'Stripe is not enabled for this store'}
                   </span>
                 </button>
 
                 {/* Option 2: PayPal */}
                 <button
                   type="button"
-                  disabled={!gateways?.paypal?.isAvailable}
+                  disabled={!paypalAvailable}
                   onClick={() => setActiveTab('paypal')}
                   style={{
                     padding: '16px 18px',
                     borderRadius: 14,
                     border: activeTab === 'paypal' ? '2px solid var(--tt-gold)' : '1px solid rgba(184, 147, 62, 0.18)',
                     background: activeTab === 'paypal' ? 'rgba(184, 147, 62, 0.12)' : 'var(--tt-surface)',
-                    opacity: gateways?.paypal?.isAvailable ? 1 : 0.45,
-                    cursor: gateways?.paypal?.isAvailable ? 'pointer' : 'not-allowed',
-                    pointerEvents: gateways?.paypal?.isAvailable ? 'auto' : 'none',
+                    opacity: paypalAvailable ? 1 : 0.45,
+                    cursor: paypalAvailable ? 'pointer' : 'not-allowed',
                     textAlign: 'left'
                   }}
                 >
                   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
                     <span style={{ fontWeight: 700, fontSize: '0.95rem', color: 'var(--tt-cream)' }}>PayPal</span>
-                    {!gateways?.paypal?.isAvailable && (
+                    {!paypalAvailable && (
                       <span style={{ fontSize: '0.7rem', color: 'var(--tt-crimson-light)', background: 'rgba(225,29,72,0.12)', padding: '2px 8px', borderRadius: 6 }}>
                         Unavailable
                       </span>
                     )}
                   </div>
                   <span style={{ fontSize: '0.78rem', color: 'var(--tt-cream-muted)' }}>
-                    {gateways?.paypal?.isAvailable ? 'PayPal Account or Pay Later' : 'Gateway credentials not configured'}
+                    {paypalAvailable
+                      ? 'PayPal Account or Pay Later'
+                      : gateways?.paypal?.reason ?? 'PayPal is not enabled for this store'}
                   </span>
                 </button>
 
@@ -370,7 +526,7 @@ export function CustomerPaymentContent() {
                   style={{
                     padding: '16px 18px',
                     borderRadius: 14,
-                    border: activeTab === 'manual' ? '2px solid var(--tt-gold)' : '1px solid rgba(184, 147, 62, 0.18)',
+                    border: activeTab === 'manual' ? '2px solid var(--tt-gold)' : '1px solid rgba(184, 147, 62, 0.3)',
                     background: activeTab === 'manual' ? 'rgba(184, 147, 62, 0.12)' : 'var(--tt-surface)',
                     color: activeTab === 'manual' ? 'var(--tt-gold-light)' : 'var(--tt-cream-muted)',
                     cursor: 'pointer',
@@ -380,7 +536,12 @@ export function CustomerPaymentContent() {
                   }}
                 >
                   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
-                    <span style={{ fontWeight: 700, fontSize: '0.95rem', color: 'var(--tt-cream)' }}>Bank Transfer</span>
+                    <span style={{ fontWeight: 700, fontSize: '0.95rem', color: 'var(--tt-cream)' }}>Manual Payment</span>
+                    {manualAvailable ? (
+                      <span style={{ fontSize: '0.7rem', color: '#4ade80', background: 'rgba(34,197,94,0.12)', padding: '2px 8px', borderRadius: 6 }}>
+                        Available
+                      </span>
+                    ) : null}
                     <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                       <line x1="3" y1="21" x2="21" y2="21" />
                       <line x1="3" y1="10" x2="21" y2="10" />
@@ -391,34 +552,71 @@ export function CustomerPaymentContent() {
                       <line x1="18" y1="10" x2="18" y2="21" />
                     </svg>
                   </div>
-                  <span style={{ fontSize: '0.78rem', color: 'var(--tt-cream-muted)' }}>Wire Transfer, Zelle, Direct Proof</span>
+                  <span style={{ fontSize: '0.78rem', color: 'var(--tt-cream-muted)' }}>
+                    Zelle, CashApp, Venmo, bank transfer, and receipt upload
+                  </span>
                 </button>
               </div>
+
+              {providerError ? (
+                <div style={{
+                  padding: '12px 14px',
+                  marginBottom: 18,
+                  borderRadius: 10,
+                  border: '1px solid rgba(248, 113, 113, 0.35)',
+                  background: 'rgba(127, 29, 29, 0.16)',
+                  color: '#fecaca',
+                  fontSize: '0.86rem'
+                }}>
+                  {providerError}
+                </div>
+              ) : null}
 
               {/* Tab 1: Stripe Card Checkout */}
               {activeTab === 'stripe' && (
                 <div>
-                  {!stripeClientSecret ? (
-                    <div style={{ textAlign: 'center', padding: '32px 16px' }}>
-                      <div
-                        style={{
-                          width: 40,
-                          height: 40,
-                          borderRadius: '50%',
-                          border: '2px solid var(--tt-gold-muted)',
-                          borderTopColor: 'var(--tt-gold)',
-                          animation: 'spin 1s linear infinite',
-                          margin: '0 auto 14px'
-                        }}
-                      />
-                      <p style={{ fontSize: '0.88rem', color: 'var(--tt-cream-muted)', margin: 0 }}>
-                        Initializing Stripe Card Checkout...
+                  {!stripeAvailable ? (
+                    <div className="tt-state-card" style={{ padding: 24 }}>
+                      <p style={{ color: 'var(--tt-cream)', fontWeight: 700, margin: '0 0 6px' }}>Card payment is not ready.</p>
+                      <p style={{ color: 'var(--tt-cream-muted)', fontSize: '0.85rem', margin: 0 }}>
+                        Use manual payment now, or ask an admin to enable Stripe on the server.
                       </p>
+                    </div>
+                  ) : !stripeClientSecret ? (
+                    <div style={{ textAlign: 'center', padding: '32px 16px' }}>
+                      {mutations.initiateMutation.isPending ? (
+                        <div
+                          style={{
+                            width: 40,
+                            height: 40,
+                            borderRadius: '50%',
+                            border: '2px solid var(--tt-gold-muted)',
+                            borderTopColor: 'var(--tt-gold)',
+                            animation: 'spin 1s linear infinite',
+                            margin: '0 auto 14px'
+                          }}
+                        />
+                      ) : null}
+                      <p style={{ fontSize: '0.88rem', color: 'var(--tt-cream-muted)', margin: 0 }}>
+                        {mutations.initiateMutation.isPending
+                          ? 'Starting secure card checkout...'
+                          : 'Ready to open the secure card form.'}
+                      </p>
+                      <button
+                        type="button"
+                        className="tt-btn-primary"
+                        disabled={mutations.initiateMutation.isPending}
+                        onClick={handleInitiateStripe}
+                        style={{ marginTop: 18, padding: '12px 24px', borderRadius: 10, width: '100%', cursor: 'pointer' }}
+                      >
+                        {mutations.initiateMutation.isPending ? 'Starting...' : 'Pay With Card'}
+                      </button>
                     </div>
                   ) : (
                     <StripePaymentWrapper
                       clientSecret={stripeClientSecret}
-                      onSuccess={() => setPending(true)}
+                      publishableKey={gateways?.stripe?.publishableKey}
+                      onSuccess={showPaymentSuccess}
                     />
                   )}
                 </div>
@@ -430,69 +628,90 @@ export function CustomerPaymentContent() {
                   <p style={{ fontSize: '0.88rem', color: 'var(--tt-cream-muted)', marginBottom: 20 }}>
                     Click below to complete payment securely with your PayPal account or Pay Later options.
                   </p>
-                  <PaypalPaymentForm
-                    paypalOrderId={paypalOrderId ?? undefined}
-                    onCreateOrder={handleInitiatePaypal}
-                    onSuccess={() => setPending(true)}
-                  />
+                  {paypalAvailable ? (
+                    <PaypalPaymentForm
+                      paypalOrderId={paypalOrderId ?? undefined}
+                      clientId={gateways?.paypal?.clientId}
+                      onCreateOrder={handleInitiatePaypal}
+                      onApproveOrder={handleCapturePaypal}
+                    />
+                  ) : (
+                    <div className="tt-state-card" style={{ padding: 24 }}>
+                      <p style={{ color: 'var(--tt-cream)', fontWeight: 700, margin: '0 0 6px' }}>PayPal is not ready.</p>
+                      <p style={{ color: 'var(--tt-cream-muted)', fontSize: '0.85rem', margin: 0 }}>
+                        Use manual payment now, or ask an admin to enable PayPal on the server.
+                      </p>
+                    </div>
+                  )}
                 </div>
               )}
 
               {/* Tab 3: Bank Transfer (Large Admin Instructions + Direct File Upload & Preview) */}
               {activeTab === 'manual' && (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
-                  {/* Method Selector Tabs if multiple manual methods exist */}
-                  {methods.length > 1 && (
-                    <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-                      {methods.map((method) => (
-                        <button
-                          key={method.id}
-                          type="button"
-                          onClick={() => setSelectedMethodId(method.id)}
-                          style={{
-                            padding: '8px 16px',
-                            borderRadius: 8,
-                            fontSize: '0.82rem',
-                            fontWeight: 600,
-                            cursor: 'pointer',
-                            border: (selectedMethodId ?? methods[0]?.id) === method.id ? '1px solid var(--tt-gold)' : '1px solid rgba(184, 147, 62, 0.15)',
-                            background: (selectedMethodId ?? methods[0]?.id) === method.id ? 'rgba(184, 147, 62, 0.15)' : 'var(--tt-surface)',
-                            color: 'var(--tt-cream)'
-                          }}
-                        >
-                          {method.label}
-                        </button>
-                      ))}
+                  {!manualAvailable ? (
+                    <div className="tt-state-card" style={{ padding: 24 }}>
+                      <p style={{ color: 'var(--tt-cream)', fontWeight: 700, margin: '0 0 6px' }}>Manual payment is not configured.</p>
+                      <p style={{ color: 'var(--tt-cream-muted)', fontSize: '0.85rem', margin: 0 }}>
+                        Ask an admin to add a payment method in Settings.
+                      </p>
                     </div>
-                  )}
+                  ) : null}
 
-                  {/* Large Admin-Configured Payment Instructions Display Card */}
-                  <div
-                    style={{
-                      background: 'rgba(30, 30, 30, 0.85)',
-                      border: '1.5px solid rgba(184, 147, 62, 0.25)',
-                      borderRadius: 14,
-                      padding: '24px 28px'
-                    }}
-                  >
-                    <p style={{ fontSize: '0.78rem', textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--tt-gold)', fontWeight: 700, margin: 0, marginBottom: 8 }}>
-                      {selectedMethod?.label ?? 'Bank Wire Transfer Details'}
-                    </p>
-                    <div style={{ color: 'var(--tt-cream)', fontSize: '0.95rem', lineHeight: 1.7, whiteSpace: 'pre-line' }}>
-                      {selectedMethod?.instructions ?? 'Bank wire transfer details will be displayed here once configured by store admin.'}
-                    </div>
-                  </div>
+                  {manualAvailable ? (
+                    <>
+                      {/* Method Selector Tabs if multiple manual methods exist */}
+                      {methods.length > 1 && (
+                        <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                          {methods.map((method) => (
+                            <button
+                              key={method.id}
+                              type="button"
+                              onClick={() => setSelectedMethodId(method.id)}
+                              style={{
+                                padding: '8px 16px',
+                                borderRadius: 8,
+                                fontSize: '0.82rem',
+                                fontWeight: 600,
+                                cursor: 'pointer',
+                                border: (selectedMethodId ?? methods[0]?.id) === method.id ? '1px solid var(--tt-gold)' : '1px solid rgba(184, 147, 62, 0.15)',
+                                background: (selectedMethodId ?? methods[0]?.id) === method.id ? 'rgba(184, 147, 62, 0.15)' : 'var(--tt-surface)',
+                                color: 'var(--tt-cream)'
+                              }}
+                            >
+                              {method.label}
+                            </button>
+                          ))}
+                        </div>
+                      )}
 
-                  {/* Direct Receipt Image Upload & Instant Preview */}
-                  <div
-                    style={{
-                      border: '2px dashed rgba(184, 147, 62, 0.3)',
-                      borderRadius: 14,
-                      padding: 28,
-                      textAlign: 'center',
-                      background: 'var(--tt-surface)'
-                    }}
-                  >
+                      {/* Large Admin-Configured Payment Instructions Display Card */}
+                      <div
+                        style={{
+                          background: 'rgba(30, 30, 30, 0.85)',
+                          border: '1.5px solid rgba(184, 147, 62, 0.25)',
+                          borderRadius: 14,
+                          padding: '24px 28px'
+                        }}
+                      >
+                        <p style={{ fontSize: '0.78rem', textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--tt-gold)', fontWeight: 700, margin: 0, marginBottom: 8 }}>
+                          {selectedMethod?.label ?? 'Manual Payment Details'}
+                        </p>
+                        <div style={{ color: 'var(--tt-cream)', fontSize: '0.95rem', lineHeight: 1.7, whiteSpace: 'pre-line' }}>
+                          {selectedMethod?.instructions ?? 'Manual payment details will be displayed here once configured by store admin.'}
+                        </div>
+                      </div>
+
+                      {/* Direct Receipt Image Upload & Instant Preview */}
+                      <div
+                        style={{
+                          border: '2px dashed rgba(184, 147, 62, 0.3)',
+                          borderRadius: 14,
+                          padding: 28,
+                          textAlign: 'center',
+                          background: 'var(--tt-surface)'
+                        }}
+                      >
                     <p style={{ fontWeight: 700, fontSize: '0.95rem', color: 'var(--tt-cream)', marginBottom: 4 }}>
                       Upload Payment Receipt Image
                     </p>
@@ -560,61 +779,43 @@ export function CustomerPaymentContent() {
                         </div>
                       </div>
                     )}
-                  </div>
+                      </div>
 
-                  {/* One-Click Submit CTA */}
-                  <button
-                    type="button"
-                    className="tt-btn-primary"
-                    disabled={!selectedFile || isUploading}
-                    onClick={handleSubmitManualProof}
-                    style={{
-                      padding: '14px 28px',
-                      borderRadius: 12,
-                      cursor: !selectedFile || isUploading ? 'not-allowed' : 'pointer',
-                      fontSize: '0.92rem',
-                      fontWeight: 700,
-                      width: '100%',
-                      opacity: !selectedFile || isUploading ? 0.6 : 1
-                    }}
-                  >
-                    {isUploading ? 'Uploading & Submitting Proof...' : 'Submit Payment Proof →'}
-                  </button>
+                      {/* One-Click Submit CTA */}
+                      <button
+                        type="button"
+                        className="tt-btn-primary"
+                        disabled={!selectedFile || isUploading}
+                        onClick={handleSubmitManualProof}
+                        style={{
+                          padding: '14px 28px',
+                          borderRadius: 12,
+                          cursor: !selectedFile || isUploading ? 'not-allowed' : 'pointer',
+                          fontSize: '0.92rem',
+                          fontWeight: 700,
+                          width: '100%',
+                          opacity: !selectedFile || isUploading ? 0.6 : 1
+                        }}
+                      >
+                        {isUploading ? 'Uploading & Submitting Proof...' : 'Submit Payment Proof'}
+                      </button>
+                    </>
+                  ) : null}
                 </div>
               )}
             </div>
           )}
-
-          {/* Real-time Status Tracker */}
-          {pending && !isCompleted && (
+          {pending && !isCompleted ? (
             <div className="tt-panel" style={{ padding: '24px 28px', borderRadius: 16 }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
-                <p style={{ fontWeight: 700, color: 'var(--tt-cream)', margin: 0 }}>Live Payment Status</p>
-                <span className="tt-badge-gold" style={{ padding: '4px 14px', borderRadius: 20 }}>
-                  {statusQuery.data?.status ?? 'Processing...'}
-                </span>
-              </div>
-              <p style={{ fontSize: '0.88rem', color: 'var(--tt-cream-muted)', marginBottom: 16 }}>
-                {statusQuery.data?.orderStatus
-                  ? `Order status: ${statusQuery.data.orderStatus.replaceAll('_', ' ')}.`
-                  : 'We will update status automatically upon verification.'}
+              <p style={{ fontWeight: 700, color: 'var(--tt-cream)', margin: '0 0 8px' }}>Payment received</p>
+              <p style={{ fontSize: '0.88rem', color: 'var(--tt-cream-muted)', margin: 0 }}>
+                We saved your payment attempt. Your order history will show the final backend status after provider confirmation.
               </p>
-              <Button
-                variant="outline"
-                loading={statusQuery.isFetching}
-                onClick={() => void statusQuery.refetch()}
-                styles={{
-                  root: {
-                    borderColor: 'var(--tt-gold-muted)',
-                    color: 'var(--tt-gold)',
-                    '&:hover': { background: 'rgba(184, 147, 62, 0.08)' }
-                  }
-                }}
-              >
-                Recheck Status
+              <Button component="a" href="/account/orders" mt="md" variant="light">
+                Go to Payment History
               </Button>
             </div>
-          )}
+          ) : null}
         </div>
       </div>
     </div>

@@ -84,6 +84,10 @@ If side effects do not happen, such as notifications, search sync, or reservatio
 pnpm dev:worker
 ```
 
+## Payment Webhook Testing
+
+Embedded Stripe and PayPal checkout require provider webhooks for final payment reconciliation. See [Payment Webhooks](./payment-webhooks.md) for the local Stripe CLI flow, PayPal tunnel setup, production webhook URLs, and required env variables.
+
 If Prisma client errors reference stale generated files, run:
 
 ```bash

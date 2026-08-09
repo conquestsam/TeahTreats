@@ -19,12 +19,13 @@ export class PermissionsGuard implements CanActivate {
 
     const request = context.switchToHttp().getRequest<AuthenticatedRequest>();
     const userPermissions = new Set(request.user?.permissions ?? []);
-    const hasEveryPermission = requiredPermissions.every((permission) =>
-      userPermissions.has(permission),
-    );
+    const missingPermissions = requiredPermissions.filter((permission) => !userPermissions.has(permission));
 
-    if (!hasEveryPermission) {
-      throw new ForbiddenException('You do not have permission for this action.');
+    if (missingPermissions.length > 0) {
+      const message = process.env.NODE_ENV === 'production'
+        ? 'You do not have permission for this action.'
+        : `You do not have permission for this action. Missing: ${missingPermissions.join(', ')}.`;
+      throw new ForbiddenException(message);
     }
 
     return true;

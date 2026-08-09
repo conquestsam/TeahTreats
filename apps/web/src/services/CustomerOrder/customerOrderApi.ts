@@ -10,22 +10,19 @@ const tenantHeaders = { 'x-tenant-id': customerTenantId };
 
 export function listCustomerOrders() {
   return apiFetch<ApiEnvelope<CustomerOrderListItem[]>>('/shop/orders', {
-    headers: tenantHeaders,
-    skipAuthRefresh: true
+    headers: tenantHeaders
   }).then((response) => response.data);
 }
 
 export function getCustomerOrder(orderId: string) {
   return apiFetch<ApiEnvelope<CustomerOrderDetail>>(`/shop/orders/${orderId}`, {
-    headers: tenantHeaders,
-    skipAuthRefresh: true
+    headers: tenantHeaders
   }).then((response) => response.data);
 }
 
 export function completeCustomerOrder(orderId: string) {
   return apiFetch<ApiEnvelope<CustomerOrderDetail>>(`/shop/orders/${orderId}/complete`, {
     method: 'POST',
-    headers: tenantHeaders,
-    skipAuthRefresh: true
+    headers: tenantHeaders
   }).then((response) => response.data);
 }

@@ -33,15 +33,21 @@ export function AdminProductContent() {
   const [statusFilter, setStatusFilter] = useState('all');
   const [categoryFilter, setCategoryFilter] = useState('all');
   const [viewMode, setViewMode] = useState<'table' | 'grid'>('table');
+  const [wizardUploadedImageCount, setWizardUploadedImageCount] = useState(0);
 
   const resetAndClose = () => {
     productForm.reset();
     imageForm.reset();
     skuForm.reset();
+    setWizardUploadedImageCount(0);
     modals.closeModal();
   };
 
   const mutations = useAdminProductMutations({
+    onProductCreated: (product) => {
+      modals.setSelectedProduct(product);
+      setWizardUploadedImageCount(0);
+    },
     onProductSaved: resetAndClose,
     onSkuSaved: () => skuForm.reset()
   });
@@ -86,6 +92,7 @@ export function AdminProductContent() {
 
   const openCreate = () => {
     productForm.reset();
+    setWizardUploadedImageCount(0);
     modals.openCreate();
   };
 
@@ -137,7 +144,20 @@ export function AdminProductContent() {
         ...(productForm.values.slug ? { slug: productForm.values.slug } : {}),
         ...(productForm.values.description
           ? { description: productForm.values.description }
-          : {})
+          : {}),
+        tags: csv(productForm.values.tags),
+        ...(productForm.values.flavor ? { flavor: productForm.values.flavor } : {}),
+        ...(productForm.values.occasion ? { occasion: productForm.values.occasion } : {}),
+        ingredients: csv(productForm.values.ingredients),
+        allergens: csv(productForm.values.allergens),
+        nutritionFacts: keyValueLines(productForm.values.nutritionFacts),
+        dietaryLabels: csv(productForm.values.dietaryLabels),
+        isPerishable: productForm.values.isPerishable,
+        ...(productForm.values.storageInstructions ? { storageInstructions: productForm.values.storageInstructions } : {}),
+        ...(productForm.values.shelfLifeNotes ? { shelfLifeNotes: productForm.values.shelfLifeNotes } : {}),
+        bundleEligible: productForm.values.bundleEligible,
+        ...(productForm.values.seoTitle ? { seoTitle: productForm.values.seoTitle } : {}),
+        ...(productForm.values.seoDescription ? { seoDescription: productForm.values.seoDescription } : {})
       });
       return;
     }
@@ -150,8 +170,56 @@ export function AdminProductContent() {
           description: productForm.values.description,
           status: productForm.values.status as AdminProductModel['status'],
           brand: productForm.values.brand || null,
-          category: productForm.values.category || null
+          category: productForm.values.category || null,
+          tags: csv(productForm.values.tags),
+          flavor: productForm.values.flavor || null,
+          occasion: productForm.values.occasion || null,
+          ingredients: csv(productForm.values.ingredients),
+          allergens: csv(productForm.values.allergens),
+          nutritionFacts: keyValueLines(productForm.values.nutritionFacts),
+          dietaryLabels: csv(productForm.values.dietaryLabels),
+          isPerishable: productForm.values.isPerishable,
+          storageInstructions: productForm.values.storageInstructions || null,
+          shelfLifeNotes: productForm.values.shelfLifeNotes || null,
+          bundleEligible: productForm.values.bundleEligible,
+          seoTitle: productForm.values.seoTitle || null,
+          seoDescription: productForm.values.seoDescription || null
         }
+      });
+    }
+  };
+
+  const uploadWizardProductImages = async (files: File[]) => {
+    const product = modals.selectedProduct;
+    if (!product || files.length === 0) {
+      return;
+    }
+
+    try {
+      for (const [index, file] of files.entries()) {
+        const upload = await mutations.imageUploadMutation.mutateAsync({
+          productId: product.id,
+          contentType: file.type
+        });
+        const uploaded = await uploadProductImageFile(file, upload);
+        await mutations.imageCreateMutation.mutateAsync({
+          productId: product.id,
+          image: {
+            url: uploaded.url,
+            objectKey: uploaded.objectKey,
+            storageProvider: upload.provider,
+            contentType: file.type as 'image/jpeg' | 'image/jpg' | 'image/png' | 'image/webp',
+            alt: `${product.name} image ${product.images.length + wizardUploadedImageCount + index + 1}`,
+            sortOrder: product.images.length + wizardUploadedImageCount + index
+          }
+        });
+      }
+      setWizardUploadedImageCount((current) => current + files.length);
+    } catch {
+      notifications.show({
+        color: 'red',
+        title: 'Upload failed',
+        message: 'One or more product images could not be uploaded.'
       });
     }
   };
@@ -270,9 +338,13 @@ export function AdminProductContent() {
         mode={modals.mode}
         opened={modals.mode === 'create' || modals.mode === 'edit'}
         loading={mutations.createMutation.isPending || mutations.updateMutation.isPending}
+        uploadLoading={mutations.imageUploadMutation.isPending || mutations.imageCreateMutation.isPending}
+        createdProduct={modals.mode === 'create' ? modals.selectedProduct : null}
+        uploadedImageCount={wizardUploadedImageCount}
         form={productForm}
         onClose={resetAndClose}
         onSubmit={submitProductForm}
+        onUploadFiles={uploadWizardProductImages}
       />
 
       <AdminProductDetailsModal

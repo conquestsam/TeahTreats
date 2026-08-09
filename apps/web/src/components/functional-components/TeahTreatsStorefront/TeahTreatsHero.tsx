@@ -2,6 +2,7 @@
 
 import { useEffect, useRef } from 'react';
 import { gsap } from 'gsap';
+import Link from 'next/link';
 import { motion } from 'motion/react';
 
 export function TeahTreatsHero() {
@@ -62,20 +63,20 @@ export function TeahTreatsHero() {
               data-hero-anim
               style={{ display: 'flex', gap: 14, flexWrap: 'wrap', opacity: 0 }}
             >
-              <a href="/products" className="tt-btn-primary" style={{
+              <Link href="/products" className="tt-btn-primary" style={{
                 display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
                 padding: '12px 28px', borderRadius: 10, textDecoration: 'none', fontWeight: 650,
                 fontSize: '0.9rem', letterSpacing: '0.02em'
               }}>
                 Shop the Collection
-              </a>
-              <a href="/bundles" className="tt-btn-secondary" style={{
+              </Link>
+              <Link href="/bundles" className="tt-btn-secondary" style={{
                 display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
                 padding: '12px 28px', borderRadius: 10, textDecoration: 'none', fontWeight: 600,
                 fontSize: '0.9rem', letterSpacing: '0.02em'
               }}>
                 Explore Bundles
-              </a>
+              </Link>
             </motion.div>
           </div>
 

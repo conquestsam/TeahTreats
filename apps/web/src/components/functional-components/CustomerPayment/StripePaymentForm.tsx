@@ -1,12 +1,9 @@
 'use client';
 
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { Elements, PaymentElement, useElements, useStripe } from '@stripe/react-stripe-js';
 import { loadStripe } from '@stripe/stripe-js';
 import { notifications } from '@mantine/notifications';
-
-const stripePublishableKey = process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY || 'pk_test_placeholder';
-const stripePromise = loadStripe(stripePublishableKey);
 
 function StripeCheckoutForm({ onSuccess }: { onSuccess: () => void }) {
   const stripe = useStripe();
@@ -99,12 +96,29 @@ function StripeCheckoutForm({ onSuccess }: { onSuccess: () => void }) {
 
 export function StripePaymentWrapper({
   clientSecret,
+  publishableKey,
   onSuccess
 }: {
   clientSecret: string;
+  publishableKey?: string | null | undefined;
   onSuccess: () => void;
 }) {
+  const stripePromise = useMemo(
+    () => (publishableKey ? loadStripe(publishableKey) : null),
+    [publishableKey],
+  );
+
   if (!clientSecret) return null;
+  if (!stripePromise) {
+    return (
+      <div className="tt-state-card" style={{ padding: 24 }}>
+        <p style={{ color: 'var(--tt-cream)', fontWeight: 700, margin: '0 0 6px' }}>Card form is not ready.</p>
+        <p style={{ color: 'var(--tt-cream-muted)', fontSize: '0.85rem', margin: 0 }}>
+          Stripe is enabled on the server, but this in-browser card form has not been configured for the current environment.
+        </p>
+      </div>
+    );
+  }
 
   return (
     <Elements

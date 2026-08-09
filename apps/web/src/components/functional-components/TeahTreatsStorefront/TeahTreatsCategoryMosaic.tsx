@@ -1,43 +1,101 @@
 'use client';
 
 import Link from 'next/link';
+import { motion, useScroll, useTransform } from 'motion/react';
+import { useRef } from 'react';
 
 const categories = [
-  { name: 'Sweet Treats', slug: 'sweet-treats', gradient: 'linear-gradient(135deg, #3d1a0e, #1a0a05)', featured: true },
-  { name: 'Savory Bites', slug: 'savory-bites', gradient: 'linear-gradient(135deg, #1a2e1a, #0a150a)' },
-  { name: 'Healthy Picks', slug: 'healthy-picks', gradient: 'linear-gradient(135deg, #1a2e2e, #0a1515)' },
-  { name: 'Party Packs', slug: 'party-packs', gradient: 'linear-gradient(135deg, #2e1a2e, #150a15)' },
-  { name: 'Office Favorites', slug: 'office-favorites', gradient: 'linear-gradient(135deg, #2e2e1a, #15150a)' }
+  {
+    name: 'Sweet Treats',
+    slug: 'sweet-treats',
+    count: '48',
+    image: 'https://images.unsplash.com/photo-1549590143-d5855148a9d5?q=80&w=928&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D',
+    featured: true
+  },
+  {
+    name: 'Savory Bites',
+    slug: 'savory-bites',
+    count: '31',
+    image: 'https://plus.unsplash.com/premium_photo-1718221058085-7b81f1226d6b?q=80&w=1740&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D'
+  },
+  {
+    name: 'Healthy Picks',
+    slug: 'healthy-picks',
+    count: '26',
+    image: 'https://plus.unsplash.com/premium_photo-1663011666483-ac74795eb4a0?q=80&w=1740&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D'
+  },
+  {
+    name: 'Party Packs',
+    slug: 'party-packs',
+    count: '22',
+    image: 'https://images.unsplash.com/photo-1481391243133-f96216dcb5d2?q=80&w=1400&auto=format&fit=crop'
+  },
+  {
+    name: 'Office Favorites',
+    slug: 'office-favorites',
+    count: '19',
+    image: 'https://images.unsplash.com/photo-1621939514649-280e2ee25f60?q=80&w=1400&auto=format&fit=crop'
+  }
 ];
 
 export function TeahTreatsCategoryMosaic() {
+  const sectionRef = useRef<HTMLElement | null>(null);
+  const { scrollYProgress } = useScroll({ target: sectionRef, offset: ['start end', 'end start'] });
+  const y = useTransform(scrollYProgress, [0, 1], [-32, 32]);
+
   return (
-    <section className="tt-section tt-section-dark">
+    <section ref={sectionRef} className="tt-section tt-section-dark">
       <div className="tt-container">
-        <p className="tt-eyebrow" style={{ marginBottom: 12 }}>Explore Categories</p>
-        <h2 className="tt-display" style={{ fontSize: 'clamp(1.8rem, 3.5vw, 3rem)', marginBottom: 40 }}>
-          Find your flavor
-        </h2>
-        <div className="tt-mosaic">
-          {categories.map((cat) => (
-            <Link
+        <div className="tt-section-heading">
+          <div>
+            <p className="tt-eyebrow">Explore Categories</p>
+            <h2 className="tt-display">Every Craving, One Address</h2>
+            <p className="tt-body">
+              Glide through fresh, sweet, savory, healthy, party, and office-ready snack worlds.
+            </p>
+          </div>
+        </div>
+        <div className="tt-mosaic tt-motion-category-grid">
+          {categories.map((cat, index) => (
+            <motion.div
               key={cat.slug}
-              href={`/products?category=${cat.slug}`}
-              className={`tt-mosaic-tile${cat.featured ? ' tt-mosaic-featured' : ''}`}
-              style={{ minHeight: cat.featured ? 420 : 200 }}
+              initial={{ opacity: 0, y: 28 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true, margin: '-80px' }}
+              transition={{ duration: 0.5, delay: index * 0.07 }}
+              className={cat.featured ? 'tt-mosaic-featured' : undefined}
             >
-              <div
-                className="tt-mosaic-tile-bg"
-                style={{ background: cat.gradient }}
-              />
-              <div className="tt-mosaic-tile-overlay" />
-              <div className="tt-mosaic-tile-content">
-                <p className="tt-eyebrow" style={{ marginBottom: 6, fontSize: '0.65rem' }}>Category</p>
-                <h3 className="tt-editorial" style={{ fontSize: cat.featured ? '1.6rem' : '1.2rem', margin: 0 }}>
-                  {cat.name}
-                </h3>
-              </div>
-            </Link>
+              <Link
+                href={`/products?category=${cat.slug}`}
+                className={`tt-mosaic-tile tt-motion-category-card${cat.featured ? ' tt-mosaic-featured' : ''}`}
+                style={{ minHeight: cat.featured ? 440 : 220 }}
+                data-cursor="Explore"
+              >
+                {cat.featured ? (
+                  <motion.img
+                    src={cat.image}
+                    alt={cat.name}
+                    className="tt-motion-category-image"
+                    style={{ y }}
+                  />
+                ) : (
+                  <motion.img
+                    src={cat.image}
+                    alt={cat.name}
+                    className="tt-motion-category-image"
+                  />
+                )}
+                <div className="tt-mosaic-tile-overlay" />
+                <div className="tt-category-shimmer" aria-hidden="true" />
+                <div className="tt-mosaic-tile-content">
+                  <p className="tt-eyebrow" style={{ marginBottom: 6, fontSize: '0.65rem' }}>{cat.count} snacks</p>
+                  <h3 className="tt-editorial" style={{ fontSize: cat.featured ? '1.7rem' : '1.22rem', margin: 0 }}>
+                    {cat.name}
+                  </h3>
+                  <span className="tt-category-link-text">Shop category</span>
+                </div>
+              </Link>
+            </motion.div>
           ))}
         </div>
       </div>

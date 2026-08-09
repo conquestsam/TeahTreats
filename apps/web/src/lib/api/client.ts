@@ -47,14 +47,15 @@ export async function apiFetch<TResponse>(
     );
   }
 
-  if (response.status === 401 && !init?.skipAuthRefresh && path !== '/auth/refresh') {
-    const refreshed = await refreshSession();
+  if ((response.status === 401 || response.status === 403) && !init?.skipAuthRefresh && !path.endsWith('/refresh')) {
+    const refreshed = await refreshSession(path, headers);
     if (refreshed) {
       return apiFetch<TResponse>(path, { ...init, skipAuthRefresh: true });
     }
   }
 
   if (!response.ok) {
+    handleAuthRedirect(path, response.status);
     throw new ApiError(await resolveErrorMessage(response), response.status);
   }
 
@@ -76,15 +77,44 @@ function readCookie(name: string) {
   return value ? decodeURIComponent(value) : null;
 }
 
-async function refreshSession() {
+async function refreshSession(path: string, headers: Headers) {
   try {
-    await apiFetch('/auth/refresh', {
+    const refreshPath = shouldUseCustomerRefresh(path) ? '/customer-auth/refresh' : '/auth/refresh';
+    await apiFetch(refreshPath, {
       method: 'POST',
+      headers,
       skipAuthRefresh: true
     });
     return true;
   } catch {
     return false;
+  }
+}
+
+function shouldUseCustomerRefresh(path: string) {
+  return path.startsWith('/customer-auth') || path.startsWith('/shop/orders');
+}
+
+function handleAuthRedirect(path: string, status: number) {
+  if (typeof window === 'undefined' || status !== 401) {
+    return;
+  }
+
+  if (path === '/customer-auth/me' || path === '/auth/me') {
+    return;
+  }
+
+  if (window.location.pathname === '/login' || window.location.pathname === '/admin/login') {
+    return;
+  }
+
+  if (path.startsWith('/customer-auth') || path.startsWith('/shop/orders')) {
+    window.location.replace('/login');
+    return;
+  }
+
+  if (path.startsWith('/auth') || path.startsWith('/admin')) {
+    window.location.replace('/admin/login');
   }
 }
 

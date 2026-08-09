@@ -118,7 +118,6 @@ export class OrdersService {
       }
     });
 
-    await this.sendReadyNotification(updated);
     return this.toOrderDetail(updated);
   }
 
@@ -421,41 +420,6 @@ export class OrdersService {
     }
   }
 
-  private async sendReadyNotification(order: OrderWithDetails) {
-    const customer = this.readCustomer(order.customer);
-    const subject = 'Your snacks order is ready';
-    const body = `Your order ${order.id} is ready.`;
-
-    await this.prisma.notification.createMany({
-      data: [
-        {
-          tenantId: order.tenantId,
-          channel: 'email',
-          subject,
-          body,
-          status: customer.email ? 'pending' : 'skipped',
-          metadata: { to: customer.email, orderId: order.id }
-        },
-        {
-          tenantId: order.tenantId,
-          channel: 'sms',
-          subject,
-          body,
-          status: customer.phone ? 'pending' : 'skipped',
-          metadata: { to: customer.phone, orderId: order.id }
-        },
-        {
-          tenantId: order.tenantId,
-          channel: 'whatsapp',
-          subject,
-          body,
-          status: customer.phone ? 'pending' : 'skipped',
-          metadata: { to: customer.phone, orderId: order.id }
-        }
-      ]
-    });
-  }
-
   private async resolveTenantId(tenantIdOrSlug: string) {
     if (!tenantIdOrSlug) {
       throw new BadRequestException('Tenant context is required.');
@@ -497,8 +461,22 @@ export class OrdersService {
       name: typeof customer.name === 'string' ? customer.name : 'Customer',
       email: typeof customer.email === 'string' ? customer.email : '',
       phone: typeof customer.phone === 'string' ? customer.phone : '',
-      address: typeof customer.address === 'string' ? customer.address : ''
+      address: this.formatCustomerAddress(customer.address)
     };
+  }
+
+  private formatCustomerAddress(value: unknown) {
+    if (typeof value === 'string') {
+      return value;
+    }
+    if (!value || typeof value !== 'object' || Array.isArray(value)) {
+      return '';
+    }
+    const address = value as Record<string, unknown>;
+    return ['line1', 'line2', 'city', 'state', 'postalCode', 'zip', 'country']
+      .map((key) => address[key])
+      .filter((part): part is string => typeof part === 'string' && part.trim().length > 0)
+      .join(', ');
   }
 
   private toOrderListItem(order: Prisma.OrderGetPayload<{ include: { items: true; payments: true } }>) {
