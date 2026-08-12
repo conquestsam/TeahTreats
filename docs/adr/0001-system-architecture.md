@@ -460,6 +460,7 @@ First UI modernization pass acceptance:
 
 - The home page must be reorganized into clear product and commerce sections: Hero, New Arrivals, Popular Snacks, Fresh Picks, Bundles, Office Snack Planning, Categories, Brand Story, Testimonials, and Newsletter/Footer.
 - Product cards must support API-provided multi-image media. The primary image is shown by default, the secondary image appears on hover-capable devices, and indicators show when multiple images exist.
+- On touch/mobile devices, product cards with multiple images must auto-transition through images smoothly because hover is unavailable. The transition should pause when the product details modal/drawer is open, respect `prefers-reduced-motion`, avoid layout shift, and never block tap targets.
 - Product cards must provide explicit actions for viewing details and adding to cart. Details open a focused modal/drawer with image gallery, SKU selection, price, availability, tags, and backend-owned add-to-cart behavior.
 - Missing product media must render a branded fallback treatment with snack/category cues. Do not show broken images, empty blocks, or skeletal placeholder cards as final UI.
 - The optional custom cursor must never interfere with click or tap behavior. It must be disabled on touch/mobile devices and when reduced motion is preferred, use `pointer-events: none`, and use a conservative z-index below app overlays.
@@ -475,6 +476,134 @@ Second UI/operations correction pass:
 - Notification delivery must be smoke-testable from admin. A smoke test creates normal notification log records and attempts provider delivery for email, SMS, WhatsApp, and in-app channels.
 - Reservation expiry must release held stock transactionally when an order expires in payment flow; Redis/OpenSearch/outbox side effects are not allowed to be the only release mechanism.
 - Admin product creation should move toward a single multistep wizard with product basics, snack metadata, SKUs, and multi-image upload in one guided flow.
+
+### Reference Brand UX Audit: iyatega.com
+
+Reference reviewed directly on August 12, 2026: `https://iyatega.com/`.
+
+Observed site profile:
+
+- Iya Tega is positioned as African and intercontinental cuisine with the promise `Good Food | Great Service`.
+- The site uses a simple restaurant structure: logo-led header, Home/Menu/About/Contact navigation, strong `Reservation` CTA, full-bleed food hero, welcome/about section, hours, menu preview, happy-hours/offer section, testimonials, social links, phone reservation CTA, and compact footer.
+- The site appears to be WordPress/Elementor, with IBM Plex Sans as the body font, a pale lavender page background, dark CTA button, real food photography, menu item pricing, phone number, and social links.
+- The strongest experience pattern is clarity: a customer immediately understands the food category, sees real food, can open the menu, and can reserve/contact without learning a complex interface.
+
+Useful patterns TeahTreats should adapt:
+
+- Lead with food, not abstract design. Iya Tega's strongest asset is real cuisine imagery in the first viewport. TeahTreats should keep snack/product photography as the first signal on the storefront hero and product sections.
+- Keep the header simple. The Iya Tega nav uses a small set of obvious routes plus one primary CTA. TeahTreats should avoid crowded desktop navigation and keep mobile navigation compact: Products, Bundles, Office Plans, Search, Cart, Account.
+- Make the primary conversion path obvious. Iya Tega uses `Reservation`; TeahTreats should use similarly direct CTAs: `Shop Snacks`, `Build a Bundle`, `Plan Office Snacks`, and `View Cart`.
+- Use menu/product previews with names, descriptions, and prices. TeahTreats product cards should show name, short sensory description, price, availability, category/dietary tag, and one clear action.
+- Add direct trust/contact cues. TeahTreats should expose support email/phone, order readiness expectations, refund/allergy links, and social links in the footer and checkout-adjacent surfaces.
+- Use culturally warm storytelling. TeahTreats can borrow the approachable food-service tone without copying the restaurant brand: short story sections, customer quotes, and African/Nigerian customer names where appropriate.
+
+Gaps in TeahTreats revealed by the reference:
+
+- TeahTreats has richer commerce functionality, but parts of the storefront can feel more complex than the reference. The shopping journey must remain as simple as the restaurant journey: browse, choose, cart, checkout, payment, readiness notification.
+- The homepage should not bury the product path under decorative sections. Product sections must be clearly separated into New Arrivals, Popular Snacks, Fresh Picks, Bundles, Office Planning, and Categories.
+- Product cards must avoid empty or skeletal states. If a product image is missing, use a branded snack fallback and seed better product imagery instead of showing blank cards.
+- The footer should behave like a trust and action hub, not only legal links. It should include support/contact, social links, order/payment help, refund policy, privacy, terms, and allergy disclaimer.
+- Admin UI should not imitate the restaurant/storefront look. Admin should borrow only clarity: direct labels, obvious primary actions, short empty states, and predictable page structure.
+
+Recommended TeahTreats improvements:
+
+- Storefront hero:
+  - Keep a real snack image background.
+  - Use one short headline and two clear CTAs.
+  - Add compact trust stats only if they do not compete with the action.
+- Navigation:
+  - Keep desktop nav route count small.
+  - Keep search and cart as persistent actions.
+  - Ensure notification overlays, custom cursors, and motion layers never intercept nav clicks.
+- Product discovery:
+  - Use menu-like product previews with price and a short description.
+  - Add section-level intent: `New Arrivals`, `Popular Snacks`, `Fresh Picks`, `Bundles`, `Office Plans`.
+  - Treat multi-image cards as product inspection aids, not decorative animation.
+- Story and trust:
+  - Use a concise `Our Story` section focused on fresh snacks, Nigerian/African-inspired treats, office planning, and reliable order readiness.
+  - Use rotating testimonials with Nigerian/African names and practical claims: freshness, office reliability, gifting quality, and easy pickup/delivery handoff.
+  - Show phone/email/contact and social links in footer.
+- Checkout:
+  - Keep checkout closer to restaurant reservation clarity: clear customer details, clear payment choice, clear success state, clear readiness notification.
+- Admin:
+  - Use Iya Tega's clarity principle, not its visual style. Admin pages should show one primary action, one table/card list, and modals for changes.
+
+Mobile-first rules from the reference:
+
+- First viewport must show brand, food category, and primary action without requiring horizontal navigation.
+- Food imagery must crop intentionally on mobile; text must not overlap faces, product details, or CTA buttons.
+- Header must remain tappable with 44px minimum hit targets.
+- Menu/product previews should stack vertically with short descriptions and visible prices.
+- Social/contact actions should be reachable near the footer and after checkout/payment states.
+
+What TeahTreats should avoid from the reference:
+
+- Do not copy the pale lavender restaurant palette; TeahTreats keeps black, crimson, gold, and cream.
+- Do not copy WordPress/Elementor layout artifacts, duplicate nav markup, decorative utensils, or chat widgets that cover primary content.
+- Do not make the storefront only brochure-like; TeahTreats is transactional ecommerce and must keep product, cart, checkout, payment, and account flows first-class.
+- Do not rely on large unoptimized images. TeahTreats should use responsive images, lazy loading below the fold, and seeded product media.
+- Do not add floating widgets or notification containers that block nav/cart/search hit targets.
+
+Risks and tradeoffs:
+
+- Borrowing restaurant warmth can improve trust, but too much brochure-style storytelling may slow shopping. Product discovery and cart actions must stay dominant.
+- Rich food imagery improves conversion but can harm performance if not responsive and lazy-loaded.
+- Cultural storytelling helps brand specificity, but copy must remain inclusive and clear for all U.S. customers.
+- Motion can make the storefront feel premium, but it must never interfere with clicks, scrolling, checkout, forms, or reduced-motion preferences.
+
+Next recommended implementation slice:
+
+- Implement a `Reference UX Storefront Refinement` slice:
+  - tighten homepage navigation and CTA hierarchy,
+  - add restaurant-style product/menu preview clarity to product cards,
+  - improve footer trust/contact/social blocks,
+  - refine story/testimonial content with Nigerian/African customer names,
+  - audit mobile first viewport and hit targets,
+  - remove or constrain any floating layer that can block nav/cart/search.
+
+### African Food-Service Storefront Refinement
+
+This refinement turns the TeahTreats storefront away from generic premium snack language and toward a simpler African food-service ecommerce experience.
+
+Decision:
+
+- The public storefront must lead with real TeahTreats products: Signature Zobo, puff puff trays, meat pie trays, samosa/spring roll trays, scotch egg bites, party snack combos, and custom celebration cakes.
+- Generic seeded storefront products such as truffle almonds, pistachio mixes, wafers, popcorn, gummies, nuts, and abstract snack boxes are not part of the MVP public catalog and should be archived by seed cleanup.
+- The homepage should feel closer to a calm food menu than a dense luxury marketplace. Customers should understand the business within three seconds: African snacks, custom cakes, zobo, visible prices, secure checkout, and readiness notifications.
+
+Storefront structure:
+
+- Hero: real food image, one clear headline, short copy, and two CTAs: `Order Snacks` and `Plan a Tray`.
+- Menu preview: four to six recognizable products with name, short description, category, and price. Avoid long copy and avoid duplicating the full catalog.
+- Product rails: group products by real food-service intent:
+  - `Signature Drinks`
+  - `Fresh Pastries`
+  - `Party Trays`
+  - `Custom Cakes`
+  - `Popular Picks`
+- Categories: use real product photos and simple labels: party trays, fresh pastries, signature drinks, celebration cakes, and office planning.
+- Product cards: support multiple images, hover transition on desktop, automatic smooth image cycling on touch devices, visible price, availability, and one clear add action.
+- Story/testimonials/footer: use warm family and food-service copy, Nigerian/African customer names, phone/social/contact cues, legal links, refund policy, privacy, terms, and allergy disclaimer.
+
+Copy rules:
+
+- Prefer plain words: `Puff Puff Tray`, `Classic Meat Pie Tray`, `Party Snack Combo`, `Custom Cake`.
+- Avoid abstract product names unless they are actual branded items.
+- Keep descriptions short and practical: what it is, who it is for, and whether it is fresh or made to order.
+- Do not make the storefront sound like a chocolate boutique unless the actual product is chocolate.
+
+Operational rules:
+
+- Seed data for the platform tenant must keep the real MVP catalog active and archive retired generic seeded slugs.
+- Storefront APIs remain backend-owned for visibility, price, availability, and inventory rules.
+- Redis/OpenSearch may accelerate discovery but must not become the source of truth.
+- Mobile product image transitions must not depend on hover or custom cursor behavior.
+
+Risks and tradeoffs:
+
+- A simpler food-service presentation may feel less “luxury marketplace,” but it improves clarity and conversion for actual snack/catering customers.
+- Real product imagery improves trust but requires image hygiene, compression, and consistent alt text.
+- Archiving old seeded products is correct for MVP demos, but production seed scripts must be careful not to archive merchant-created products accidentally.
 
 ## Mantine vs shadcn/ui Decision
 

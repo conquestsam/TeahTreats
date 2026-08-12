@@ -52,7 +52,7 @@ export function useCustomerLogoutMutation() {
   return useMutation({
     mutationFn: logoutCustomer,
     onSuccess: async () => {
-      await queryClient.invalidateQueries({ queryKey: customerAuthQueryKey });
+      queryClient.clear();
       notifications.show({ color: 'green', title: 'Signed out', message: 'Your session has ended.' });
       window.location.replace('/');
     },

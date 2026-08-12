@@ -22,17 +22,17 @@ export function TeahTreatsHero() {
   }, []);
 
   const stats = [
-    { value: '500+', label: 'Curated Snacks' },
-    { value: '24h', label: 'Freshness Check' },
-    { value: 'Free', label: 'Pickup Ready' }
+    { value: 'Trays', label: 'Fresh snacks' },
+    { value: 'Cakes', label: 'Custom orders' },
+    { value: 'Zobo', label: 'Signature drink' }
   ];
 
   return (
     <section className="tt-hero" ref={heroRef}>
       <div className="tt-hero-bg">
         <img
-          src="/hero-snacks.png"
-          alt="Premium curated snacks on dark slate"
+          src="/brand/products/party-snack-combo.jpg"
+          alt="TeshTreats party tray with puff puff, samosas, and spring rolls"
           loading="eager"
           style={{ width: '100%', height: '100%', objectFit: 'cover' }}
         />
@@ -42,22 +42,22 @@ export function TeahTreatsHero() {
         <div className="tt-container" style={{ paddingBlock: '48px' }}>
           <div style={{ maxWidth: 720 }}>
             <p data-hero-anim className="tt-eyebrow" style={{ marginBottom: 16, opacity: 0 }}>
-              Premium Snack Commerce
+              Fresh Snacks | Cakes | Signature Zobo
             </p>
             <h1
               data-hero-anim
               className="tt-display"
               style={{ fontSize: 'clamp(2.4rem, 5.5vw, 4.5rem)', marginBottom: 20, opacity: 0 }}
             >
-              Snacks crafted for every craving, curated for every moment.
+              African snacks, custom cakes, and zobo made simple.
             </h1>
             <p
               data-hero-anim
               className="tt-body"
               style={{ maxWidth: 560, marginBottom: 32, fontSize: '1.05rem', opacity: 0 }}
             >
-              From artisan treats to office packs — discover fresh, perishable, and shelf-stable
-              snacks with real-time availability and curated bundles.
+              Order puff puff, meat pies, samosas, spring rolls, custom cakes, and TeshTreats
+              Signature Zobo with visible prices and readiness updates.
             </p>
             <motion.div
               data-hero-anim
@@ -68,16 +68,21 @@ export function TeahTreatsHero() {
                 padding: '12px 28px', borderRadius: 10, textDecoration: 'none', fontWeight: 650,
                 fontSize: '0.9rem', letterSpacing: '0.02em'
               }}>
-                Shop the Collection
+                Order Snacks
               </Link>
               <Link href="/bundles" className="tt-btn-secondary" style={{
                 display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
                 padding: '12px 28px', borderRadius: 10, textDecoration: 'none', fontWeight: 600,
                 fontSize: '0.9rem', letterSpacing: '0.02em'
               }}>
-                Explore Bundles
+                Plan a Tray
               </Link>
             </motion.div>
+            <div data-hero-anim className="tt-hero-contact-cue" style={{ opacity: 0 }}>
+              <span>Pickup and delivery handoff ready</span>
+              <span>Secure checkout</span>
+              <span>Order alerts by email/SMS</span>
+            </div>
           </div>
 
           <div

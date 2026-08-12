@@ -97,6 +97,32 @@ export function TeahTreatsNewsletter() {
         }}>
           No spam. Unsubscribe anytime. We respect your privacy.
         </p>
+
+        <div className="tt-footer-trust-grid">
+          <div>
+            <span className="tt-eyebrow">Call or Text</span>
+            <a href="tel:+17089006994">708-900-6994</a>
+            <p>Questions about trays, cakes, or pickup readiness.</p>
+          </div>
+          <div>
+            <span className="tt-eyebrow">Order Help</span>
+            <a href="mailto:support@teshtreats.com">support@teshtreats.com</a>
+            <p>Secure checkout, manual payment help, and order updates.</p>
+          </div>
+          <div>
+            <span className="tt-eyebrow">Social</span>
+            <div className="tt-footer-socials" aria-label="TeshTreats social links">
+              <a href="https://instagram.com/teshtreats" target="_blank" rel="noreferrer">Instagram</a>
+              <a href="https://facebook.com/" target="_blank" rel="noreferrer">Facebook</a>
+              <a href="https://tiktok.com/" target="_blank" rel="noreferrer">TikTok</a>
+            </div>
+            <p>Fresh drops, party trays, custom cakes, and Signature Zobo.</p>
+          </div>
+        </div>
+
+        <p className="tt-footer-readiness-note">
+          Order readiness is sent by email, SMS, WhatsApp, or in-app notification when configured.
+        </p>
       </div>
     </section>
   );

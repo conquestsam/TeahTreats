@@ -17,10 +17,18 @@ import {
 } from '@/services/Storefront/storefrontApi';
 import type { StorefrontProductQuery } from '@/types/Storefront/storefrontTypes';
 
+const storefrontAvailabilityQueryOptions = {
+  staleTime: 5 * 60_000,
+  gcTime: 30 * 60_000,
+  retry: 1,
+  refetchOnWindowFocus: false
+};
+
 export function useStorefrontProductsQuery(query: StorefrontProductQuery) {
   return useQuery({
     queryKey: [...storefrontProductsQueryKey, query],
-    queryFn: () => getStorefrontProducts(query)
+    queryFn: () => getStorefrontProducts(query),
+    ...storefrontAvailabilityQueryOptions
   });
 }
 
@@ -28,7 +36,10 @@ export function useStorefrontSearchQuery(query: StorefrontProductQuery, enabled:
   return useQuery({
     queryKey: [...storefrontSearchQueryKey, query],
     queryFn: () => searchStorefrontProducts(query),
-    enabled
+    enabled,
+    staleTime: 60_000,
+    retry: 1,
+    refetchOnWindowFocus: false
   });
 }
 
@@ -36,20 +47,26 @@ export function useStorefrontProductDetailQuery(slug: string, enabled = true) {
   return useQuery({
     queryKey: [...storefrontProductDetailQueryKey, slug],
     queryFn: () => getStorefrontProduct(slug),
-    enabled: Boolean(slug) && enabled
+    enabled: Boolean(slug) && enabled,
+    staleTime: 5 * 60_000,
+    gcTime: 30 * 60_000,
+    retry: 1,
+    refetchOnWindowFocus: false
   });
 }
 
 export function useStorefrontCollectionsQuery() {
   return useQuery({
     queryKey: storefrontCollectionsQueryKey,
-    queryFn: getStorefrontCollections
+    queryFn: getStorefrontCollections,
+    ...storefrontAvailabilityQueryOptions
   });
 }
 
 export function useStorefrontRecommendationsQuery() {
   return useQuery({
     queryKey: storefrontRecommendationsQueryKey,
-    queryFn: getStorefrontRecommendations
+    queryFn: getStorefrontRecommendations,
+    ...storefrontAvailabilityQueryOptions
   });
 }

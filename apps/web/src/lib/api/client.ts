@@ -47,7 +47,7 @@ export async function apiFetch<TResponse>(
     );
   }
 
-  if ((response.status === 401 || response.status === 403) && !init?.skipAuthRefresh && !path.endsWith('/refresh')) {
+  if (shouldAttemptRefresh(path, response.status, init?.skipAuthRefresh)) {
     const refreshed = await refreshSession(path, headers);
     if (refreshed) {
       return apiFetch<TResponse>(path, { ...init, skipAuthRefresh: true });
@@ -91,6 +91,19 @@ async function refreshSession(path: string, headers: Headers) {
   }
 }
 
+function shouldAttemptRefresh(path: string, status: number, skipAuthRefresh: boolean | undefined) {
+  if (skipAuthRefresh || status !== 401) {
+    return false;
+  }
+  if (path.endsWith('/refresh') || path.endsWith('/login') || path.endsWith('/signup') || path.endsWith('/csrf')) {
+    return false;
+  }
+  if (path === '/auth/me' || path === '/customer-auth/me') {
+    return false;
+  }
+  return path.startsWith('/auth') || path.startsWith('/admin') || path.startsWith('/customer-auth') || path.startsWith('/shop/orders');
+}
+
 function shouldUseCustomerRefresh(path: string) {
   return path.startsWith('/customer-auth') || path.startsWith('/shop/orders');
 }
@@ -128,6 +141,9 @@ async function resolveErrorMessage(response: Response) {
     if (Array.isArray(body.message)) {
       return body.message.join(' ');
     }
+    if (response.status === 401 && isCredentialEndpoint(response.url)) {
+      return 'Email or password is incorrect.';
+    }
     if (response.status === 401) {
       return 'Your session expired. Please sign in again.';
     }
@@ -148,4 +164,8 @@ async function resolveErrorMessage(response: Response) {
   } catch {
     return `Request failed: ${response.statusText}`;
   }
+}
+
+function isCredentialEndpoint(url: string) {
+  return url.endsWith('/auth/login') || url.endsWith('/customer-auth/login');
 }

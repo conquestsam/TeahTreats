@@ -6,35 +6,35 @@ import { useRef } from 'react';
 
 const categories = [
   {
-    name: 'Sweet Treats',
-    slug: 'sweet-treats',
-    count: '48',
-    image: 'https://images.unsplash.com/photo-1549590143-d5855148a9d5?q=80&w=928&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D',
+    name: 'Party Trays',
+    description: 'Puff puff, samosas, spring rolls, and ready-to-share combos.',
+    count: '2',
+    image: '/brand/products/party-snack-combo.jpg',
     featured: true
   },
   {
-    name: 'Savory Bites',
-    slug: 'savory-bites',
-    count: '31',
-    image: 'https://plus.unsplash.com/premium_photo-1718221058085-7b81f1226d6b?q=80&w=1740&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D'
+    name: 'Fresh Pastries',
+    description: 'Meat pies, puff puff, and scotch egg bites prepared fresh.',
+    count: '3',
+    image: '/brand/products/classic-meat-pie-tray.jpg'
   },
   {
-    name: 'Healthy Picks',
-    slug: 'healthy-picks',
-    count: '26',
-    image: 'https://plus.unsplash.com/premium_photo-1663011666483-ac74795eb4a0?q=80&w=1740&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D'
+    name: 'Signature Drinks',
+    description: 'Refreshing TeshTreats Zobo made with sorrel and fruit.',
+    count: '1',
+    image: '/brand/products/signature-zobo-label.jpeg'
   },
   {
-    name: 'Party Packs',
-    slug: 'party-packs',
-    count: '22',
-    image: 'https://images.unsplash.com/photo-1481391243133-f96216dcb5d2?q=80&w=1400&auto=format&fit=crop'
+    name: 'Celebration Cakes',
+    description: 'Custom cakes for birthdays, anniversaries, and milestones.',
+    count: '4',
+    image: '/brand/products/custom-celebration-cakes-hero.jpg'
   },
   {
-    name: 'Office Favorites',
-    slug: 'office-favorites',
-    count: '19',
-    image: 'https://images.unsplash.com/photo-1621939514649-280e2ee25f60?q=80&w=1400&auto=format&fit=crop'
+    name: 'Office Planning',
+    description: 'Simple snack trays for meetings, teams, and shared tables.',
+    count: '1',
+    image: '/brand/products/puff-puff-tray.jpg'
   }
 ];
 
@@ -49,16 +49,16 @@ export function TeahTreatsCategoryMosaic() {
         <div className="tt-section-heading">
           <div>
             <p className="tt-eyebrow">Explore Categories</p>
-            <h2 className="tt-display">Every Craving, One Address</h2>
+            <h2 className="tt-display">Choose what you need.</h2>
             <p className="tt-body">
-              Glide through fresh, sweet, savory, healthy, party, and office-ready snack worlds.
+              Simple food groups for real orders: trays, pastries, drinks, cakes, and office planning.
             </p>
           </div>
         </div>
         <div className="tt-mosaic tt-motion-category-grid">
           {categories.map((cat, index) => (
             <motion.div
-              key={cat.slug}
+              key={cat.name}
               initial={{ opacity: 0, y: 28 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true, margin: '-80px' }}
@@ -66,10 +66,9 @@ export function TeahTreatsCategoryMosaic() {
               className={cat.featured ? 'tt-mosaic-featured' : undefined}
             >
               <Link
-                href={`/products?category=${cat.slug}`}
+                href={`/products?category=${encodeURIComponent(cat.name)}`}
                 className={`tt-mosaic-tile tt-motion-category-card${cat.featured ? ' tt-mosaic-featured' : ''}`}
                 style={{ minHeight: cat.featured ? 440 : 220 }}
-                data-cursor="Explore"
               >
                 {cat.featured ? (
                   <motion.img
@@ -92,6 +91,7 @@ export function TeahTreatsCategoryMosaic() {
                   <h3 className="tt-editorial" style={{ fontSize: cat.featured ? '1.7rem' : '1.22rem', margin: 0 }}>
                     {cat.name}
                   </h3>
+                  <p className="tt-category-description">{cat.description}</p>
                   <span className="tt-category-link-text">Shop category</span>
                 </div>
               </Link>

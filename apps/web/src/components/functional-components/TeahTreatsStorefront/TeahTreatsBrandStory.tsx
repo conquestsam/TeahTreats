@@ -4,9 +4,9 @@ import { useRef } from 'react';
 import { motion, useScroll, useTransform } from 'motion/react';
 
 const storySteps = [
-  { label: 'Source', text: 'We choose snacks with clear ingredients, strong flavor, and honest shelf-life.' },
-  { label: 'Check', text: 'Perishable treats are handled with expiry awareness before they reach checkout.' },
-  { label: 'Curate', text: 'Bundles, office plans, and personal picks all come from the same trusted catalog.' }
+  { label: 'Prepare', text: 'Puff puff, meat pies, samosas, and cakes are handled as fresh food, not anonymous inventory.' },
+  { label: 'Confirm', text: 'Checkout keeps prices, stock, allergens, and readiness notifications clear before you pay.' },
+  { label: 'Celebrate', text: 'Party trays, office plans, and custom cakes stay simple to order and easy to share.' }
 ];
 
 export function TeahTreatsBrandStory() {
@@ -27,8 +27,8 @@ export function TeahTreatsBrandStory() {
             transition={{ duration: 0.65 }}
           >
             <motion.img
-              src="https://images.unsplash.com/photo-1571826945830-5423b80a986c?q=80&w=1400&auto=format&fit=crop"
-              alt="Premium assorted snacks"
+              src="/brand/products/custom-celebration-cakes-hero.jpg"
+              alt="Custom celebration cakes from TeshTreats"
               style={{ y: imageY }}
             />
             <motion.span className="tt-story-year" style={{ y: numberY }} aria-hidden="true">
@@ -52,7 +52,7 @@ export function TeahTreatsBrandStory() {
               viewport={{ once: true }}
               transition={{ delay: 0.08 }}
             >
-              Built for snacks that deserve better handling.
+              Food-service warmth, built into a cleaner shopping flow.
             </motion.h2>
             <motion.p
               className="tt-body"
@@ -61,9 +61,9 @@ export function TeahTreatsBrandStory() {
               viewport={{ once: true }}
               transition={{ delay: 0.16 }}
             >
-              TeahTreats started from a simple frustration: great snacks are often sold with weak freshness control,
-              unclear allergen notes, and stressful ordering. We built the store around real-time availability,
-              expiry-aware inventory, clear checkout, and thoughtful notifications.
+              TeshTreats brings together the comfort of Nigerian party snacks, custom cakes, and signature drinks
+              with the clarity customers expect online: real photos, visible prices, secure payment, and clear
+              readiness updates when an order is prepared.
             </motion.p>
             <div className="tt-story-steps">
               {storySteps.map((step, index) => (

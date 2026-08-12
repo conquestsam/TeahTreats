@@ -36,7 +36,7 @@ export function useAdminLogoutMutation() {
   return useMutation({
     mutationFn: logoutAdmin,
     onSuccess: async () => {
-      queryClient.removeQueries({ queryKey: adminAuthQueryKeys.currentUser });
+      queryClient.clear();
       notifications.show({
         color: 'green',
         title: 'Signed out',

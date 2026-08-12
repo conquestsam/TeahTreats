@@ -5,7 +5,6 @@ import { Burger, Drawer } from '@mantine/core';
 import { useDisclosure } from '@mantine/hooks';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { TeahTreatsCursor } from '@/components/functional-components/TeahTreatsStorefront/TeahTreatsCursor';
 import { TeahTreatsLogo } from '@/components/functional-components/TeahTreatsStorefront/TeahTreatsLogo';
 import { useCustomerCartQuery } from '@/hooks/CustomerCart/useCustomerCartQuery';
 import { useCurrentCustomerQuery } from '@/hooks/CustomerAuth/useCustomerAuthQuery';
@@ -57,8 +56,6 @@ export function AppShell({ children }: Readonly<{ children: React.ReactNode }>) 
 
   return (
     <div className="tt-shell">
-      <TeahTreatsCursor />
-
       {/* ── Header ── */}
       <header className="sticky top-0 z-40" style={{
         background: 'rgba(10, 10, 10, 0.92)',
@@ -66,11 +63,11 @@ export function AppShell({ children }: Readonly<{ children: React.ReactNode }>) 
         borderBottom: '1px solid rgba(184, 147, 62, 0.18)'
       }}>
         <div className="tt-container" style={{ paddingBlock: '16px' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 24 }}>
+          <div className="tt-header-row">
             <TeahTreatsLogo />
 
             {/* Desktop nav */}
-            <nav className="hidden lg:flex" style={{ gap: 28, alignItems: 'center' }}>
+            <nav className="tt-desktop-nav hidden lg:flex">
               {navLinks.map((link) => (
                 <Link
                   key={link.href}
@@ -83,7 +80,7 @@ export function AppShell({ children }: Readonly<{ children: React.ReactNode }>) 
             </nav>
 
             {/* Actions */}
-            <div style={{ display: 'flex', gap: 10, alignItems: 'center', flexShrink: 0 }}>
+            <div className="tt-header-actions">
               <Link href="/search" className="tt-icon-action" style={{
                 display: 'inline-flex', alignItems: 'center', gap: 6, padding: '10px 16px',
                 borderRadius: 10, textDecoration: 'none'

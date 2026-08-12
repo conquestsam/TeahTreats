@@ -1,9 +1,9 @@
 'use client';
 
 const items = [
-  'Artisan Cookies', 'Chocolate Truffles', 'Meat Pies', 'Nut Mix',
-  'Dried Fruit', 'Sweet Chips', 'Party Pack', 'Office Box',
-  'Gift Bundle', 'Protein Bites', 'Trail Mix', 'Granola Clusters'
+  'Signature Zobo', 'Puff Puff Tray', 'Meat Pie Tray', 'Mini Samosa',
+  'Spring Rolls', 'Scotch Egg Bites', 'Party Snack Combo', 'Custom Cakes',
+  'Photo Cakes', 'Birthday Cakes', 'Office Trays', 'Fresh Pickup'
 ];
 
 export function TeahTreatsMarquee() {

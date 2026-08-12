@@ -17,9 +17,15 @@ export function TeahTreatsCursor() {
   useEffect(() => {
     const pointerMedia = window.matchMedia('(hover: hover) and (pointer: fine)');
     const motionMedia = window.matchMedia('(prefers-reduced-motion: reduce)');
+    const touchMedia = window.matchMedia('(any-pointer: coarse)');
 
     const resolveEnabled = () => {
-      const canUseCursor = pointerMedia.matches && !motionMedia.matches && window.innerWidth >= 1024;
+      const canUseCursor =
+        pointerMedia.matches &&
+        !touchMedia.matches &&
+        !motionMedia.matches &&
+        window.innerWidth >= 1024 &&
+        navigator.maxTouchPoints === 0;
       setEnabled(canUseCursor);
       return canUseCursor;
     };
@@ -57,6 +63,7 @@ export function TeahTreatsCursor() {
     window.addEventListener('mouseenter', enter);
     window.addEventListener('resize', refresh);
     pointerMedia.addEventListener('change', refresh);
+    touchMedia.addEventListener('change', refresh);
     motionMedia.addEventListener('change', refresh);
     return () => {
       window.removeEventListener('pointermove', move);
@@ -66,6 +73,7 @@ export function TeahTreatsCursor() {
       window.removeEventListener('mouseenter', enter);
       window.removeEventListener('resize', refresh);
       pointerMedia.removeEventListener('change', refresh);
+      touchMedia.removeEventListener('change', refresh);
       motionMedia.removeEventListener('change', refresh);
     };
   }, [cursorX, cursorY]);
@@ -81,7 +89,7 @@ export function TeahTreatsCursor() {
     <>
       <motion.div
         aria-hidden="true"
-        className="fixed left-0 top-0 z-[70] hidden items-center justify-center pointer-events-none lg:flex"
+        className="fixed left-0 top-0 z-[45] hidden items-center justify-center pointer-events-none lg:flex"
         style={{ pointerEvents: 'none', x: springX, y: springY, translateX: '-50%', translateY: '-50%' }}
         animate={{ opacity: hidden ? 0 : 1 }}
       >
@@ -100,7 +108,7 @@ export function TeahTreatsCursor() {
       </motion.div>
       <motion.div
         aria-hidden="true"
-        className="fixed left-0 top-0 z-[71] hidden rounded-full bg-[#B8933E] pointer-events-none lg:block"
+        className="fixed left-0 top-0 z-[46] hidden rounded-full bg-[#B8933E] pointer-events-none lg:block"
         style={{ pointerEvents: 'none', x: cursorX, y: cursorY, translateX: '-50%', translateY: '-50%' }}
         animate={{ width: dotSize, height: dotSize, opacity: hidden ? 0 : 1 }}
       />

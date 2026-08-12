@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Button, Group, Modal, Skeleton, Stack, Text } from '@mantine/core';
 import { motion } from 'motion/react';
 import { StorefrontAddToCartDrawer } from '@/components/functional-components/Storefront/StorefrontAddToCartDrawer';
@@ -38,8 +38,34 @@ export function StorefrontProductCard({ product }: Readonly<{ product: ProductCa
   const images = useMemo(() => product.images.length > 0 ? product.images : product.image ? [product.image] : [], [product.image, product.images]);
   const primaryImage = images[0] ?? null;
   const secondaryImage = images[1] ?? null;
+  const cyclingImage = images[activeImageIndex] ?? primaryImage;
   const modalImages = detail?.images.length ? detail.images : images;
   const activeModalImage = modalImages[activeImageIndex] ?? modalImages[0] ?? null;
+
+  useEffect(() => {
+    if (images.length < 2 || detailsOpened) {
+      return;
+    }
+
+    const pointerMedia = window.matchMedia('(hover: none), (pointer: coarse)');
+    const reducedMotionMedia = window.matchMedia('(prefers-reduced-motion: reduce)');
+    if (!pointerMedia.matches || reducedMotionMedia.matches) {
+      return;
+    }
+
+    const timer = window.setInterval(() => {
+      setActiveImageIndex((current) => (current + 1) % images.length);
+    }, 3600);
+
+    return () => window.clearInterval(timer);
+  }, [detailsOpened, images.length]);
+
+  useEffect(() => {
+    if (!detailsOpened) {
+      return;
+    }
+    setActiveImageIndex(0);
+  }, [detailsOpened]);
 
   const openDetails = () => {
     setActiveImageIndex(0);
@@ -79,9 +105,9 @@ export function StorefrontProductCard({ product }: Readonly<{ product: ProductCa
           {primaryImage ? (
             <>
               <img
-                src={primaryImage.url}
-                alt={primaryImage.alt ?? product.name}
-                className="tt-product-img tt-product-img-primary"
+                src={cyclingImage?.url ?? primaryImage.url}
+                alt={cyclingImage?.alt ?? primaryImage.alt ?? product.name}
+                className="tt-product-img tt-product-img-primary tt-product-img-mobile-cycle"
               />
               {secondaryImage ? (
                 <img
@@ -109,7 +135,7 @@ export function StorefrontProductCard({ product }: Readonly<{ product: ProductCa
           {images.length > 1 ? (
             <div className="tt-product-image-dots" aria-label={`${images.length} product images`}>
               {images.slice(0, 4).map((image, index) => (
-                <span key={image.id} className={index === 0 ? 'is-active' : undefined} />
+                <span key={image.id} className={index === activeImageIndex ? 'is-active' : undefined} />
               ))}
             </div>
           ) : null}

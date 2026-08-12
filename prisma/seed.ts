@@ -36,469 +36,347 @@ type StorefrontSeedProduct = {
 
 const seededStorefrontProducts: StorefrontSeedProduct[] = [
   {
-    slug: 'dark-truffle-almonds',
-    name: 'Dark Truffle Almonds',
-    description: 'Roasted almonds dusted with dark cocoa and a quiet truffle finish.',
-    brand: 'TeahTreats Reserve',
-    category: 'Nuts',
-    flavor: 'Dark cocoa',
-    occasion: 'Gifting',
-    priceCents: 2800,
-    skuName: '8 oz tin',
-    quantity: 64,
-    size: '8 oz',
+    slug: 'teshtreats-signature-zobo',
+    name: 'TeshTreats Signature Zobo',
+    description: 'Naturally refreshing sorrel drink crafted with real sorrel, fruit, dates, pineapple, and watermelon notes.',
+    brand: 'TeshTreats LLC',
+    category: 'Signature Drinks',
+    flavor: 'Sorrel fruit',
+    occasion: 'Everyday refreshment',
+    priceCents: 450,
+    skuName: '330 ml can',
+    quantity: 120,
+    size: '330 ml',
     packCount: 1,
-    unitLabel: 'tin',
-    tags: ['popular', 'premium', 'gifting'],
-    dietaryLabels: ['vegetarian'],
-    ingredients: ['almonds', 'dark cocoa', 'cane sugar', 'sea salt'],
-    allergens: ['tree nuts'],
-    images: [
-      {
-        url: 'https://images.unsplash.com/photo-1599599810769-bcde5a160d32?auto=format&fit=crop&w=1200&q=85',
-        alt: 'Premium almonds and mixed nuts in a dark bowl'
-      },
-      {
-        url: 'https://images.unsplash.com/photo-1542990253-0d0f5be5f0ed?auto=format&fit=crop&w=1200&q=85',
-        alt: 'Chocolate covered nuts on a warm background'
-      }
-    ]
-  },
-  {
-    slug: 'saffron-pistachio-mix',
-    name: 'Saffron Pistachio Mix',
-    description: 'A fragrant pistachio blend with golden saffron and light sea salt.',
-    brand: 'TeahTreats Reserve',
-    category: 'Nuts',
-    flavor: 'Saffron salted',
-    occasion: 'Office snack',
-    priceCents: 3400,
-    skuName: '10 oz pouch',
-    quantity: 52,
-    size: '10 oz',
-    packCount: 1,
-    unitLabel: 'pouch',
-    tags: ['new-arrival', 'office', 'nuts'],
-    dietaryLabels: ['gluten-free', 'vegetarian'],
-    ingredients: ['pistachios', 'saffron', 'sea salt', 'olive oil'],
-    allergens: ['tree nuts'],
-    images: [
-      {
-        url: 'https://images.unsplash.com/photo-1508061253366-f7da158b6d46?auto=format&fit=crop&w=1200&q=85',
-        alt: 'Pistachios in a ceramic bowl'
-      },
-      {
-        url: 'https://images.unsplash.com/photo-1615485500704-8e990f9900f7?auto=format&fit=crop&w=1200&q=85',
-        alt: 'Assorted roasted nuts arranged on a table'
-      }
-    ]
-  },
-  {
-    slug: 'midnight-berry-bark',
-    name: 'Midnight Berry Bark',
-    description: 'Dark chocolate bark layered with dried berries and roasted almonds.',
-    brand: 'TeahTreats Chocolatier',
-    category: 'Chocolates',
-    flavor: 'Berry dark chocolate',
-    occasion: 'Dessert',
-    priceCents: 2200,
-    skuName: '6 piece box',
-    quantity: 46,
-    size: '6 pieces',
-    packCount: 6,
-    unitLabel: 'box',
-    tags: ['popular', 'chocolate', 'fresh-pick'],
-    dietaryLabels: ['vegetarian'],
-    ingredients: ['dark chocolate', 'cranberries', 'blueberries', 'almonds'],
-    allergens: ['milk', 'tree nuts'],
-    images: [
-      {
-        url: 'https://images.unsplash.com/photo-1549590143-d5855148a9d5?auto=format&fit=crop&w=1200&q=85',
-        alt: 'Chocolate bar with fruit and nuts'
-      },
-      {
-        url: 'https://images.unsplash.com/photo-1606313564200-e75d5e30476c?auto=format&fit=crop&w=1200&q=85',
-        alt: 'Dark chocolate dessert pieces on a plate'
-      }
-    ]
-  },
-  {
-    slug: 'smoked-cashew-reserve',
-    name: 'Smoked Cashew Reserve',
-    description: 'Slow-roasted cashews with smoked paprika, honey, and sea salt.',
-    brand: 'TeahTreats Reserve',
-    category: 'Nuts',
-    flavor: 'Smoked honey',
-    occasion: 'Game night',
-    priceCents: 3000,
-    skuName: '9 oz jar',
-    quantity: 58,
-    size: '9 oz',
-    packCount: 1,
-    unitLabel: 'jar',
-    tags: ['popular', 'savory', 'bundle-ready'],
-    dietaryLabels: ['vegetarian'],
-    ingredients: ['cashews', 'honey', 'smoked paprika', 'sea salt'],
-    allergens: ['tree nuts'],
-    images: [
-      {
-        url: 'https://images.unsplash.com/photo-1563412885-139e4045eb35?auto=format&fit=crop&w=1200&q=85',
-        alt: 'Cashews in a white bowl on a wooden table'
-      },
-      {
-        url: 'https://images.unsplash.com/photo-1606923829579-0cb981a83e2e?auto=format&fit=crop&w=1200&q=85',
-        alt: 'Roasted cashews and spices on a dark surface'
-      }
-    ]
-  },
-  {
-    slug: 'gold-caramel-wafers',
-    name: 'Gold Caramel Wafers',
-    description: 'Crisp layered wafers filled with caramel cream and gold sugar.',
-    brand: 'TeahTreats Bakery',
-    category: 'Pastry',
-    flavor: 'Caramel cream',
-    occasion: 'Tea break',
-    priceCents: 1800,
-    skuName: '12 wafer box',
-    quantity: 72,
-    size: '12 wafers',
-    packCount: 12,
-    unitLabel: 'box',
-    tags: ['fresh-pick', 'tea-time', 'sweet'],
-    dietaryLabels: ['vegetarian'],
-    ingredients: ['wheat flour', 'caramel', 'milk cream', 'cane sugar'],
-    allergens: ['wheat', 'milk'],
-    images: [
-      {
-        url: 'https://images.unsplash.com/photo-1587248720327-8eb72564be1e?auto=format&fit=crop&w=1200&q=85',
-        alt: 'Sweet wafer cookies stacked on a plate'
-      },
-      {
-        url: 'https://images.unsplash.com/photo-1558961363-fa8fdf82db35?auto=format&fit=crop&w=1200&q=85',
-        alt: 'Cookies and sweet snacks arranged on a table'
-      }
-    ]
-  },
-  {
-    slug: 'honey-roasted-pecans',
-    name: 'Honey Roasted Pecans',
-    description: 'Buttery pecans glazed with wildflower honey and a pinch of salt.',
-    brand: 'TeahTreats Reserve',
-    category: 'Nuts',
-    flavor: 'Honey roasted',
-    occasion: 'Corporate gifting',
-    priceCents: 3200,
-    skuName: '8 oz tin',
-    quantity: 48,
-    size: '8 oz',
-    packCount: 1,
-    unitLabel: 'tin',
-    tags: ['gifting', 'premium', 'bundle-ready'],
-    dietaryLabels: ['gluten-free', 'vegetarian'],
-    ingredients: ['pecans', 'honey', 'cane sugar', 'sea salt'],
-    allergens: ['tree nuts'],
-    images: [
-      {
-        url: 'https://images.unsplash.com/photo-1601493700631-2b16ec4b4716?auto=format&fit=crop&w=1200&q=85',
-        alt: 'Pecans and mixed nuts in a bowl'
-      },
-      {
-        url: 'https://images.unsplash.com/photo-1615485290382-441e4d049cb5?auto=format&fit=crop&w=1200&q=85',
-        alt: 'Roasted nuts on a rustic surface'
-      }
-    ]
-  },
-  {
-    slug: 'black-sesame-praline',
-    name: 'Black Sesame Praline',
-    description: 'Nutty black sesame praline squares with a crisp caramel snap.',
-    brand: 'TeahTreats Chocolatier',
-    category: 'Chocolates',
-    flavor: 'Sesame caramel',
-    occasion: 'After dinner',
-    priceCents: 2600,
-    skuName: '10 piece box',
-    quantity: 40,
-    size: '10 pieces',
-    packCount: 10,
-    unitLabel: 'box',
-    tags: ['limited', 'chocolate', 'artisan'],
-    dietaryLabels: ['vegetarian'],
-    ingredients: ['black sesame', 'caramel', 'dark chocolate', 'sea salt'],
-    allergens: ['sesame', 'milk'],
-    images: [
-      {
-        url: 'https://images.unsplash.com/photo-1481391319762-47dff72954d9?auto=format&fit=crop&w=1200&q=85',
-        alt: 'Artisan chocolate pieces on a dark plate'
-      },
-      {
-        url: 'https://images.unsplash.com/photo-1511381939415-e44015466834?auto=format&fit=crop&w=1200&q=85',
-        alt: 'Chocolate pralines arranged in rows'
-      }
-    ]
-  },
-  {
-    slug: 'coconut-plantain-crisps',
-    name: 'Coconut Plantain Crisps',
-    description: 'Thin plantain crisps tossed with toasted coconut and mild spice.',
-    brand: 'TeahTreats Market',
-    category: 'Fresh Picks',
-    flavor: 'Coconut spice',
-    occasion: 'Movie night',
-    priceCents: 1400,
-    skuName: '5 oz pouch',
-    quantity: 80,
-    size: '5 oz',
-    packCount: 1,
-    unitLabel: 'pouch',
-    tags: ['fresh-pick', 'crunchy', 'african-inspired'],
-    dietaryLabels: ['vegan', 'gluten-free'],
-    ingredients: ['plantain', 'coconut', 'sunflower oil', 'chili', 'salt'],
-    allergens: ['coconut'],
-    images: [
-      {
-        url: 'https://images.unsplash.com/photo-1586190848861-99aa4a171e90?auto=format&fit=crop&w=1200&q=85',
-        alt: 'Crispy chips in a bowl'
-      },
-      {
-        url: 'https://images.unsplash.com/photo-1566478989037-eec170784d0b?auto=format&fit=crop&w=1200&q=85',
-        alt: 'Golden snack crisps on a dark table'
-      }
-    ]
-  },
-  {
-    slug: 'suya-spice-cashews',
-    name: 'Suya Spice Cashews',
-    description: 'Cashews coated with a warm suya-inspired pepper and peanut spice.',
-    brand: 'TeahTreats Market',
-    category: 'Nuts',
-    flavor: 'Suya spice',
-    occasion: 'Party',
-    priceCents: 2400,
-    skuName: '7 oz pouch',
-    quantity: 60,
-    size: '7 oz',
-    packCount: 1,
-    unitLabel: 'pouch',
-    tags: ['popular', 'savory', 'african-inspired'],
-    dietaryLabels: ['vegan'],
-    ingredients: ['cashews', 'peanut spice', 'ginger', 'chili', 'salt'],
-    allergens: ['tree nuts', 'peanuts'],
-    images: [
-      {
-        url: 'https://images.unsplash.com/photo-1563412885-139e4045eb35?auto=format&fit=crop&w=1200&q=85',
-        alt: 'Cashews ready for snacking'
-      },
-      {
-        url: 'https://images.unsplash.com/photo-1590080877777-3bd7b18d7f43?auto=format&fit=crop&w=1200&q=85',
-        alt: 'Spiced nuts in a serving bowl'
-      }
-    ]
-  },
-  {
-    slug: 'zobo-berry-gummies',
-    name: 'Zobo Berry Gummies',
-    description: 'Soft berry gummies with hibiscus brightness and a light sugar dusting.',
-    brand: 'TeahTreats Candy',
-    category: 'Fresh Picks',
-    flavor: 'Hibiscus berry',
-    occasion: 'Kids party',
-    priceCents: 1200,
-    skuName: '6 oz bag',
-    quantity: 76,
-    size: '6 oz',
-    packCount: 1,
-    unitLabel: 'bag',
-    tags: ['new-arrival', 'sweet', 'african-inspired'],
-    dietaryLabels: ['gelatin-free'],
-    ingredients: ['hibiscus extract', 'berry juice', 'pectin', 'cane sugar'],
+    unitLabel: 'can',
+    isPerishable: true,
+    expiresInDays: 14,
+    tags: ['signature', 'zobo', 'drink', 'popular', 'fresh-pick'],
+    dietaryLabels: ['vegan-friendly', 'no refined sugar'],
+    ingredients: ['filtered water', 'dried sorrel hibiscus', 'dates', 'pineapple', 'watermelon', 'monk fruit extract', 'natural flavors'],
     allergens: [],
     images: [
       {
-        url: 'https://images.unsplash.com/photo-1582058091505-f87a2e55a40f?auto=format&fit=crop&w=1200&q=85',
-        alt: 'Colorful gummy candy in a pile'
+        url: '/brand/products/signature-zobo-label.jpeg',
+        alt: 'TeshTreats Signature Zobo sorrel drink label and can design'
       },
       {
-        url: 'https://images.unsplash.com/photo-1571506165871-ee72a35bc9d4?auto=format&fit=crop&w=1200&q=85',
-        alt: 'Red candy sweets in a bowl'
+        url: '/brand/products/party-snack-combo.jpg',
+        alt: 'Party tray with puff puff and savory snacks for pairing with zobo'
       }
     ]
   },
   {
-    slug: 'chin-chin-crunch-box',
-    name: 'Chin Chin Crunch Box',
-    description: 'Golden bite-size chin chin with nutmeg, vanilla, and crisp edges.',
-    brand: 'TeahTreats Bakery',
-    category: 'Pastry',
-    flavor: 'Vanilla nutmeg',
-    occasion: 'Family sharing',
-    priceCents: 1600,
-    skuName: '12 oz box',
-    quantity: 66,
-    size: '12 oz',
-    packCount: 1,
-    unitLabel: 'box',
-    tags: ['popular', 'african-inspired', 'crunchy'],
-    dietaryLabels: ['vegetarian'],
-    ingredients: ['wheat flour', 'milk', 'butter', 'nutmeg', 'sugar'],
+    slug: 'puff-puff-tray',
+    name: 'Puff Puff Tray',
+    description: 'Golden Nigerian puff puff prepared for parties, office sharing, and family gatherings.',
+    brand: 'TeshTreats Kitchen',
+    category: 'Fresh Pastries',
+    flavor: 'Sweet golden dough',
+    occasion: 'Party tray',
+    priceCents: 2800,
+    skuName: 'Small tray',
+    quantity: 45,
+    size: 'small tray',
+    packCount: 35,
+    unitLabel: 'tray',
+    isPerishable: true,
+    expiresInDays: 3,
+    tags: ['popular', 'fresh', 'party', 'african-inspired', 'bundle-ready'],
+    dietaryLabels: ['fresh-made'],
+    ingredients: ['wheat flour', 'yeast', 'sugar', 'nutmeg', 'sunflower oil'],
+    allergens: ['wheat'],
+    images: [
+      {
+        url: '/brand/products/puff-puff-tray.jpg',
+        alt: 'Tray of golden puff puff bites'
+      },
+      {
+        url: '/brand/products/party-snack-combo.jpg',
+        alt: 'Assorted party tray with puff puff and savory pastries'
+      }
+    ]
+  },
+  {
+    slug: 'mini-samosa-spring-roll-tray',
+    name: 'Mini Samosa & Spring Roll Tray',
+    description: 'Crisp mini samosas and spring rolls packed for easy party serving.',
+    brand: 'TeshTreats Kitchen',
+    category: 'Party Trays',
+    flavor: 'Savory spiced vegetable',
+    occasion: 'Events and meetings',
+    priceCents: 4200,
+    skuName: 'Assorted tray',
+    quantity: 34,
+    size: 'assorted tray',
+    packCount: 40,
+    unitLabel: 'tray',
+    isPerishable: true,
+    expiresInDays: 3,
+    tags: ['party', 'savory', 'bundle-ready', 'office'],
+    dietaryLabels: ['fresh-made'],
+    ingredients: ['wheat pastry', 'vegetables', 'onion', 'pepper', 'spices', 'sunflower oil'],
+    allergens: ['wheat'],
+    images: [
+      {
+        url: '/brand/products/samosa-spring-roll-tray.jpg',
+        alt: 'Tray of mini samosas and spring rolls'
+      },
+      {
+        url: '/brand/products/party-snack-combo.jpg',
+        alt: 'Assorted puff puff, samosa, and spring roll party tray'
+      }
+    ]
+  },
+  {
+    slug: 'classic-meat-pie-tray',
+    name: 'Classic Meat Pie Tray',
+    description: 'Fresh baked meat pies with flaky golden pastry and savory beef filling.',
+    brand: 'TeshTreats Bakery',
+    category: 'Fresh Pastries',
+    flavor: 'Savory beef',
+    occasion: 'Lunch and events',
+    priceCents: 3600,
+    skuName: 'Dozen tray',
+    quantity: 40,
+    size: '12 pieces',
+    packCount: 12,
+    unitLabel: 'tray',
+    isPerishable: true,
+    expiresInDays: 3,
+    tags: ['fresh', 'savory', 'popular', 'office', 'bundle-ready'],
+    dietaryLabels: ['fresh-baked'],
+    ingredients: ['wheat flour', 'beef', 'butter', 'potato', 'carrot', 'onion', 'pepper'],
     allergens: ['wheat', 'milk'],
     images: [
       {
-        url: 'https://images.unsplash.com/photo-1590080875515-8a3a8dc5735e?auto=format&fit=crop&w=1200&q=85',
-        alt: 'Golden pastry bites in a serving bowl'
+        url: '/brand/products/classic-meat-pie-tray.jpg',
+        alt: 'Tray of fresh golden meat pies'
       },
       {
-        url: 'https://images.unsplash.com/photo-1605807646983-377bc5a76493?auto=format&fit=crop&w=1200&q=85',
-        alt: 'Small sweet pastries on a tray'
+        url: '/brand/products/party-snack-combo.jpg',
+        alt: 'Assorted party tray with meat pies and puff puff'
       }
     ]
   },
   {
-    slug: 'salted-date-energy-bites',
-    name: 'Salted Date Energy Bites',
-    description: 'Chewy date bites with oats, cocoa, almond butter, and sea salt.',
-    brand: 'TeahTreats Wellness',
-    category: 'Fresh Picks',
-    flavor: 'Cocoa date',
-    occasion: 'Workout snack',
-    priceCents: 1900,
-    skuName: '8 bite pack',
-    quantity: 55,
-    size: '8 bites',
-    packCount: 8,
+    slug: 'scotch-egg-bites',
+    name: 'Scotch Egg Bites',
+    description: 'Savory egg bites wrapped in seasoned meat and crisp golden coating.',
+    brand: 'TeshTreats Kitchen',
+    category: 'Fresh Pastries',
+    flavor: 'Seasoned beef and egg',
+    occasion: 'Brunch and party trays',
+    priceCents: 2400,
+    skuName: 'Six piece pack',
+    quantity: 38,
+    size: '6 pieces',
+    packCount: 6,
     unitLabel: 'pack',
-    tags: ['fresh-pick', 'wellness', 'office'],
-    dietaryLabels: ['vegan'],
-    ingredients: ['dates', 'oats', 'almond butter', 'cocoa', 'sea salt'],
-    allergens: ['tree nuts'],
+    isPerishable: true,
+    expiresInDays: 3,
+    tags: ['fresh', 'savory', 'protein', 'party'],
+    dietaryLabels: ['fresh-made'],
+    ingredients: ['eggs', 'beef', 'breadcrumbs', 'spices', 'sunflower oil'],
+    allergens: ['egg', 'wheat'],
     images: [
       {
-        url: 'https://images.unsplash.com/photo-1590080875515-8a3a8dc5735e?auto=format&fit=crop&w=1200&q=85',
-        alt: 'Energy bites arranged in a bowl'
+        url: '/brand/products/scotch-egg-bites.jpg',
+        alt: 'Plate of scotch egg bites with one cut open'
       },
       {
-        url: 'https://images.unsplash.com/photo-1563729784474-d77dbb933a9e?auto=format&fit=crop&w=1200&q=85',
-        alt: 'Chocolate snack bites on a plate'
+        url: '/brand/products/classic-meat-pie-tray.jpg',
+        alt: 'Fresh meat pie tray for savory snack pairing'
       }
     ]
   },
   {
-    slug: 'hibiscus-glazed-popcorn',
-    name: 'Hibiscus Glazed Popcorn',
-    description: 'Airy popcorn glazed with tart hibiscus, vanilla, and a red sugar sheen.',
-    brand: 'TeahTreats Market',
-    category: 'Fresh Picks',
-    flavor: 'Hibiscus vanilla',
-    occasion: 'Movie night',
-    priceCents: 1500,
-    skuName: '7 oz bag',
-    quantity: 70,
-    size: '7 oz',
-    packCount: 1,
-    unitLabel: 'bag',
-    tags: ['new-arrival', 'sweet', 'crunchy'],
-    dietaryLabels: ['vegetarian'],
-    ingredients: ['popcorn', 'hibiscus', 'vanilla', 'cane sugar', 'butter'],
-    allergens: ['milk'],
-    images: [
-      {
-        url: 'https://images.unsplash.com/photo-1578849278619-e73505e9610f?auto=format&fit=crop&w=1200&q=85',
-        alt: 'Popcorn in a bowl for movie night'
-      },
-      {
-        url: 'https://images.unsplash.com/photo-1585647347384-2593bc35786b?auto=format&fit=crop&w=1200&q=85',
-        alt: 'Sweet popcorn in a paper container'
-      }
-    ]
-  },
-  {
-    slug: 'chocolate-wafer-minis',
-    name: 'Chocolate Wafer Minis',
-    description: 'Mini chocolate wafers built for quick cravings and desk drawers.',
-    brand: 'TeahTreats Bakery',
-    category: 'Chocolates',
-    flavor: 'Chocolate cream',
-    occasion: 'Desk snack',
-    priceCents: 1300,
-    skuName: '18 mini pack',
-    quantity: 88,
-    size: '18 minis',
-    packCount: 18,
-    unitLabel: 'pack',
-    tags: ['office', 'bundle-ready', 'chocolate'],
-    dietaryLabels: ['vegetarian'],
-    ingredients: ['wheat flour', 'cocoa', 'milk cream', 'sugar'],
-    allergens: ['wheat', 'milk'],
-    images: [
-      {
-        url: 'https://images.unsplash.com/photo-1598373182133-52452f7691ef?auto=format&fit=crop&w=1200&q=85',
-        alt: 'Chocolate wafer cookies stacked together'
-      },
-      {
-        url: 'https://images.unsplash.com/photo-1558961363-fa8fdf82db35?auto=format&fit=crop&w=1200&q=85',
-        alt: 'Assorted cookies and wafers on a table'
-      }
-    ]
-  },
-  {
-    slug: 'office-snack-sampler',
-    name: 'Office Snack Sampler',
-    description: 'A balanced sampler with nuts, wafers, popcorn, and chocolate bites.',
-    brand: 'TeahTreats Office',
-    category: 'Bundles',
-    flavor: 'Mixed',
-    occasion: 'Office planning',
-    priceCents: 5200,
-    skuName: '24 piece bundle',
-    quantity: 35,
-    size: '24 pieces',
-    packCount: 24,
-    unitLabel: 'bundle',
-    tags: ['bundle', 'office', 'popular'],
-    dietaryLabels: ['mixed'],
-    ingredients: ['mixed nuts', 'wafers', 'popcorn', 'chocolate bites'],
-    allergens: ['tree nuts', 'wheat', 'milk'],
-    images: [
-      {
-        url: 'https://images.unsplash.com/photo-1606787366850-de6330128bfc?auto=format&fit=crop&w=1200&q=85',
-        alt: 'Assorted snack board with nuts and sweets'
-      },
-      {
-        url: 'https://images.unsplash.com/photo-1542838132-92c53300491e?auto=format&fit=crop&w=1200&q=85',
-        alt: 'Packed assortment of snacks for sharing'
-      }
-    ]
-  },
-  {
-    slug: 'premium-gifting-box',
-    name: 'Premium Gifting Box',
-    description: 'A polished gift box with chocolates, nuts, wafers, and berry treats.',
-    brand: 'TeahTreats Gifting',
-    category: 'Bundles',
-    flavor: 'Curated assortment',
-    occasion: 'Gifting',
-    priceCents: 6800,
-    skuName: 'Gift box',
+    slug: 'party-snack-combo',
+    name: 'Party Snack Combo',
+    description: 'A crowd-ready mix of puff puff, mini samosas, and spring rolls for celebrations and office events.',
+    brand: 'TeshTreats Kitchen',
+    category: 'Party Trays',
+    flavor: 'Sweet and savory mix',
+    occasion: 'Parties and office planning',
+    priceCents: 6500,
+    skuName: 'Large combo tray',
     quantity: 28,
-    size: 'large',
-    packCount: 1,
-    unitLabel: 'box',
-    tags: ['bundle', 'gifting', 'premium'],
+    size: 'large tray',
+    packCount: 75,
+    unitLabel: 'tray',
+    isPerishable: true,
+    expiresInDays: 3,
+    tags: ['bundle', 'party', 'office', 'popular', 'fresh'],
     dietaryLabels: ['mixed'],
-    ingredients: ['dark chocolate', 'cashews', 'pecans', 'wafers', 'berry gummies'],
-    allergens: ['tree nuts', 'wheat', 'milk'],
+    ingredients: ['puff puff', 'mini samosas', 'spring rolls', 'vegetables', 'spices'],
+    allergens: ['wheat'],
     images: [
       {
-        url: 'https://images.unsplash.com/photo-1513201099705-a9746e1e201f?auto=format&fit=crop&w=1200&q=85',
-        alt: 'Gift box with premium snacks and sweets'
+        url: '/brand/products/party-snack-combo.jpg',
+        alt: 'Assorted party tray with puff puff, samosas, and spring rolls'
       },
       {
-        url: 'https://images.unsplash.com/photo-1607083206968-13611e3d76db?auto=format&fit=crop&w=1200&q=85',
-        alt: 'Wrapped gift box and treats'
+        url: '/brand/products/samosa-spring-roll-tray.jpg',
+        alt: 'Mini samosa and spring roll tray close up'
+      },
+      {
+        url: '/brand/products/puff-puff-tray.jpg',
+        alt: 'Puff puff tray close up'
+      }
+    ]
+  },
+  {
+    slug: 'black-gold-celebration-cake',
+    name: 'Black & Gold Celebration Cake',
+    description: 'Elegant black, cream, and gold celebration cake for milestone birthdays and premium events.',
+    brand: 'TeshTreats Cakes',
+    category: 'Celebration Cakes',
+    flavor: 'Custom cake',
+    occasion: 'Birthday',
+    priceCents: 9500,
+    skuName: 'Two-tier cake',
+    quantity: 12,
+    size: 'two-tier',
+    packCount: 1,
+    unitLabel: 'cake',
+    isPerishable: true,
+    expiresInDays: 5,
+    tags: ['cake', 'custom', 'premium', 'gifting'],
+    dietaryLabels: ['made-to-order'],
+    ingredients: ['cake sponge', 'buttercream', 'fondant accents', 'edible gold detail'],
+    allergens: ['wheat', 'milk', 'egg'],
+    images: [
+      {
+        url: '/brand/products/black-gold-celebration-cake.jpg',
+        alt: 'Black and cream celebration cake with gold drip and flowers'
+      },
+      {
+        url: '/brand/products/black-gold-birthday-cake.jpg',
+        alt: 'White birthday cake with black and gold balloon details'
+      },
+      {
+        url: '/brand/products/red-black-gold-birthday-cake.jpg',
+        alt: 'Red black and gold birthday cake'
+      }
+    ]
+  },
+  {
+    slug: 'custom-photo-anniversary-cake',
+    name: 'Custom Photo Anniversary Cake',
+    description: 'Made-to-order photo cake for anniversaries, family celebrations, and meaningful milestones.',
+    brand: 'TeshTreats Cakes',
+    category: 'Celebration Cakes',
+    flavor: 'Custom cake',
+    occasion: 'Anniversary',
+    priceCents: 12500,
+    skuName: 'Custom tiered cake',
+    quantity: 8,
+    size: 'custom tiered',
+    packCount: 1,
+    unitLabel: 'cake',
+    isPerishable: true,
+    expiresInDays: 5,
+    tags: ['cake', 'custom', 'photo-cake', 'gifting'],
+    dietaryLabels: ['made-to-order'],
+    ingredients: ['cake sponge', 'buttercream', 'edible print', 'floral accents'],
+    allergens: ['wheat', 'milk', 'egg'],
+    images: [
+      {
+        url: '/brand/products/custom-photo-anniversary-cake.jpg',
+        alt: 'Custom anniversary photo cake with floral decorations'
+      },
+      {
+        url: '/brand/products/custom-celebration-cakes-hero.jpg',
+        alt: 'Custom PlayStation and rainbow birthday cakes'
+      }
+    ]
+  },
+  {
+    slug: 'kids-custom-birthday-cake',
+    name: 'Kids Custom Birthday Cake',
+    description: 'Bright themed birthday cake for children, customized with colors, characters, and celebration toppers.',
+    brand: 'TeshTreats Cakes',
+    category: 'Celebration Cakes',
+    flavor: 'Vanilla celebration',
+    occasion: 'Kids party',
+    priceCents: 7800,
+    skuName: 'One-tier custom cake',
+    quantity: 10,
+    size: 'one-tier',
+    packCount: 1,
+    unitLabel: 'cake',
+    isPerishable: true,
+    expiresInDays: 5,
+    tags: ['cake', 'custom', 'kids-party', 'new-arrival'],
+    dietaryLabels: ['made-to-order'],
+    ingredients: ['cake sponge', 'buttercream', 'fondant decoration', 'food coloring'],
+    allergens: ['wheat', 'milk', 'egg'],
+    images: [
+      {
+        url: '/brand/products/hello-kitty-cake.jpg',
+        alt: 'Pink Hello Kitty themed birthday cake'
+      },
+      {
+        url: '/brand/products/custom-celebration-cakes-hero.jpg',
+        alt: 'Custom PlayStation and rainbow birthday cakes'
+      }
+    ]
+  },
+  {
+    slug: 'custom-celebration-cakes',
+    name: 'Custom Celebration Cakes',
+    description: 'A custom cake booking product for birthdays, graduations, anniversaries, and themed events.',
+    brand: 'TeshTreats Cakes',
+    category: 'Celebration Cakes',
+    flavor: 'Custom flavor',
+    occasion: 'Made-to-order celebration',
+    priceCents: 7000,
+    skuName: 'Starting custom order',
+    quantity: 15,
+    size: 'custom',
+    packCount: 1,
+    unitLabel: 'order',
+    isPerishable: true,
+    expiresInDays: 5,
+    tags: ['cake', 'custom', 'gifting', 'bundle-ready'],
+    dietaryLabels: ['made-to-order'],
+    ingredients: ['custom cake base', 'buttercream', 'fondant or edible decor'],
+    allergens: ['wheat', 'milk', 'egg'],
+    images: [
+      {
+        url: '/brand/products/custom-celebration-cakes-hero.jpg',
+        alt: 'Two custom birthday cakes with game and rainbow themes'
+      },
+      {
+        url: '/brand/products/black-gold-birthday-cake.jpg',
+        alt: 'White and black birthday cake with gold balloon details'
+      },
+      {
+        url: '/brand/products/red-black-gold-birthday-cake.jpg',
+        alt: 'Red black and gold birthday cake'
       }
     ]
   }
+];
+
+const retiredPlatformStorefrontSlugs = [
+  'fresh-meat-pie',
+  'dark-truffle-almonds',
+  'saffron-pistachio-mix',
+  'midnight-berry-bark',
+  'smoked-cashew-reserve',
+  'gold-caramel-wafers',
+  'honey-roasted-pecans',
+  'black-sesame-praline',
+  'coconut-plantain-crisps',
+  'suya-spice-cashews',
+  'zobo-berry-gummies',
+  'chin-chin-crunch-box',
+  'salted-date-energy-bites',
+  'hibiscus-glazed-popcorn',
+  'chocolate-wafer-minis',
+  'office-snack-sampler',
+  'premium-gifting-box'
 ];
 
 async function main() {
@@ -914,19 +792,19 @@ async function main() {
     },
     update: {
       productId: meatPie.id,
-      url: 'https://images.unsplash.com/photo-1601050690597-df0568f70950?auto=format&fit=crop&w=900&q=80',
-      alt: 'Fresh golden meat pie on a plate',
+      url: '/brand/products/classic-meat-pie-tray.jpg',
+      alt: 'Tray of fresh golden meat pies',
       sortOrder: 0,
-      storageProvider: 'cloudinary',
+      storageProvider: 'local',
       contentType: 'image/jpeg'
     },
     create: {
       id: 'seed-meat-pie-image',
       productId: meatPie.id,
-      url: 'https://images.unsplash.com/photo-1601050690597-df0568f70950?auto=format&fit=crop&w=900&q=80',
-      alt: 'Fresh golden meat pie on a plate',
+      url: '/brand/products/classic-meat-pie-tray.jpg',
+      alt: 'Tray of fresh golden meat pies',
       sortOrder: 0,
-      storageProvider: 'cloudinary',
+      storageProvider: 'local',
       contentType: 'image/jpeg'
     }
   });
@@ -1080,7 +958,7 @@ async function main() {
           objectKey: `seed/products/${seedProduct.slug}/${imageIndex + 1}.jpg`,
           alt: image.alt,
           sortOrder: imageIndex,
-          storageProvider: 'unsplash',
+          storageProvider: 'local',
           contentType: 'image/jpeg'
         },
         create: {
@@ -1090,7 +968,7 @@ async function main() {
           objectKey: `seed/products/${seedProduct.slug}/${imageIndex + 1}.jpg`,
           alt: image.alt,
           sortOrder: imageIndex,
-          storageProvider: 'unsplash',
+          storageProvider: 'local',
           contentType: 'image/jpeg'
         }
       });
@@ -1126,6 +1004,30 @@ async function main() {
       });
     }
   }
+
+  await prisma.product.updateMany({
+    where: {
+      tenantId: tenant.id,
+      slug: {
+        in: retiredPlatformStorefrontSlugs
+      }
+    },
+    data: {
+      status: 'archived'
+    }
+  });
+
+  await prisma.product.updateMany({
+    where: {
+      tenantId: tenant.id,
+      slug: {
+        notIn: seededStorefrontProducts.map((product) => product.slug)
+      }
+    },
+    data: {
+      status: 'archived'
+    }
+  });
 
   const trailMix = await prisma.product.upsert({
     where: {

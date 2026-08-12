@@ -54,18 +54,18 @@ function ProductRail({
 function CommercePreviewSection() {
   const previews = [
     {
-      eyebrow: 'Bundles',
-      title: 'Build a Better Snack Box',
-      text: 'Bundle fresh pastries, chocolate bites, nuts, and office-safe favorites into one calm order.',
-      cta: 'Explore bundles',
+      eyebrow: 'Party Trays',
+      title: 'Build One Tray for the Table',
+      text: 'Choose puff puff, samosas, spring rolls, meat pies, and zobo for one clear order.',
+      cta: 'Explore trays',
       href: '/bundles',
       mark: 'B'
     },
     {
       eyebrow: 'Office Plans',
-      title: 'Snack Planning Without Spreadsheets',
-      text: 'Plan by team size, budget, dietary needs, freshness window, and repeat favorites.',
-      cta: 'Plan office snacks',
+      title: 'Feed the Team Without Back-and-Forth',
+      text: 'Plan by headcount, budget, dietary notes, and the time the order should be ready.',
+      cta: 'Plan office trays',
       href: '/office-snack-planner',
       mark: 'O'
     }
@@ -77,9 +77,9 @@ function CommercePreviewSection() {
         <div className="tt-section-heading">
           <div>
             <p className="tt-eyebrow">Planning</p>
-            <h2 className="tt-display">Made for More Than One Craving</h2>
+            <h2 className="tt-display">Made for parties, teams, and family tables.</h2>
             <p className="tt-body">
-              TeahTreats supports quick personal orders, curated bundles, and office snack planning from the same product catalog.
+              TeahTreats keeps bulk snack orders practical: pick the tray, confirm the details, and get notified when it is ready.
             </p>
           </div>
         </div>
@@ -109,59 +109,118 @@ function CommercePreviewSection() {
   );
 }
 
+function formatMenuPrice(cents: number | null, currency: string) {
+  if (cents === null) {
+    return 'Price on request';
+  }
+  return new Intl.NumberFormat('en-US', { style: 'currency', currency }).format(cents / 100);
+}
+
+function MenuPreviewSection({ products }: Readonly<{ products: StorefrontProductCard[] }>) {
+  const menuProducts = products.slice(0, 5);
+
+  if (menuProducts.length === 0) {
+    return null;
+  }
+
+  return (
+    <section className="tt-section tt-section-dark tt-menu-preview-section">
+      <div className="tt-container">
+        <div className="tt-section-heading">
+          <div>
+            <p className="tt-eyebrow">Menu Preview</p>
+            <h2 className="tt-display">A short menu. Clear prices.</h2>
+            <p className="tt-body">
+              Start with the familiar items customers ask for most.
+            </p>
+          </div>
+          <Link href="/products" className="tt-btn-secondary tt-section-link">
+            View full menu
+          </Link>
+        </div>
+        <div className="tt-menu-preview-list">
+          {menuProducts.map((product) => (
+            <Link key={product.id} href={`/products/${product.slug}`} className="tt-menu-preview-row">
+              <div className="tt-menu-preview-copy">
+                <span>{product.category ?? 'TeshTreats'}</span>
+                <h3>{product.name}</h3>
+                <p>{product.description ?? 'Fresh food ready to order.'}</p>
+              </div>
+              <strong>{formatMenuPrice(product.startingPriceCents, product.currency)}</strong>
+            </Link>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}
+
 export function StorefrontHomeContent() {
-  const newArrivalsQuery = useStorefrontProductsQuery({ page: 1, pageSize: 4, sort: 'newest' });
+  const newArrivalsQuery = useStorefrontProductsQuery({ page: 1, pageSize: 12, sort: 'newest' });
   const recommendationsQuery = useStorefrontRecommendationsQuery();
   const recommendationSections = recommendationsQuery.data ?? [];
-  const fallbackProducts = newArrivalsQuery.data?.items ?? [];
-  const popularProducts = recommendationSections.find((section) => section.key === 'popular')?.items ?? fallbackProducts;
-  const freshProducts = recommendationSections.find((section) => section.key === 'fresh')?.items ?? fallbackProducts;
-  const bundleProducts = recommendationSections.find((section) => section.key === 'dynamic-bundles')?.items ?? popularProducts;
+  const allProducts = newArrivalsQuery.data?.items ?? [];
+  const productsByCategory = (category: string) => allProducts.filter((product) => product.category === category);
+  const signatureDrinks = productsByCategory('Signature Drinks');
+  const freshPastries = productsByCategory('Fresh Pastries');
+  const partyTrays = productsByCategory('Party Trays');
+  const celebrationCakes = productsByCategory('Celebration Cakes');
+  const popularProducts = recommendationSections.find((section) => section.key === 'popular')?.items ?? allProducts;
+  const freshProducts = recommendationSections.find((section) => section.key === 'fresh')?.items ?? freshPastries;
 
   return (
     <div>
       <TeahTreatsHero />
       <TeahTreatsMarquee />
+      <MenuPreviewSection products={allProducts} />
 
       <ProductRail
-        eyebrow="New Arrivals"
-        title="Fresh Snacks Just Landed"
-        description="Newly added treats with current pricing, visibility, and availability from the storefront catalog."
-        products={fallbackProducts}
-        loading={newArrivalsQuery.isLoading}
+        eyebrow="Signature Drinks"
+        title="TeshTreats Zobo"
+        description="A refreshing sorrel drink made with real fruit notes and clear serving details."
+        products={signatureDrinks}
+        loading={newArrivalsQuery.isLoading && allProducts.length === 0}
         error={newArrivalsQuery.error}
       />
 
       <ProductRail
-        eyebrow="Popular Snacks"
-        title="Customer Favorites"
-        description="A practical first pass at popularity using backend recommendation signals, ready for deeper engagement scoring later."
-        products={popularProducts.slice(0, 4)}
-        loading={recommendationsQuery.isLoading}
-        error={recommendationsQuery.error}
+        eyebrow="Fresh Pastries"
+        title="Puff puff, meat pies, and scotch egg bites"
+        description="Freshly prepared Nigerian party staples for small orders, trays, and office sharing."
+        products={freshPastries}
+        loading={newArrivalsQuery.isLoading && allProducts.length === 0}
+        error={newArrivalsQuery.error}
         tone="elevated"
       />
 
       <ProductRail
-        eyebrow="Fresh Picks"
-        title="Picked for Today"
-        description="Fresh and fast-moving options for personal cravings, office trays, and quick curated gifts."
-        products={freshProducts.slice(0, 4)}
-        loading={recommendationsQuery.isLoading}
-        error={recommendationsQuery.error}
+        eyebrow="Party Trays"
+        title="Snack trays for a crowd"
+        description="Samosas, spring rolls, puff puff, and combo trays made for celebrations and meetings."
+        products={partyTrays}
+        loading={newArrivalsQuery.isLoading && allProducts.length === 0}
+        error={newArrivalsQuery.error}
       />
 
       <ProductRail
-        eyebrow="Bundles"
-        title="Bundle-Ready Treats"
-        description="A focused rail for snacks that can become dynamic bundles without changing checkout inventory rules."
-        products={bundleProducts.slice(0, 4)}
-        loading={recommendationsQuery.isLoading}
-        error={recommendationsQuery.error}
+        eyebrow="Custom Cakes"
+        title="Cakes for birthdays and milestones"
+        description="Photo cakes, kids cakes, and black-and-gold celebration cakes with simple starting prices."
+        products={celebrationCakes}
+        loading={newArrivalsQuery.isLoading && allProducts.length === 0}
+        error={newArrivalsQuery.error}
         tone="elevated"
       />
 
       <CommercePreviewSection />
+      <ProductRail
+        eyebrow="Popular Picks"
+        title="What customers ask for first"
+        description="A short, backend-backed recommendation rail that stays focused on real TeahTreats products."
+        products={popularProducts.slice(0, 4)}
+        loading={recommendationsQuery.isLoading && popularProducts.length === 0}
+        error={recommendationsQuery.error}
+      />
       <TeahTreatsCategoryMosaic />
       <TeahTreatsBrandStory />
       <TeahTreatsTestimonials />
