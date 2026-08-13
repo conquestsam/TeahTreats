@@ -1,7 +1,8 @@
 import { Body, Controller, Get, Param, Patch, Post, UseGuards } from '@nestjs/common';
-import { ApiCookieAuth, ApiHeader, ApiOperation, ApiTags } from '@nestjs/swagger';
+import { ApiCookieAuth, ApiHeader, ApiTags } from '@nestjs/swagger';
 import { permissions } from '@snacks/shared';
 import { CurrentTenant } from '../../../common/decorators/current-tenant.decorator.js';
+import { ApiAdminEndpoint } from '../../../common/decorators/openapi.decorator.js';
 import { CurrentUser } from '../../../common/decorators/current-user.decorator.js';
 import { RequirePermissions } from '../../../common/decorators/require-permissions.decorator.js';
 import { CsrfGuard } from '../../../common/guards/csrf.guard.js';
@@ -22,14 +23,14 @@ export class AdminPromotionsController {
 
   @Get()
   @RequirePermissions(permissions.promotionsRead)
-  @ApiOperation({ summary: 'List tenant promotions.' })
+  @ApiAdminEndpoint('List tenant promotions.', { tenant: 'optional' })
   async list(@CurrentTenant() tenantId: string) {
     return { data: await this.promotions.listAdminPromotions(tenantId) };
   }
 
   @Post()
   @RequirePermissions(permissions.promotionsWrite)
-  @ApiOperation({ summary: 'Create a tenant promotion.' })
+  @ApiAdminEndpoint('Create a tenant promotion.', { tenant: 'optional' })
   async create(
     @CurrentUser() actor: AuthenticatedUser,
     @CurrentTenant() tenantId: string,
@@ -40,7 +41,7 @@ export class AdminPromotionsController {
 
   @Patch(':promotionId')
   @RequirePermissions(permissions.promotionsWrite)
-  @ApiOperation({ summary: 'Update a tenant promotion.' })
+  @ApiAdminEndpoint('Update a tenant promotion.', { tenant: 'optional' })
   async update(
     @CurrentUser() actor: AuthenticatedUser,
     @CurrentTenant() tenantId: string,
@@ -52,7 +53,7 @@ export class AdminPromotionsController {
 
   @Post(':promotionId/archive')
   @RequirePermissions(permissions.promotionsWrite)
-  @ApiOperation({ summary: 'Archive a tenant promotion.' })
+  @ApiAdminEndpoint('Archive a tenant promotion.', { tenant: 'optional' })
   async archive(
     @CurrentUser() actor: AuthenticatedUser,
     @CurrentTenant() tenantId: string,

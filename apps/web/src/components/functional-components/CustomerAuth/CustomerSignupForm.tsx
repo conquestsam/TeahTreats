@@ -3,6 +3,7 @@
 import { PasswordInput, TextInput } from '@mantine/core';
 import type { UseFormReturnType } from '@mantine/form';
 import Link from 'next/link';
+import { buildCustomerOAuthStartUrl } from '@/services/CustomerAuth/customerAuthApi';
 import type { CustomerSignupFormValues } from '@/validation/CustomerAuth/customerAuthValidation';
 
 export function CustomerSignupForm({
@@ -14,9 +15,33 @@ export function CustomerSignupForm({
   loading: boolean;
   onSubmit: (values: CustomerSignupFormValues) => void;
 }) {
+  const googleUrl = buildCustomerOAuthStartUrl('google');
+
   return (
     <form onSubmit={form.onSubmit(onSubmit)}>
       <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+        <a
+          href={googleUrl}
+          className="tt-auth-btn"
+          style={{
+            width: '100%',
+            display: 'inline-flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: 10,
+            background: 'rgba(250, 247, 242, 0.06)',
+            border: '1px solid rgba(184, 147, 62, 0.28)'
+          }}
+        >
+          Continue with Google
+        </a>
+
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12, color: 'var(--tt-cream-muted)', fontSize: '0.75rem' }}>
+          <span style={{ flex: 1, height: 1, background: 'rgba(184, 147, 62, 0.18)' }} />
+          <span>Email sign up</span>
+          <span style={{ flex: 1, height: 1, background: 'rgba(184, 147, 62, 0.18)' }} />
+        </div>
+
         <TextInput
           label="Full Name"
           placeholder="Ada Customer"

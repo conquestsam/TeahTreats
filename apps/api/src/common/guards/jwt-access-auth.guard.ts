@@ -1,9 +1,10 @@
-import { CanActivate, ExecutionContext, Injectable, UnauthorizedException } from '@nestjs/common';
+import { CanActivate, ExecutionContext, Injectable } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
 import { IS_PUBLIC_ROUTE } from '../decorators/public.decorator.js';
 import { PrismaService } from '../../infrastructure/database/prisma.service.js';
+import { authExceptions } from '../errors/auth-contract.exception.js';
 import type { AuthenticatedRequest, AuthenticatedUser } from '../types/authenticated-request.js';
 
 interface AccessTokenPayload {
@@ -41,7 +42,7 @@ export class JwtAccessAuthGuard implements CanActivate {
     const token = request.cookies?.access_token;
 
     if (!token) {
-      throw new UnauthorizedException('Authentication is required.');
+      throw authExceptions.sessionExpired();
     }
 
     try {
@@ -51,7 +52,7 @@ export class JwtAccessAuthGuard implements CanActivate {
       request.user = await this.hydrateCurrentAccess(payload);
       return true;
     } catch {
-      throw new UnauthorizedException('Authentication is required.');
+      throw authExceptions.sessionExpired();
     }
   }
 
@@ -80,7 +81,7 @@ export class JwtAccessAuthGuard implements CanActivate {
     });
 
     if (!session || session.revokedAt || session.expiresAt <= new Date() || session.user.deletedAt) {
-      throw new UnauthorizedException('Authentication is required.');
+      throw authExceptions.sessionExpired();
     }
 
     const tenantIds = new Set<string>();

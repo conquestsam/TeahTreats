@@ -1,7 +1,8 @@
 import { Body, Controller, Delete, Get, Param, Patch, Post, UseGuards } from '@nestjs/common';
-import { ApiHeader, ApiTags } from '@nestjs/swagger';
+import { ApiTags } from '@nestjs/swagger';
 import { permissions } from '@snacks/shared';
 import { CurrentTenant } from '../../../common/decorators/current-tenant.decorator.js';
+import { ApiAdminEndpoint, ApiPublicEndpoint } from '../../../common/decorators/openapi.decorator.js';
 import { Public } from '../../../common/decorators/public.decorator.js';
 import { RequirePermissions } from '../../../common/decorators/require-permissions.decorator.js';
 import { CsrfGuard } from '../../../common/guards/csrf.guard.js';
@@ -24,6 +25,7 @@ export class CatalogController {
 
   @Public()
   @Get('featured')
+  @ApiPublicEndpoint('List featured storefront catalog products.')
   async listFeaturedProducts() {
     return {
       data: await this.catalog.listFeaturedProducts()
@@ -32,11 +34,6 @@ export class CatalogController {
 }
 
 @ApiTags('admin/catalog')
-@ApiHeader({
-  name: 'x-tenant-id',
-  required: false,
-  description: 'Development fallback only. Protected routes prefer authenticated tenant context.'
-})
 @UseGuards(JwtAccessAuthGuard, CsrfGuard, TenantScopeGuard, PermissionsGuard)
 @Controller('admin/catalog/products')
 export class AdminCatalogController {
@@ -44,6 +41,7 @@ export class AdminCatalogController {
 
   @Get()
   @RequirePermissions(permissions.productsRead)
+  @ApiAdminEndpoint('List tenant-scoped admin products.', { tenant: 'optional' })
   async listProducts(@CurrentTenant() tenantId: string) {
     return {
       data: await this.catalog.listProducts(tenantId)
@@ -52,6 +50,7 @@ export class AdminCatalogController {
 
   @Post()
   @RequirePermissions(permissions.productsWrite)
+  @ApiAdminEndpoint('Create a tenant-scoped product draft.', { tenant: 'optional', csrf: true, status: 201 })
   async createProduct(@CurrentTenant() tenantId: string, @Body() dto: CreateProductDto) {
     return {
       data: await this.catalog.createProduct(tenantId, dto)
@@ -60,6 +59,7 @@ export class AdminCatalogController {
 
   @Get(':productId')
   @RequirePermissions(permissions.productsRead)
+  @ApiAdminEndpoint('Get one tenant-scoped product with SKUs and images.', { tenant: 'optional' })
   async getProduct(@CurrentTenant() tenantId: string, @Param('productId') productId: string) {
     return {
       data: await this.catalog.getProduct(tenantId, productId)
@@ -68,6 +68,7 @@ export class AdminCatalogController {
 
   @Patch(':productId')
   @RequirePermissions(permissions.productsWrite)
+  @ApiAdminEndpoint('Update product metadata and status rules.', { tenant: 'optional', csrf: true })
   async updateProduct(
     @CurrentTenant() tenantId: string,
     @Param('productId') productId: string,
@@ -80,6 +81,7 @@ export class AdminCatalogController {
 
   @Post(':productId/archive')
   @RequirePermissions(permissions.productsWrite)
+  @ApiAdminEndpoint('Archive a product so it leaves storefront visibility.', { tenant: 'optional', csrf: true, status: 201 })
   async archiveProduct(@CurrentTenant() tenantId: string, @Param('productId') productId: string) {
     return {
       data: await this.catalog.archiveProduct(tenantId, productId)
@@ -88,6 +90,7 @@ export class AdminCatalogController {
 
   @Post(':productId/restore')
   @RequirePermissions(permissions.productsWrite)
+  @ApiAdminEndpoint('Restore an archived product to draft status.', { tenant: 'optional', csrf: true, status: 201 })
   async restoreProduct(@CurrentTenant() tenantId: string, @Param('productId') productId: string) {
     return {
       data: await this.catalog.restoreProduct(tenantId, productId)
@@ -96,6 +99,7 @@ export class AdminCatalogController {
 
   @Post(':productId/skus')
   @RequirePermissions(permissions.productsWrite)
+  @ApiAdminEndpoint('Create a SKU under a tenant-scoped product.', { tenant: 'optional', csrf: true, status: 201 })
   async createSku(
     @CurrentTenant() tenantId: string,
     @Param('productId') productId: string,
@@ -108,6 +112,7 @@ export class AdminCatalogController {
 
   @Patch(':productId/skus/:skuId')
   @RequirePermissions(permissions.productsWrite)
+  @ApiAdminEndpoint('Update SKU price, status, and metadata.', { tenant: 'optional', csrf: true })
   async updateSku(
     @CurrentTenant() tenantId: string,
     @Param('productId') productId: string,
@@ -121,6 +126,7 @@ export class AdminCatalogController {
 
   @Post(':productId/images/upload')
   @RequirePermissions(permissions.productsWrite)
+  @ApiAdminEndpoint('Create a signed product image upload target.', { tenant: 'optional', csrf: true, status: 201 })
   async createImageUpload(
     @CurrentTenant() tenantId: string,
     @Param('productId') productId: string,
@@ -133,6 +139,7 @@ export class AdminCatalogController {
 
   @Post(':productId/images')
   @RequirePermissions(permissions.productsWrite)
+  @ApiAdminEndpoint('Attach uploaded product image metadata.', { tenant: 'optional', csrf: true, status: 201 })
   async createImage(
     @CurrentTenant() tenantId: string,
     @Param('productId') productId: string,
@@ -145,6 +152,7 @@ export class AdminCatalogController {
 
   @Patch(':productId/images/:imageId')
   @RequirePermissions(permissions.productsWrite)
+  @ApiAdminEndpoint('Update product image alt text and sort order.', { tenant: 'optional', csrf: true })
   async updateImage(
     @CurrentTenant() tenantId: string,
     @Param('productId') productId: string,
@@ -158,6 +166,7 @@ export class AdminCatalogController {
 
   @Delete(':productId/images/:imageId')
   @RequirePermissions(permissions.productsWrite)
+  @ApiAdminEndpoint('Remove product image metadata.', { tenant: 'optional', csrf: true })
   async removeImage(
     @CurrentTenant() tenantId: string,
     @Param('productId') productId: string,

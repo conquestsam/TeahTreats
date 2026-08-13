@@ -1,7 +1,8 @@
 import { Body, Controller, Delete, Get, Param, Patch, Post, UseGuards } from '@nestjs/common';
-import { ApiCookieAuth, ApiHeader, ApiOperation, ApiTags } from '@nestjs/swagger';
+import { ApiCookieAuth, ApiHeader, ApiTags } from '@nestjs/swagger';
 import { permissions } from '@snacks/shared';
 import { CurrentTenant } from '../../../common/decorators/current-tenant.decorator.js';
+import { ApiAdminEndpoint } from '../../../common/decorators/openapi.decorator.js';
 import { CurrentUser } from '../../../common/decorators/current-user.decorator.js';
 import { RequirePermissions } from '../../../common/decorators/require-permissions.decorator.js';
 import { CsrfGuard } from '../../../common/guards/csrf.guard.js';
@@ -32,14 +33,14 @@ export class AdminIamController {
 
   @Get('users')
   @RequirePermissions(permissions.usersManage)
-  @ApiOperation({ summary: 'List admin and vendor users for the current tenant.' })
+  @ApiAdminEndpoint('List admin and vendor users for the current tenant.', { tenant: 'optional' })
   async listUsers(@CurrentTenant() tenantId: string) {
     return { data: await this.iam.listUsers(tenantId) };
   }
 
   @Post('users')
   @RequirePermissions(permissions.usersManage)
-  @ApiOperation({ summary: 'Create an admin, vendor, or support user.' })
+  @ApiAdminEndpoint('Create an admin, vendor, or support user.', { tenant: 'optional' })
   async createUser(
     @CurrentUser() actor: AuthenticatedUser,
     @CurrentTenant() tenantId: string,
@@ -50,7 +51,7 @@ export class AdminIamController {
 
   @Patch('users/:userId')
   @RequirePermissions(permissions.usersManage)
-  @ApiOperation({ summary: 'Update a managed user profile.' })
+  @ApiAdminEndpoint('Update a managed user profile.', { tenant: 'optional' })
   async updateUser(
     @CurrentUser() actor: AuthenticatedUser,
     @CurrentTenant() tenantId: string,
@@ -62,7 +63,7 @@ export class AdminIamController {
 
   @Post('users/:userId/roles')
   @RequirePermissions(permissions.rolesManage)
-  @ApiOperation({ summary: 'Assign a role or create an approval request.' })
+  @ApiAdminEndpoint('Assign a role or create an approval request.', { tenant: 'optional' })
   async assignRole(
     @CurrentUser() actor: AuthenticatedUser,
     @CurrentTenant() tenantId: string,
@@ -74,7 +75,7 @@ export class AdminIamController {
 
   @Delete('users/:userId/roles/:userRoleId')
   @RequirePermissions(permissions.rolesManage)
-  @ApiOperation({ summary: 'Remove a user role assignment.' })
+  @ApiAdminEndpoint('Remove a user role assignment.', { tenant: 'optional' })
   async removeRole(
     @CurrentUser() actor: AuthenticatedUser,
     @CurrentTenant() tenantId: string,
@@ -85,14 +86,14 @@ export class AdminIamController {
 
   @Get('roles')
   @RequirePermissions(permissions.rolesManage)
-  @ApiOperation({ summary: 'List assignable roles.' })
+  @ApiAdminEndpoint('List assignable roles.', { tenant: 'optional' })
   async listRoles(@CurrentTenant() tenantId: string) {
     return { data: await this.iam.listRoles(tenantId) };
   }
 
   @Post('roles')
   @RequirePermissions(permissions.rolesManage)
-  @ApiOperation({ summary: 'Create a tenant role.' })
+  @ApiAdminEndpoint('Create a tenant role.', { tenant: 'optional' })
   async createRole(
     @CurrentUser() actor: AuthenticatedUser,
     @CurrentTenant() tenantId: string,
@@ -103,28 +104,28 @@ export class AdminIamController {
 
   @Get('permissions')
   @RequirePermissions(permissions.rolesManage)
-  @ApiOperation({ summary: 'List known permissions.' })
+  @ApiAdminEndpoint('List known permissions.', { tenant: 'optional' })
   listPermissions() {
     return { data: this.iam.listPermissions() };
   }
 
   @Get('tenants')
   @RequirePermissions(permissions.tenantsManage)
-  @ApiOperation({ summary: 'List tenants visible to the current actor.' })
+  @ApiAdminEndpoint('List tenants visible to the current actor.', { tenant: 'optional' })
   async listTenants(@CurrentUser() actor: AuthenticatedUser) {
     return { data: await this.iam.listTenants(actor) };
   }
 
   @Get('approvals')
   @RequirePermissions(permissions.rolesManage)
-  @ApiOperation({ summary: 'List pending role change approvals.' })
+  @ApiAdminEndpoint('List pending role change approvals.', { tenant: 'optional' })
   async listApprovals(@CurrentTenant() tenantId: string) {
     return { data: await this.iam.listApprovals(tenantId) };
   }
 
   @Post('approvals/:approvalId/approve')
   @RequirePermissions(permissions.rolesManage)
-  @ApiOperation({ summary: 'Approve a delegated role change.' })
+  @ApiAdminEndpoint('Approve a delegated role change.', { tenant: 'optional' })
   async approve(
     @CurrentUser() actor: AuthenticatedUser,
     @CurrentTenant() tenantId: string,
@@ -135,7 +136,7 @@ export class AdminIamController {
 
   @Post('approvals/:approvalId/reject')
   @RequirePermissions(permissions.rolesManage)
-  @ApiOperation({ summary: 'Reject a delegated role change.' })
+  @ApiAdminEndpoint('Reject a delegated role change.', { tenant: 'optional' })
   async reject(
     @CurrentUser() actor: AuthenticatedUser,
     @CurrentTenant() tenantId: string,

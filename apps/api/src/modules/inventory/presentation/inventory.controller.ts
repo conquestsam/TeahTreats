@@ -1,7 +1,8 @@
 import { Body, Controller, Get, Param, Post, UseGuards } from '@nestjs/common';
-import { ApiCookieAuth, ApiHeader, ApiOperation, ApiTags } from '@nestjs/swagger';
+import { ApiCookieAuth, ApiHeader, ApiTags } from '@nestjs/swagger';
 import { permissions } from '@snacks/shared';
 import { CurrentTenant } from '../../../common/decorators/current-tenant.decorator.js';
+import { ApiAdminEndpoint } from '../../../common/decorators/openapi.decorator.js';
 import { CurrentUser } from '../../../common/decorators/current-user.decorator.js';
 import { RequirePermissions } from '../../../common/decorators/require-permissions.decorator.js';
 import { CsrfGuard } from '../../../common/guards/csrf.guard.js';
@@ -30,28 +31,28 @@ export class InventoryController {
 
   @Get('batches')
   @RequirePermissions(permissions.inventoryRead)
-  @ApiOperation({ summary: 'List tenant inventory batches.' })
+  @ApiAdminEndpoint('List tenant inventory batches.', { tenant: 'optional' })
   async listBatches(@CurrentTenant() tenantId: string) {
     return { data: await this.inventory.listBatches(tenantId) };
   }
 
   @Get('sku-options')
   @RequirePermissions(permissions.inventoryRead)
-  @ApiOperation({ summary: 'List SKUs that can receive inventory.' })
+  @ApiAdminEndpoint('List SKUs that can receive inventory.', { tenant: 'optional' })
   async listSkuOptions(@CurrentTenant() tenantId: string) {
     return { data: await this.inventory.listSkuOptions(tenantId) };
   }
 
   @Get('batches/:batchId')
   @RequirePermissions(permissions.inventoryRead)
-  @ApiOperation({ summary: 'Get one inventory batch.' })
+  @ApiAdminEndpoint('Get one inventory batch.', { tenant: 'optional' })
   async getBatch(@CurrentTenant() tenantId: string, @Param('batchId') batchId: string) {
     return { data: await this.inventory.getBatch(tenantId, batchId) };
   }
 
   @Post('batches')
   @RequirePermissions(permissions.inventoryWrite)
-  @ApiOperation({ summary: 'Create an inventory batch.' })
+  @ApiAdminEndpoint('Create an inventory batch.', { tenant: 'optional' })
   async createBatch(
     @CurrentUser() actor: AuthenticatedUser,
     @CurrentTenant() tenantId: string,
@@ -62,7 +63,7 @@ export class InventoryController {
 
   @Post('batches/:batchId/adjust')
   @RequirePermissions(permissions.inventoryWrite)
-  @ApiOperation({ summary: 'Adjust batch quantity.' })
+  @ApiAdminEndpoint('Adjust batch quantity.', { tenant: 'optional' })
   async adjustBatch(
     @CurrentUser() actor: AuthenticatedUser,
     @CurrentTenant() tenantId: string,
@@ -74,7 +75,7 @@ export class InventoryController {
 
   @Post('batches/:batchId/expire')
   @RequirePermissions(permissions.inventoryWrite)
-  @ApiOperation({ summary: 'Mark a batch expired.' })
+  @ApiAdminEndpoint('Mark a batch expired.', { tenant: 'optional' })
   async expireBatch(
     @CurrentUser() actor: AuthenticatedUser,
     @CurrentTenant() tenantId: string,
@@ -85,7 +86,7 @@ export class InventoryController {
 
   @Post('reservations')
   @RequirePermissions(permissions.inventoryWrite)
-  @ApiOperation({ summary: 'Create a checkout-ready stock reservation foundation.' })
+  @ApiAdminEndpoint('Create a checkout-ready stock reservation foundation.', { tenant: 'optional' })
   async reserveStock(
     @CurrentUser() actor: AuthenticatedUser,
     @CurrentTenant() tenantId: string,

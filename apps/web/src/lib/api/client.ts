@@ -1,3 +1,5 @@
+import type { ApiErrorBody } from '@snacks/shared';
+
 const apiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL ?? 'http://localhost:4000/api/v1';
 export const temporaryTenantId = process.env.NEXT_PUBLIC_TEMP_TENANT_ID;
 
@@ -7,6 +9,8 @@ export class ApiError extends Error {
   constructor(
     message: string,
     readonly status: number,
+    readonly code = 'REQUEST_FAILED',
+    readonly details?: unknown,
   ) {
     super(message);
   }
@@ -42,8 +46,9 @@ export async function apiFetch<TResponse>(
     });
   } catch {
     throw new ApiError(
-      `The API server is offline or unreachable at ${apiBaseUrl}. Start the backend with pnpm dev:api, then try again.`,
+      'API server is offline or unreachable.',
       0,
+      'API_OFFLINE',
     );
   }
 
@@ -55,8 +60,8 @@ export async function apiFetch<TResponse>(
   }
 
   if (!response.ok) {
-    handleAuthRedirect(path, response.status);
-    throw new ApiError(await resolveErrorMessage(response), response.status);
+    const errorBody = await resolveErrorBody(response);
+    throw new ApiError(errorBody.message, response.status, errorBody.code, errorBody.details);
   }
 
   return (await response.json()) as TResponse;
@@ -98,9 +103,6 @@ function shouldAttemptRefresh(path: string, status: number, skipAuthRefresh: boo
   if (path.endsWith('/refresh') || path.endsWith('/login') || path.endsWith('/signup') || path.endsWith('/csrf')) {
     return false;
   }
-  if (path === '/auth/me' || path === '/customer-auth/me') {
-    return false;
-  }
   return path.startsWith('/auth') || path.startsWith('/admin') || path.startsWith('/customer-auth') || path.startsWith('/shop/orders');
 }
 
@@ -108,64 +110,46 @@ function shouldUseCustomerRefresh(path: string) {
   return path.startsWith('/customer-auth') || path.startsWith('/shop/orders');
 }
 
-function handleAuthRedirect(path: string, status: number) {
-  if (typeof window === 'undefined' || status !== 401) {
-    return;
-  }
-
-  if (path === '/customer-auth/me' || path === '/auth/me') {
-    return;
-  }
-
-  if (window.location.pathname === '/login' || window.location.pathname === '/admin/login') {
-    return;
-  }
-
-  if (path.startsWith('/customer-auth') || path.startsWith('/shop/orders')) {
-    window.location.replace('/login');
-    return;
-  }
-
-  if (path.startsWith('/auth') || path.startsWith('/admin')) {
-    window.location.replace('/admin/login');
-  }
-}
-
-async function resolveErrorMessage(response: Response) {
+async function resolveErrorBody(response: Response): Promise<ApiErrorBody> {
   try {
-    const body = (await response.json()) as {
-      message?: string | string[];
-      error?: string;
-      statusCode?: number;
-    };
+    const body = (await response.json()) as Partial<ApiErrorBody> & { message?: string | string[] };
     if (Array.isArray(body.message)) {
-      return body.message.join(' ');
+      return {
+        statusCode: response.status,
+        code: body.code ?? 'VALIDATION_ERROR',
+        message: body.message.join(' '),
+        error: body.error ?? 'Validation failed.',
+        details: body.details
+      };
     }
-    if (response.status === 401 && isCredentialEndpoint(response.url)) {
-      return 'Email or password is incorrect.';
-    }
-    if (response.status === 401) {
-      return 'Your session expired. Please sign in again.';
-    }
-    if (response.status === 403 && typeof body.message === 'string' && body.message.toLowerCase().includes('csrf')) {
-      return 'Your security token expired. Refresh the page and try again.';
-    }
-    if (
-      (response.status === 400 || response.status === 403) &&
-      typeof body.message === 'string' &&
-      body.message.toLowerCase().includes('tenant')
-    ) {
-      return 'Tenant is missing. Set NEXT_PUBLIC_TEMP_TENANT_ID=platform or send x-tenant-id.';
-    }
-    if (response.status === 429) {
-      return 'Too many attempts. Please wait and try again.';
-    }
-    return body.message ?? body.error ?? `Request failed: ${response.statusText}`;
+    const message = body.message ?? body.error ?? `Request failed: ${response.statusText}`;
+    return {
+      statusCode: body.statusCode ?? response.status,
+      code: body.code ?? fallbackCode(response.status),
+      message,
+      error: body.error ?? message,
+      details: body.details
+    };
   } catch {
-    return `Request failed: ${response.statusText}`;
+    const message = `Request failed: ${response.statusText}`;
+    return {
+      statusCode: response.status,
+      code: fallbackCode(response.status),
+      message,
+      error: message
+    };
   }
 }
 
-function isCredentialEndpoint(url: string) {
-  return url.endsWith('/auth/login') || url.endsWith('/customer-auth/login');
+function fallbackCode(status: number) {
+  if (status === 401) {
+    return 'AUTH_SESSION_EXPIRED';
+  }
+  if (status === 403) {
+    return 'AUTH_PERMISSION_DENIED';
+  }
+  if (status === 429) {
+    return 'RATE_LIMITED';
+  }
+  return 'REQUEST_FAILED';
 }

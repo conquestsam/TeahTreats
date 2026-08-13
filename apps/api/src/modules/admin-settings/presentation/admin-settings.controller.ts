@@ -1,7 +1,8 @@
 import { Body, Controller, Get, Param, Patch, Post, UseGuards } from '@nestjs/common';
-import { ApiCookieAuth, ApiHeader, ApiOperation, ApiTags } from '@nestjs/swagger';
+import { ApiCookieAuth, ApiHeader, ApiTags } from '@nestjs/swagger';
 import { permissions } from '@snacks/shared';
 import { CurrentTenant } from '../../../common/decorators/current-tenant.decorator.js';
+import { ApiAdminEndpoint } from '../../../common/decorators/openapi.decorator.js';
 import { CurrentUser } from '../../../common/decorators/current-user.decorator.js';
 import { RequirePermissions } from '../../../common/decorators/require-permissions.decorator.js';
 import { CsrfGuard } from '../../../common/guards/csrf.guard.js';
@@ -31,14 +32,14 @@ export class AdminSettingsController {
   constructor(private readonly settings: AdminSettingsService) {}
 
   @Get()
-  @ApiOperation({ summary: 'Get tenant operation settings.' })
+  @ApiAdminEndpoint('Get tenant operation settings.', { tenant: 'optional' })
   async getSettings(@CurrentUser() actor: AuthenticatedUser, @CurrentTenant() tenantId: string) {
     return { data: await this.settings.getSettings(actor, tenantId) };
   }
 
   @Patch('business-profile')
   @RequirePermissions(permissions.tenantsManage)
-  @ApiOperation({ summary: 'Update tenant business profile settings.' })
+  @ApiAdminEndpoint('Update tenant business profile settings.', { tenant: 'optional' })
   async updateBusinessProfile(
     @CurrentUser() actor: AuthenticatedUser,
     @CurrentTenant() tenantId: string,
@@ -49,7 +50,7 @@ export class AdminSettingsController {
 
   @Patch('approval')
   @RequirePermissions(permissions.tenantsManage)
-  @ApiOperation({ summary: 'Update tenant approval rules.' })
+  @ApiAdminEndpoint('Update tenant approval rules.', { tenant: 'optional' })
   async updateApprovalSettings(
     @CurrentUser() actor: AuthenticatedUser,
     @CurrentTenant() tenantId: string,
@@ -60,7 +61,7 @@ export class AdminSettingsController {
 
   @Patch('notifications')
   @RequirePermissions(permissions.tenantsManage)
-  @ApiOperation({ summary: 'Update tenant notification channels.' })
+  @ApiAdminEndpoint('Update tenant notification channels.', { tenant: 'optional' })
   async updateNotificationChannels(
     @CurrentUser() actor: AuthenticatedUser,
     @CurrentTenant() tenantId: string,
@@ -71,14 +72,14 @@ export class AdminSettingsController {
 
   @Get('manual-payment-methods')
   @RequirePermissions(permissions.manualPaymentsReview)
-  @ApiOperation({ summary: 'List tenant manual payment methods.' })
+  @ApiAdminEndpoint('List tenant manual payment methods.', { tenant: 'optional' })
   async listManualPaymentMethods(@CurrentTenant() tenantId: string) {
     return { data: await this.settings.listManualPaymentMethods(tenantId) };
   }
 
   @Post('manual-payment-methods')
   @RequirePermissions(permissions.manualPaymentsReview)
-  @ApiOperation({ summary: 'Create a tenant manual payment method.' })
+  @ApiAdminEndpoint('Create a tenant manual payment method.', { tenant: 'optional' })
   async createManualPaymentMethod(
     @CurrentUser() actor: AuthenticatedUser,
     @CurrentTenant() tenantId: string,
@@ -89,7 +90,7 @@ export class AdminSettingsController {
 
   @Patch('manual-payment-methods/:methodId')
   @RequirePermissions(permissions.manualPaymentsReview)
-  @ApiOperation({ summary: 'Update a tenant manual payment method.' })
+  @ApiAdminEndpoint('Update a tenant manual payment method.', { tenant: 'optional' })
   async updateManualPaymentMethod(
     @CurrentUser() actor: AuthenticatedUser,
     @CurrentTenant() tenantId: string,
@@ -101,7 +102,7 @@ export class AdminSettingsController {
 
   @Post('manual-payment-methods/:methodId/activate')
   @RequirePermissions(permissions.manualPaymentsReview)
-  @ApiOperation({ summary: 'Activate a tenant manual payment method.' })
+  @ApiAdminEndpoint('Activate a tenant manual payment method.', { tenant: 'optional' })
   async activateManualPaymentMethod(
     @CurrentUser() actor: AuthenticatedUser,
     @CurrentTenant() tenantId: string,
@@ -112,7 +113,7 @@ export class AdminSettingsController {
 
   @Post('manual-payment-methods/:methodId/deactivate')
   @RequirePermissions(permissions.manualPaymentsReview)
-  @ApiOperation({ summary: 'Deactivate a tenant manual payment method.' })
+  @ApiAdminEndpoint('Deactivate a tenant manual payment method.', { tenant: 'optional' })
   async deactivateManualPaymentMethod(
     @CurrentUser() actor: AuthenticatedUser,
     @CurrentTenant() tenantId: string,

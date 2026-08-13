@@ -5,6 +5,7 @@ import { ConfigService } from '@nestjs/config';
 import { NestFactory } from '@nestjs/core';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { AppModule } from './app.module.js';
+import { HttpExceptionFilter } from './common/filters/http-exception.filter.js';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule, { rawBody: true });
@@ -23,12 +24,44 @@ async function bootstrap() {
       transform: true
     }),
   );
+  app.useGlobalFilters(new HttpExceptionFilter());
 
   const documentConfig = new DocumentBuilder()
-    .setTitle('Snacks Commerce API')
-    .setDescription('REST API for the snacks e-commerce modular monolith.')
+    .setTitle('TeahTreats API')
+    .setDescription(
+      'REST API for the TeahTreats snacks e-commerce modular monolith. Protected browser mutations use HTTP-only cookies, tenant scoping, and CSRF headers.',
+    )
     .setVersion('1.0')
-    .addCookieAuth('access_token')
+    .addCookieAuth('access_token', {
+      type: 'apiKey',
+      in: 'cookie',
+      name: 'access_token',
+      description: 'Admin/vendor access cookie set by /api/v1/auth/login.'
+    })
+    .addCookieAuth('customer_access_token', {
+      type: 'apiKey',
+      in: 'cookie',
+      name: 'customer_access_token',
+      description: 'Customer access cookie set by /api/v1/customer-auth/login or signup.'
+    })
+    .addApiKey(
+      {
+        type: 'apiKey',
+        in: 'header',
+        name: 'x-tenant-id',
+        description: 'Tenant context for tenant-scoped APIs.'
+      },
+      'tenant-id',
+    )
+    .addApiKey(
+      {
+        type: 'apiKey',
+        in: 'header',
+        name: 'x-csrf-token',
+        description: 'CSRF token required for unsafe browser mutations.'
+      },
+      'csrf-token',
+    )
     .build();
 
   SwaggerModule.setup('api/docs', app, SwaggerModule.createDocument(app, documentConfig));

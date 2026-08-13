@@ -1,7 +1,8 @@
 import { Controller, Get, Param, UseGuards } from '@nestjs/common';
-import { ApiCookieAuth, ApiHeader, ApiOperation, ApiTags } from '@nestjs/swagger';
+import { ApiCookieAuth, ApiHeader, ApiTags } from '@nestjs/swagger';
 import { permissions } from '@snacks/shared';
 import { CurrentTenant } from '../../../common/decorators/current-tenant.decorator.js';
+import { ApiAdminEndpoint } from '../../../common/decorators/openapi.decorator.js';
 import { CurrentUser } from '../../../common/decorators/current-user.decorator.js';
 import { RequirePermissions } from '../../../common/decorators/require-permissions.decorator.js';
 import { CsrfGuard } from '../../../common/guards/csrf.guard.js';
@@ -25,7 +26,7 @@ export class VendorController {
 
   @Get('dashboard')
   @RequirePermissions(permissions.productsRead)
-  @ApiOperation({ summary: 'Get a tenant-scoped vendor dashboard summary.' })
+  @ApiAdminEndpoint('Get a tenant-scoped vendor dashboard summary.', { tenant: 'optional' })
   async dashboard(
     @CurrentUser() actor: AuthenticatedUser,
     @CurrentTenant() tenantId: string,
@@ -35,14 +36,14 @@ export class VendorController {
 
   @Get('products')
   @RequirePermissions(permissions.productsRead)
-  @ApiOperation({ summary: 'List vendor-scoped products.' })
+  @ApiAdminEndpoint('List vendor-scoped products.', { tenant: 'optional' })
   async products(@CurrentUser() actor: AuthenticatedUser, @CurrentTenant() tenantId: string) {
     return { data: await this.vendor.listProducts(actor, tenantId) };
   }
 
   @Get('products/:productId')
   @RequirePermissions(permissions.productsRead)
-  @ApiOperation({ summary: 'Get a vendor-scoped product detail.' })
+  @ApiAdminEndpoint('Get a vendor-scoped product detail.', { tenant: 'optional' })
   async product(
     @CurrentUser() actor: AuthenticatedUser,
     @CurrentTenant() tenantId: string,
@@ -53,14 +54,14 @@ export class VendorController {
 
   @Get('inventory')
   @RequirePermissions(permissions.inventoryRead)
-  @ApiOperation({ summary: 'List vendor-scoped inventory batches.' })
+  @ApiAdminEndpoint('List vendor-scoped inventory batches.', { tenant: 'optional' })
   async inventory(@CurrentUser() actor: AuthenticatedUser, @CurrentTenant() tenantId: string) {
     return { data: await this.vendor.listInventory(actor, tenantId) };
   }
 
   @Get('inventory/:batchId')
   @RequirePermissions(permissions.inventoryRead)
-  @ApiOperation({ summary: 'Get a vendor-scoped inventory batch detail.' })
+  @ApiAdminEndpoint('Get a vendor-scoped inventory batch detail.', { tenant: 'optional' })
   async inventoryBatch(
     @CurrentUser() actor: AuthenticatedUser,
     @CurrentTenant() tenantId: string,
@@ -71,14 +72,14 @@ export class VendorController {
 
   @Get('orders')
   @RequirePermissions(permissions.ordersRead)
-  @ApiOperation({ summary: 'List vendor-scoped orders.' })
+  @ApiAdminEndpoint('List vendor-scoped orders.', { tenant: 'optional' })
   async orders(@CurrentUser() actor: AuthenticatedUser, @CurrentTenant() tenantId: string) {
     return { data: await this.vendor.listOrders(actor, tenantId) };
   }
 
   @Get('orders/:orderId')
   @RequirePermissions(permissions.ordersRead)
-  @ApiOperation({ summary: 'Get a vendor-scoped order detail.' })
+  @ApiAdminEndpoint('Get a vendor-scoped order detail.', { tenant: 'optional' })
   async order(
     @CurrentUser() actor: AuthenticatedUser,
     @CurrentTenant() tenantId: string,

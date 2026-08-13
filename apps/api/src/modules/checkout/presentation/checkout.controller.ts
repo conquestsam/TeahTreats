@@ -1,6 +1,7 @@
 import { Body, Controller, Post, Req, Res, UseGuards } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { ApiHeader, ApiOperation, ApiTags } from '@nestjs/swagger';
+import { ApiHeader, ApiTags } from '@nestjs/swagger';
+import { ApiEndpoint } from '../../../common/decorators/openapi.decorator.js';
 import type { Request, Response } from 'express';
 import { randomUUID } from 'node:crypto';
 import { CurrentTenant } from '../../../common/decorators/current-tenant.decorator.js';
@@ -30,7 +31,7 @@ export class CheckoutController {
   @Post('start')
   @RateLimit({ limit: 6, windowSeconds: 60, keyPrefix: 'checkout-start' })
   @UseGuards(RateLimitGuard, CsrfGuard, OptionalCustomerAuthGuard, TenantScopeGuard)
-  @ApiOperation({ summary: 'Start checkout and reserve inventory.' })
+  @ApiEndpoint({ summary: 'Start checkout and reserve inventory.', tenant: 'required', auth: 'none', status: 201 })
   async start(
     @CurrentTenant() tenantId: string,
     @CurrentUser() user: AuthenticatedUser | undefined,

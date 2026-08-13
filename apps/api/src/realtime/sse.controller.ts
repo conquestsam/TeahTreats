@@ -1,9 +1,10 @@
 import { BadRequestException, Controller, Get, MessageEvent, Query, Sse, UseGuards } from '@nestjs/common';
-import { ApiCookieAuth, ApiHeader, ApiOperation, ApiTags } from '@nestjs/swagger';
+import { ApiCookieAuth, ApiHeader, ApiTags } from '@nestjs/swagger';
 import { permissions, realtimeTopics } from '@snacks/shared';
 import { map, merge, Observable, of } from 'rxjs';
 import { CurrentTenant } from '../common/decorators/current-tenant.decorator.js';
 import { CurrentUser } from '../common/decorators/current-user.decorator.js';
+import { ApiAdminEndpoint, ApiEndpoint } from '../common/decorators/openapi.decorator.js';
 import { RequirePermissions } from '../common/decorators/require-permissions.decorator.js';
 import { JwtAccessAuthGuard } from '../common/guards/jwt-access-auth.guard.js';
 import { OptionalCustomerAuthGuard } from '../common/guards/optional-customer-auth.guard.js';
@@ -31,7 +32,10 @@ export class SseController {
   })
   @UseGuards(JwtAccessAuthGuard, TenantScopeGuard, PermissionsGuard)
   @RequirePermissions(permissions.ordersRead)
-  @ApiOperation({ summary: 'Tenant-scoped admin realtime stream.' })
+  @ApiAdminEndpoint('Tenant-scoped admin realtime stream.', {
+    tenant: 'optional',
+    okDescription: 'Server-sent event stream for admin tenant events.'
+  })
   admin(@CurrentTenant() tenantId: string): Observable<MessageEvent> {
     const hello = of({
       type: 'heartbeat',
@@ -51,7 +55,11 @@ export class SseController {
   @Get('customer-order/verify')
   @UseGuards(OptionalCustomerAuthGuard)
   @ApiHeader({ name: 'x-tenant-id', required: false, description: 'EventSource verification uses tenantId query fallback.' })
-  @ApiOperation({ summary: 'Verify a customer order stream before opening SSE.' })
+  @ApiEndpoint({
+    summary: 'Verify a customer order stream before opening SSE.',
+    tenant: 'optional',
+    auth: 'optional'
+  })
   async verifyCustomerOrder(
     @CurrentUser() user: AuthenticatedUser | undefined,
     @Query('tenantId') tenantId: string,
@@ -68,7 +76,12 @@ export class SseController {
   @Sse('customer-order')
   @UseGuards(OptionalCustomerAuthGuard)
   @ApiHeader({ name: 'x-tenant-id', required: false, description: 'EventSource uses tenantId query fallback.' })
-  @ApiOperation({ summary: 'Customer order realtime stream using temporary customer verification.' })
+  @ApiEndpoint({
+    summary: 'Customer order realtime stream using temporary customer verification.',
+    tenant: 'optional',
+    auth: 'optional',
+    okDescription: 'Server-sent event stream for one customer order.'
+  })
   async customerOrder(
     @CurrentUser() user: AuthenticatedUser | undefined,
     @Query('tenantId') tenantId: string,

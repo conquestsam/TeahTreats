@@ -1,6 +1,7 @@
 import { Body, Controller, Post, Req, Res, UseGuards } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { ApiHeader, ApiOperation, ApiTags } from '@nestjs/swagger';
+import { ApiHeader, ApiTags } from '@nestjs/swagger';
+import { ApiEndpoint } from '../../../common/decorators/openapi.decorator.js';
 import type { Request, Response } from 'express';
 import { randomUUID } from 'node:crypto';
 import { CurrentTenant } from '../../../common/decorators/current-tenant.decorator.js';
@@ -24,7 +25,7 @@ export class CustomerPromotionsController {
   ) {}
 
   @Post('validate-coupon')
-  @ApiOperation({ summary: 'Validate a coupon against the current cart.' })
+  @ApiEndpoint({ summary: 'Validate a coupon against the current cart.', tenant: 'required', auth: 'none' })
   async validateCoupon(
     @CurrentTenant() tenantId: string,
     @CurrentUser() user: AuthenticatedUser | undefined,

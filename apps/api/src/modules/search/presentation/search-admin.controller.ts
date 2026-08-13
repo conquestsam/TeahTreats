@@ -1,7 +1,8 @@
 import { Controller, Post, UseGuards } from '@nestjs/common';
-import { ApiCookieAuth, ApiHeader, ApiOperation, ApiTags } from '@nestjs/swagger';
+import { ApiCookieAuth, ApiHeader, ApiTags } from '@nestjs/swagger';
 import { permissions } from '@snacks/shared';
 import { CurrentTenant } from '../../../common/decorators/current-tenant.decorator.js';
+import { ApiAdminEndpoint } from '../../../common/decorators/openapi.decorator.js';
 import { RequirePermissions } from '../../../common/decorators/require-permissions.decorator.js';
 import { CsrfGuard } from '../../../common/guards/csrf.guard.js';
 import { JwtAccessAuthGuard } from '../../../common/guards/jwt-access-auth.guard.js';
@@ -19,7 +20,7 @@ export class SearchAdminController {
 
   @Post('products/reindex')
   @RequirePermissions(permissions.productsWrite)
-  @ApiOperation({ summary: 'Rebuild the tenant product OpenSearch index from PostgreSQL.' })
+  @ApiAdminEndpoint('Rebuild the tenant product OpenSearch index from PostgreSQL.', { tenant: 'optional' })
   async reindexProducts(@CurrentTenant() tenantId: string) {
     return { data: await this.search.reindexProducts(tenantId) };
   }

@@ -1,5 +1,6 @@
 import { Body, Controller, Get, Param, Post, Query, UseGuards } from '@nestjs/common';
-import { ApiHeader, ApiOperation, ApiTags } from '@nestjs/swagger';
+import { ApiHeader, ApiTags } from '@nestjs/swagger';
+import { ApiEndpoint } from '../../../common/decorators/openapi.decorator.js';
 import { CurrentTenant } from '../../../common/decorators/current-tenant.decorator.js';
 import { Public } from '../../../common/decorators/public.decorator.js';
 import { RateLimit } from '../../../common/decorators/rate-limit.decorator.js';
@@ -18,7 +19,7 @@ export class StorefrontController {
   constructor(private readonly storefront: StorefrontService) {}
 
   @Get('products')
-  @ApiOperation({ summary: 'List active storefront products with inventory-aware availability.' })
+  @ApiEndpoint({ summary: 'List active storefront products with inventory-aware availability.', tenant: 'required', auth: 'none' })
   async listProducts(@CurrentTenant() tenantId: string, @Query() query: StorefrontProductListQueryDto) {
     return {
       data: await this.storefront.listProducts(tenantId, query)
@@ -26,7 +27,7 @@ export class StorefrontController {
   }
 
   @Get('products/:slug')
-  @ApiOperation({ summary: 'Get an active storefront product by slug.' })
+  @ApiEndpoint({ summary: 'Get an active storefront product by slug.', tenant: 'required', auth: 'none' })
   async getProduct(@CurrentTenant() tenantId: string, @Param('slug') slug: string) {
     return {
       data: await this.storefront.getProductBySlug(tenantId, slug)
@@ -36,7 +37,7 @@ export class StorefrontController {
   @Get('search')
   @RateLimit({ limit: 60, windowSeconds: 60, keyPrefix: 'storefront-search' })
   @UseGuards(RateLimitGuard, TenantScopeGuard)
-  @ApiOperation({ summary: 'Search storefront products with OpenSearch fallback.' })
+  @ApiEndpoint({ summary: 'Search storefront products with OpenSearch fallback.', tenant: 'required', auth: 'none' })
   async searchProducts(@CurrentTenant() tenantId: string, @Query() query: StorefrontSearchQueryDto) {
     return {
       data: await this.storefront.searchProducts(tenantId, query)
@@ -44,7 +45,7 @@ export class StorefrontController {
   }
 
   @Get('collections')
-  @ApiOperation({ summary: 'List category collection summaries.' })
+  @ApiEndpoint({ summary: 'List category collection summaries.', tenant: 'required', auth: 'none' })
   async listCollections(@CurrentTenant() tenantId: string) {
     return {
       data: await this.storefront.listCollections(tenantId)
@@ -52,7 +53,7 @@ export class StorefrontController {
   }
 
   @Get('recommendations')
-  @ApiOperation({ summary: 'List MVP recommendation sections.' })
+  @ApiEndpoint({ summary: 'List MVP recommendation sections.', tenant: 'required', auth: 'none' })
   async listRecommendations(@CurrentTenant() tenantId: string) {
     return {
       data: await this.storefront.listRecommendations(tenantId)
@@ -62,7 +63,7 @@ export class StorefrontController {
   @Post('newsletter')
   @RateLimit({ limit: 10, windowSeconds: 60, keyPrefix: 'storefront-newsletter' })
   @UseGuards(RateLimitGuard, TenantScopeGuard)
-  @ApiOperation({ summary: 'Subscribe an email to storefront newsletter updates.' })
+  @ApiEndpoint({ summary: 'Subscribe an email to storefront newsletter updates.', tenant: 'required', auth: 'none' })
   async subscribeToNewsletter(@CurrentTenant() tenantId: string, @Body() dto: NewsletterSubscribeDto) {
     return {
       data: await this.storefront.subscribeToNewsletter(tenantId, dto)

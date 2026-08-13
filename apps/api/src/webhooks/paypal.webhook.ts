@@ -1,6 +1,7 @@
 import { BadRequestException, Body, Controller, Headers, Post } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { ApiOperation, ApiTags } from '@nestjs/swagger';
+import { ApiTags } from '@nestjs/swagger';
+import { ApiPublicEndpoint } from '../common/decorators/openapi.decorator.js';
 import { PaymentProvider } from '@prisma/client';
 import { PaymentReconciliationService } from '../modules/payments/application/payment-reconciliation.service.js';
 
@@ -13,7 +14,7 @@ export class PaypalWebhookController {
   ) {}
 
   @Post()
-  @ApiOperation({ summary: 'Receive PayPal payment webhooks.' })
+  @ApiPublicEndpoint('Receive PayPal payment webhooks.', 'Provider webhook endpoint. Signature verification is enforced in production.')
   async handle(@Headers() headers: Record<string, string | undefined>, @Body() body: PaypalWebhookEvent) {
     await this.verifyPaypalSignature(headers, body);
     const resource = body.resource && typeof body.resource === 'object' ? body.resource : {};

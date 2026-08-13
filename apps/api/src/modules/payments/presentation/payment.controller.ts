@@ -1,5 +1,6 @@
 import { Body, Controller, Get, Post, UseGuards } from '@nestjs/common';
-import { ApiHeader, ApiOperation, ApiTags } from '@nestjs/swagger';
+import { ApiHeader, ApiTags } from '@nestjs/swagger';
+import { ApiEndpoint } from '../../../common/decorators/openapi.decorator.js';
 import { CurrentTenant } from '../../../common/decorators/current-tenant.decorator.js';
 import { IdempotencyKey } from '../../../common/decorators/idempotency-key.decorator.js';
 import { RateLimit } from '../../../common/decorators/rate-limit.decorator.js';
@@ -21,19 +22,19 @@ export class PaymentController {
   ) {}
 
   @Get('manual-methods')
-  @ApiOperation({ summary: 'List active manual payment methods.' })
+  @ApiEndpoint({ summary: 'List active manual payment methods.', tenant: 'required', auth: 'none' })
   async listManualMethods(@CurrentTenant() tenantId: string) {
     return { data: await this.payments.listManualMethods(tenantId) };
   }
 
   @Get('gateway-status')
-  @ApiOperation({ summary: 'Returns availability of each payment gateway.' })
+  @ApiEndpoint({ summary: 'Returns availability of each payment gateway.', tenant: 'required', auth: 'none' })
   async gatewayStatus(@CurrentTenant() tenantId: string) {
     return { data: await this.payments.getGatewayStatus(tenantId) };
   }
 
   @Post('initiate')
-  @ApiOperation({ summary: 'Initiate a payment attempt.' })
+  @ApiEndpoint({ summary: 'Initiate a payment attempt.', tenant: 'required', auth: 'none' })
   async initiate(
     @CurrentTenant() tenantId: string,
     @IdempotencyKey() idempotencyKey: string | undefined,
@@ -43,7 +44,7 @@ export class PaymentController {
   }
 
   @Post('paypal/capture')
-  @ApiOperation({ summary: 'Capture an approved PayPal order through the backend.' })
+  @ApiEndpoint({ summary: 'Capture an approved PayPal order through the backend.', tenant: 'required', auth: 'none' })
   async capturePaypal(
     @CurrentTenant() tenantId: string,
     @IdempotencyKey() idempotencyKey: string | undefined,
@@ -55,7 +56,7 @@ export class PaymentController {
   @Post('receipt-upload')
   @RateLimit({ limit: 10, windowSeconds: 60, keyPrefix: 'payment-receipt-upload' })
   @UseGuards(RateLimitGuard, CsrfGuard, TenantScopeGuard)
-  @ApiOperation({ summary: 'Create a signed receipt upload target.' })
+  @ApiEndpoint({ summary: 'Create a signed receipt upload target.', tenant: 'required', auth: 'none' })
   async receiptUpload(@CurrentTenant() tenantId: string, @Body() dto: CreateReceiptUploadDto) {
     return { data: await this.payments.createReceiptUpload(tenantId, dto) };
   }
@@ -63,7 +64,7 @@ export class PaymentController {
   @Post('manual-proof')
   @RateLimit({ limit: 8, windowSeconds: 60, keyPrefix: 'payment-manual-proof' })
   @UseGuards(RateLimitGuard, CsrfGuard, TenantScopeGuard)
-  @ApiOperation({ summary: 'Submit manual payment proof.' })
+  @ApiEndpoint({ summary: 'Submit manual payment proof.', tenant: 'required', auth: 'none' })
   async submitManualProof(
     @CurrentTenant() tenantId: string,
     @IdempotencyKey() idempotencyKey: string | undefined,
@@ -73,7 +74,7 @@ export class PaymentController {
   }
 
   @Post('status')
-  @ApiOperation({ summary: 'Get backend-owned customer payment status.' })
+  @ApiEndpoint({ summary: 'Get backend-owned customer payment status.', tenant: 'required', auth: 'none' })
   async getStatus(@CurrentTenant() tenantId: string, @Body() dto: PaymentStatusLookupDto) {
     return { data: await this.reconciliation.getCustomerPaymentStatus(tenantId, dto.orderId, dto) };
   }

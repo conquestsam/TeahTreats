@@ -9,6 +9,7 @@ export interface PaginatedResult<TItem> {
   total: number;
 }
 export * from './admin-user.js';
+export * from './auth-errors.js';
 export * from './inventory.js';
 export * from './cart.js';
 export * from './payment.js';

@@ -1,5 +1,6 @@
 import { Controller, Get } from '@nestjs/common';
-import { ApiOperation, ApiTags } from '@nestjs/swagger';
+import { ApiTags } from '@nestjs/swagger';
+import { ApiPublicEndpoint } from '../../../common/decorators/openapi.decorator.js';
 import { Public } from '../../../common/decorators/public.decorator.js';
 import { HealthService } from '../application/health.service.js';
 
@@ -10,7 +11,7 @@ export class HealthController {
   constructor(private readonly health: HealthService) {}
 
   @Get()
-  @ApiOperation({ summary: 'Check API and dependency health.' })
+  @ApiPublicEndpoint('Check API and dependency health.')
   check() {
     return this.health.check();
   }

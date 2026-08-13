@@ -1,6 +1,7 @@
 import { Body, Controller, Get, Param, Patch, Post, UseGuards } from '@nestjs/common';
-import { ApiCookieAuth, ApiHeader, ApiOperation, ApiTags } from '@nestjs/swagger';
+import { ApiCookieAuth, ApiHeader, ApiTags } from '@nestjs/swagger';
 import { permissions } from '@snacks/shared';
+import { ApiAdminEndpoint } from '../../../common/decorators/openapi.decorator.js';
 import { CurrentUser } from '../../../common/decorators/current-user.decorator.js';
 import { RequirePermissions } from '../../../common/decorators/require-permissions.decorator.js';
 import { CsrfGuard } from '../../../common/guards/csrf.guard.js';
@@ -30,19 +31,19 @@ export class AdminTenantsController {
   constructor(private readonly tenants: AdminTenantsService) {}
 
   @Get()
-  @ApiOperation({ summary: 'List tenants visible to the current actor.' })
+  @ApiAdminEndpoint('List tenants visible to the current actor.', { tenant: 'optional' })
   async listTenants(@CurrentUser() actor: AuthenticatedUser) {
     return { data: await this.tenants.listTenants(actor) };
   }
 
   @Post()
-  @ApiOperation({ summary: 'Create a tenant.' })
+  @ApiAdminEndpoint('Create a tenant.', { tenant: 'optional' })
   async createTenant(@CurrentUser() actor: AuthenticatedUser, @Body() dto: CreateTenantDto) {
     return { data: await this.tenants.createTenant(actor, dto) };
   }
 
   @Get(':tenantId')
-  @ApiOperation({ summary: 'Get tenant detail.' })
+  @ApiAdminEndpoint('Get tenant detail.', { tenant: 'optional' })
   async getTenant(
     @CurrentUser() actor: AuthenticatedUser,
     @Param('tenantId') tenantId: string,
@@ -51,7 +52,7 @@ export class AdminTenantsController {
   }
 
   @Patch(':tenantId')
-  @ApiOperation({ summary: 'Update tenant settings.' })
+  @ApiAdminEndpoint('Update tenant settings.', { tenant: 'optional' })
   async updateTenant(
     @CurrentUser() actor: AuthenticatedUser,
     @Param('tenantId') tenantId: string,
@@ -61,7 +62,7 @@ export class AdminTenantsController {
   }
 
   @Post(':tenantId/deactivate')
-  @ApiOperation({ summary: 'Deactivate a tenant when it has no unsafe open orders.' })
+  @ApiAdminEndpoint('Deactivate a tenant when it has no unsafe open orders.', { tenant: 'optional' })
   async deactivateTenant(
     @CurrentUser() actor: AuthenticatedUser,
     @Param('tenantId') tenantId: string,
@@ -71,7 +72,7 @@ export class AdminTenantsController {
   }
 
   @Post(':tenantId/reactivate')
-  @ApiOperation({ summary: 'Reactivate a tenant.' })
+  @ApiAdminEndpoint('Reactivate a tenant.', { tenant: 'optional' })
   async reactivateTenant(
     @CurrentUser() actor: AuthenticatedUser,
     @Param('tenantId') tenantId: string,

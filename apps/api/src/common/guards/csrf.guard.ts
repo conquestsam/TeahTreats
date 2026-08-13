@@ -1,7 +1,8 @@
-import { CanActivate, ExecutionContext, ForbiddenException, Injectable } from '@nestjs/common';
+import { CanActivate, ExecutionContext, Injectable } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import { timingSafeEqual } from 'node:crypto';
 import { IS_PUBLIC_ROUTE } from '../decorators/public.decorator.js';
+import { authExceptions } from '../errors/auth-contract.exception.js';
 
 const unsafeMethods = new Set(['POST', 'PATCH', 'PUT', 'DELETE']);
 
@@ -33,8 +34,12 @@ export class CsrfGuard implements CanActivate {
     const csrfHeader = request.headers['x-csrf-token'];
     const csrfHeaderValue = Array.isArray(csrfHeader) ? csrfHeader[0] : csrfHeader;
 
-    if (!csrfCookie || !csrfHeaderValue || !this.equals(csrfCookie, csrfHeaderValue)) {
-      throw new ForbiddenException('CSRF validation failed.');
+    if (!csrfCookie || !csrfHeaderValue) {
+      throw authExceptions.csrfRequired();
+    }
+
+    if (!this.equals(csrfCookie, csrfHeaderValue)) {
+      throw authExceptions.csrfInvalid();
     }
 
     return true;

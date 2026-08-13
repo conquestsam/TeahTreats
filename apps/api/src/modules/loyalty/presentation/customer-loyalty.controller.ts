@@ -1,5 +1,6 @@
 import { Controller, Get, Param, Post, UseGuards } from '@nestjs/common';
-import { ApiCookieAuth, ApiHeader, ApiOperation, ApiTags } from '@nestjs/swagger';
+import { ApiCookieAuth, ApiHeader, ApiTags } from '@nestjs/swagger';
+import { ApiCustomerEndpoint } from '../../../common/decorators/openapi.decorator.js';
 import { CurrentTenant } from '../../../common/decorators/current-tenant.decorator.js';
 import { CurrentUser } from '../../../common/decorators/current-user.decorator.js';
 import { CustomerAccessAuthGuard } from '../../../common/guards/customer-access-auth.guard.js';
@@ -16,13 +17,13 @@ export class CustomerLoyaltyController {
   constructor(private readonly foundations: LoyaltyFoundationsService) {}
 
   @Get()
-  @ApiOperation({ summary: 'Get loyalty points and quest progress.' })
+  @ApiCustomerEndpoint('Get loyalty points and quest progress.', { tenant: 'required' })
   async summary(@CurrentTenant() tenantId: string, @CurrentUser() user: AuthenticatedUser) {
     return { data: await this.foundations.getLoyalty(tenantId, user) };
   }
 
   @Post('quests/:questId/claim')
-  @ApiOperation({ summary: 'Claim a completed quest reward.' })
+  @ApiCustomerEndpoint('Claim a completed quest reward.', { tenant: 'required' })
   async claim(
     @CurrentTenant() tenantId: string,
     @CurrentUser() user: AuthenticatedUser,

@@ -1,7 +1,8 @@
 import { Body, Controller, Get, Post, Req, Res, UseGuards } from '@nestjs/common';
-import { ApiCookieAuth, ApiOkResponse, ApiOperation, ApiTags } from '@nestjs/swagger';
+import { ApiCookieAuth, ApiOkResponse, ApiTags } from '@nestjs/swagger';
 import type { Request, Response } from 'express';
 import { CurrentUser } from '../../../common/decorators/current-user.decorator.js';
+import { ApiAdminEndpoint, ApiEndpoint, ApiPublicEndpoint } from '../../../common/decorators/openapi.decorator.js';
 import { Public } from '../../../common/decorators/public.decorator.js';
 import { RateLimit } from '../../../common/decorators/rate-limit.decorator.js';
 import { CsrfGuard } from '../../../common/guards/csrf.guard.js';
@@ -25,7 +26,7 @@ export class AuthController {
 
   @Public()
   @Get('csrf')
-  @ApiOperation({ summary: 'Issue a browser CSRF cookie.' })
+  @ApiPublicEndpoint('Issue a browser CSRF cookie.')
   async csrf(@Res({ passthrough: true }) response: Response) {
     return {
       data: {
@@ -38,7 +39,7 @@ export class AuthController {
   @Post('login')
   @RateLimit({ limit: 10, windowSeconds: 60, keyPrefix: 'admin-login' })
   @UseGuards(RateLimitGuard)
-  @ApiOperation({ summary: 'Login as an admin or vendor user.' })
+  @ApiEndpoint({ summary: 'Login as an admin or vendor user.', auth: 'none', tenant: 'none', status: 200 })
   @ApiOkResponse({ description: 'Sets access and refresh cookies.' })
   async login(
     @Body() dto: LoginDto,
@@ -56,7 +57,7 @@ export class AuthController {
 
   @Public()
   @Post('refresh')
-  @ApiOperation({ summary: 'Rotate the refresh session and issue a new access cookie.' })
+  @ApiEndpoint({ summary: 'Rotate the refresh session and issue a new access cookie.', auth: 'none', tenant: 'none', csrf: true })
   async refresh(@Req() request: Request, @Res({ passthrough: true }) response: Response) {
     const cookies = request.cookies as Record<string, string | undefined> | undefined;
     this.cookies.assertCsrf({
@@ -75,7 +76,7 @@ export class AuthController {
   @Get('me')
   @ApiCookieAuth('access_token')
   @UseGuards(JwtAccessAuthGuard)
-  @ApiOperation({ summary: 'Return the authenticated admin or vendor user.' })
+  @ApiAdminEndpoint('Return the authenticated admin or vendor user.')
   async me(@CurrentUser() user: AuthenticatedUser) {
     return {
       data: this.auth.safeUser({
@@ -95,7 +96,7 @@ export class AuthController {
   @Post('mfa/setup')
   @ApiCookieAuth('access_token')
   @UseGuards(JwtAccessAuthGuard, CsrfGuard)
-  @ApiOperation({ summary: 'Start admin TOTP MFA setup.' })
+  @ApiAdminEndpoint('Start admin TOTP MFA setup.', { csrf: true, status: 201 })
   async setupMfa(@CurrentUser() user: AuthenticatedUser) {
     return { data: await this.mfa.setup(user.id) };
   }
@@ -103,7 +104,7 @@ export class AuthController {
   @Post('mfa/verify')
   @ApiCookieAuth('access_token')
   @UseGuards(JwtAccessAuthGuard, CsrfGuard)
-  @ApiOperation({ summary: 'Verify admin TOTP MFA code.' })
+  @ApiAdminEndpoint('Verify admin TOTP MFA code.', { csrf: true, status: 201 })
   async verifyMfa(@CurrentUser() user: AuthenticatedUser, @Body() dto: VerifyAdminMfaDto) {
     return { data: await this.mfa.verify(user.id, dto.code) };
   }
@@ -111,7 +112,7 @@ export class AuthController {
   @Post('mfa/disable')
   @ApiCookieAuth('access_token')
   @UseGuards(JwtAccessAuthGuard, CsrfGuard)
-  @ApiOperation({ summary: 'Disable admin TOTP MFA.' })
+  @ApiAdminEndpoint('Disable admin TOTP MFA.', { csrf: true, status: 201 })
   async disableMfa(@CurrentUser() user: AuthenticatedUser, @Body() dto: VerifyAdminMfaDto) {
     return { data: await this.mfa.disable(user.id, dto.code) };
   }
@@ -119,7 +120,7 @@ export class AuthController {
   @Post('logout')
   @ApiCookieAuth('access_token')
   @UseGuards(JwtAccessAuthGuard, CsrfGuard)
-  @ApiOperation({ summary: 'Revoke the current session and clear auth cookies.' })
+  @ApiAdminEndpoint('Revoke the current session and clear auth cookies.', { csrf: true, status: 201 })
   async logout(
     @CurrentUser() user: AuthenticatedUser,
     @Res({ passthrough: true }) response: Response,

@@ -1,6 +1,7 @@
 'use client'
 
 import { useCurrentCustomerQuery } from "@/hooks/CustomerAuth/useCustomerAuthQuery";
+import { redirectOnce } from "@/lib/auth/auth-errors";
 import { useEffect } from "react";
 
 interface customerDashboardProps {
@@ -12,7 +13,7 @@ export function CustomerDashboardGate({ children }: customerDashboardProps) {
 
  useEffect (() => {
     if (currentUserQuery.isError) { 
-        window.location.replace('/login'); 
+        redirectOnce('/login'); 
     }
  }, [currentUserQuery.isError]); 
 if (currentUserQuery.isLoading || currentUserQuery.isError) {

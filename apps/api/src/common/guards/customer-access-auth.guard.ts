@@ -1,6 +1,8 @@
-import { CanActivate, ExecutionContext, Injectable, UnauthorizedException } from '@nestjs/common';
+import { CanActivate, ExecutionContext, Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
+import { PrismaService } from '../../infrastructure/database/prisma.service.js';
+import { authExceptions } from '../errors/auth-contract.exception.js';
 import type { AuthenticatedRequest, AuthenticatedUser } from '../types/authenticated-request.js';
 
 interface CustomerAccessTokenPayload {
@@ -18,6 +20,7 @@ export class CustomerAccessAuthGuard implements CanActivate {
   constructor(
     private readonly jwt: JwtService,
     private readonly config: ConfigService,
+    private readonly prisma: PrismaService,
   ) {}
 
   async canActivate(context: ExecutionContext) {
@@ -26,7 +29,7 @@ export class CustomerAccessAuthGuard implements CanActivate {
     >();
     const token = request.cookies?.customer_access_token;
     if (!token) {
-      throw new UnauthorizedException('Authentication is required.');
+      throw authExceptions.sessionExpired();
     }
 
     try {
@@ -34,7 +37,20 @@ export class CustomerAccessAuthGuard implements CanActivate {
         secret: this.config.getOrThrow<string>('AUTH_ACCESS_TOKEN_SECRET')
       });
       if (payload.userType !== 'customer') {
-        throw new UnauthorizedException('Authentication is required.');
+        throw authExceptions.sessionExpired();
+      }
+      const session = await this.prisma.session.findUnique({
+        where: { id: payload.sessionId },
+        include: { user: true }
+      });
+      if (
+        !session ||
+        session.revokedAt ||
+        session.expiresAt <= new Date() ||
+        session.user.deletedAt ||
+        session.user.userType !== 'customer'
+      ) {
+        throw authExceptions.sessionExpired();
       }
       request.user = {
         id: payload.sub,
@@ -47,7 +63,7 @@ export class CustomerAccessAuthGuard implements CanActivate {
       } satisfies AuthenticatedUser;
       return true;
     } catch {
-      throw new UnauthorizedException('Authentication is required.');
+      throw authExceptions.sessionExpired();
     }
   }
 }

@@ -1,6 +1,7 @@
-import { CanActivate, ExecutionContext, ForbiddenException, Injectable, InternalServerErrorException } from '@nestjs/common';
+import { CanActivate, ExecutionContext, Injectable, InternalServerErrorException } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import { REQUIRED_PERMISSIONS } from '../decorators/require-permissions.decorator.js';
+import { authExceptions } from '../errors/auth-contract.exception.js';
 import type { AuthenticatedRequest } from '../types/authenticated-request.js';
 
 @Injectable()
@@ -29,10 +30,7 @@ export class PermissionsGuard implements CanActivate {
     const missingPermissions = requiredPermissions.filter((permission) => !userPermissions.has(permission));
 
     if (missingPermissions.length > 0) {
-      const message = process.env.NODE_ENV === 'production'
-        ? 'You do not have permission for this action.'
-        : `You do not have permission for this action. Missing: ${missingPermissions.join(', ')}.`;
-      throw new ForbiddenException(message);
+      throw authExceptions.permissionDenied();
     }
 
     return true;

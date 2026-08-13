@@ -1,4 +1,4 @@
-import { BadRequestException, Injectable, UnauthorizedException } from '@nestjs/common';
+import { BadRequestException, Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
 import { domainEvents } from '@snacks/shared';
@@ -6,6 +6,7 @@ import argon2 from 'argon2';
 import { randomUUID } from 'node:crypto';
 import { Prisma, UserType } from '@prisma/client';
 import { PrismaService } from '../../../infrastructure/database/prisma.service.js';
+import { authExceptions } from '../../../common/errors/auth-contract.exception.js';
 import { CartService } from '../../cart/application/cart.service.js';
 import type { CustomerLoginDto, CustomerSignupDto } from '../presentation/dto/customer-auth.dto.js';
 
@@ -74,11 +75,11 @@ export class CustomerAuthService {
     const resolvedTenantId = await this.resolveTenantId(tenantId);
     const user = await this.prisma.user.findUnique({ where: { email: dto.email.toLowerCase() } });
     if (!user?.passwordHash || user.deletedAt || user.userType !== UserType.customer) {
-      throw new UnauthorizedException('Email or password is incorrect.');
+      throw authExceptions.invalidCredentials();
     }
     const passwordMatches = await argon2.verify(user.passwordHash, dto.password);
     if (!passwordMatches) {
-      throw new UnauthorizedException('Email or password is incorrect.');
+      throw authExceptions.invalidCredentials();
     }
 
     const result = await this.createSession(user, resolvedTenantId, context);
@@ -99,7 +100,7 @@ export class CustomerAuthService {
 
   async refresh(refreshToken: string | undefined, tenantId: string, context: RequestContext) {
     if (!refreshToken) {
-      throw new UnauthorizedException('Refresh session is required.');
+      throw authExceptions.refreshRequired();
     }
     const claims = await this.verifyRefreshToken(refreshToken);
     const session = await this.prisma.session.findUnique({
@@ -113,11 +114,11 @@ export class CustomerAuthService {
       session.user.deletedAt ||
       session.user.userType !== UserType.customer
     ) {
-      throw new UnauthorizedException('Refresh session is invalid.');
+      throw authExceptions.sessionExpired();
     }
     const matchesStoredToken = await argon2.verify(session.refreshTokenHash, refreshToken);
     if (!matchesStoredToken) {
-      throw new UnauthorizedException('Refresh session is invalid.');
+      throw authExceptions.sessionExpired();
     }
 
     const resolvedTenantId = await this.resolveTenantId(tenantId);
@@ -144,6 +145,14 @@ export class CustomerAuthService {
     });
     await this.writeOutbox(tenantId ?? null, userId, domainEvents.customerLoggedOut, { userId, sessionId });
     return { ok: true };
+  }
+
+  createCustomerSession(
+    user: { id: string; email: string; name: string; phone?: string | null; userType: UserType },
+    tenantId: string,
+    context: RequestContext,
+  ) {
+    return this.createSession(user, tenantId, context);
   }
 
   safeUser(user: CustomerAccessClaims) {
@@ -222,7 +231,7 @@ export class CustomerAuthService {
         secret: this.config.getOrThrow<string>('AUTH_REFRESH_TOKEN_SECRET')
       });
     } catch {
-      throw new UnauthorizedException('Refresh session is invalid.');
+      throw authExceptions.sessionExpired();
     }
   }
 

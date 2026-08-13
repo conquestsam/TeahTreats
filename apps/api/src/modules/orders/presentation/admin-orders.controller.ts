@@ -1,7 +1,8 @@
 import { Body, Controller, Get, Param, Post, UseGuards } from '@nestjs/common';
-import { ApiCookieAuth, ApiHeader, ApiOperation, ApiTags } from '@nestjs/swagger';
+import { ApiCookieAuth, ApiHeader, ApiTags } from '@nestjs/swagger';
 import { permissions } from '@snacks/shared';
 import { CurrentTenant } from '../../../common/decorators/current-tenant.decorator.js';
+import { ApiAdminEndpoint } from '../../../common/decorators/openapi.decorator.js';
 import { CurrentUser } from '../../../common/decorators/current-user.decorator.js';
 import { RequirePermissions } from '../../../common/decorators/require-permissions.decorator.js';
 import { CsrfGuard } from '../../../common/guards/csrf.guard.js';
@@ -26,21 +27,21 @@ export class AdminOrdersController {
 
   @Get()
   @RequirePermissions(permissions.ordersRead)
-  @ApiOperation({ summary: 'List tenant orders for admin management.' })
+  @ApiAdminEndpoint('List tenant orders for admin management.', { tenant: 'optional' })
   async list(@CurrentTenant() tenantId: string) {
     return { data: await this.orders.listAdminOrders(tenantId) };
   }
 
   @Get(':orderId')
   @RequirePermissions(permissions.ordersRead)
-  @ApiOperation({ summary: 'Get one tenant order for admin management.' })
+  @ApiAdminEndpoint('Get one tenant order for admin management.', { tenant: 'optional' })
   async detail(@CurrentTenant() tenantId: string, @Param('orderId') orderId: string) {
     return { data: await this.orders.getAdminOrder(tenantId, orderId) };
   }
 
   @Post(':orderId/prepare')
   @RequirePermissions(permissions.ordersWrite)
-  @ApiOperation({ summary: 'Mark a paid order as preparing.' })
+  @ApiAdminEndpoint('Mark a paid order as preparing.', { tenant: 'optional' })
   async prepare(
     @CurrentUser() actor: AuthenticatedUser,
     @CurrentTenant() tenantId: string,
@@ -51,7 +52,7 @@ export class AdminOrdersController {
 
   @Post(':orderId/ready')
   @RequirePermissions(permissions.ordersWrite)
-  @ApiOperation({ summary: 'Mark a preparing order as ready for pickup.' })
+  @ApiAdminEndpoint('Mark a preparing order as ready for pickup.', { tenant: 'optional' })
   async ready(
     @CurrentUser() actor: AuthenticatedUser,
     @CurrentTenant() tenantId: string,
@@ -62,7 +63,7 @@ export class AdminOrdersController {
 
   @Post(':orderId/complete')
   @RequirePermissions(permissions.ordersWrite)
-  @ApiOperation({ summary: 'Mark a ready order as completed by admin.' })
+  @ApiAdminEndpoint('Mark a ready order as completed by admin.', { tenant: 'optional' })
   async complete(
     @CurrentUser() actor: AuthenticatedUser,
     @CurrentTenant() tenantId: string,
@@ -73,7 +74,7 @@ export class AdminOrdersController {
 
   @Post(':orderId/cancel')
   @RequirePermissions(permissions.ordersWrite)
-  @ApiOperation({ summary: 'Cancel an allowed order and release reservations.' })
+  @ApiAdminEndpoint('Cancel an allowed order and release reservations.', { tenant: 'optional' })
   async cancel(
     @CurrentUser() actor: AuthenticatedUser,
     @CurrentTenant() tenantId: string,

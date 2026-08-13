@@ -1,7 +1,8 @@
-import { ForbiddenException, Injectable } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import type { Response } from 'express';
 import { randomBytes, timingSafeEqual } from 'node:crypto';
+import { authExceptions } from '../../../common/errors/auth-contract.exception.js';
 
 const accessCookieName = 'access_token';
 const refreshCookieName = 'refresh_token';
@@ -59,8 +60,12 @@ export class AuthCookieService {
     const csrfHeader = requestParts.headers['x-csrf-token'];
     const csrfHeaderValue = Array.isArray(csrfHeader) ? csrfHeader[0] : csrfHeader;
 
-    if (!csrfCookie || !csrfHeaderValue || !this.equals(csrfCookie, csrfHeaderValue)) {
-      throw new ForbiddenException('CSRF validation failed.');
+    if (!csrfCookie || !csrfHeaderValue) {
+      throw authExceptions.csrfRequired();
+    }
+
+    if (!this.equals(csrfCookie, csrfHeaderValue)) {
+      throw authExceptions.csrfInvalid();
     }
   }
 

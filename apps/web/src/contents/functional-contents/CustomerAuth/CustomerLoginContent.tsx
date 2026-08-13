@@ -6,16 +6,17 @@ import { CustomerLoginForm } from '@/components/functional-components/CustomerAu
 import { useCustomerLoginForm } from '@/hooks/CustomerAuth/useCustomerAuthForm';
 import { useCustomerLoginMutation } from '@/hooks/CustomerAuth/useCustomerAuthMutations';
 import { useCurrentCustomerQuery, useCustomerCsrfQuery } from '@/hooks/CustomerAuth/useCustomerAuthQuery';
+import { redirectOnce } from '@/lib/auth/auth-errors';
 
 export function CustomerLoginContent() {
   useCustomerCsrfQuery();
   const form = useCustomerLoginForm();
   const loginMutation = useCustomerLoginMutation();
-  const currentCustomerQuery = useCurrentCustomerQuery();
+  const currentCustomerQuery = useCurrentCustomerQuery(true);
 
   useEffect(() => {
     if (currentCustomerQuery.data) {
-      window.location.replace('/account');
+      redirectOnce('/account');
     }
   }, [currentCustomerQuery.data]);
 

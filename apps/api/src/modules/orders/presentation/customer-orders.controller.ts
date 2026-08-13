@@ -1,5 +1,6 @@
 import { Body, Controller, Get, Param, Post, UseGuards } from '@nestjs/common';
-import { ApiCookieAuth, ApiHeader, ApiOperation, ApiTags } from '@nestjs/swagger';
+import { ApiCookieAuth, ApiHeader, ApiTags } from '@nestjs/swagger';
+import { ApiCustomerEndpoint } from '../../../common/decorators/openapi.decorator.js';
 import { CurrentTenant } from '../../../common/decorators/current-tenant.decorator.js';
 import { CurrentUser } from '../../../common/decorators/current-user.decorator.js';
 import { CsrfGuard } from '../../../common/guards/csrf.guard.js';
@@ -23,7 +24,7 @@ export class CustomerOrdersController {
   @Get()
   @ApiCookieAuth('customer_access_token')
   @UseGuards(CustomerAccessAuthGuard, TenantScopeGuard)
-  @ApiOperation({ summary: 'List the authenticated customer orders.' })
+  @ApiCustomerEndpoint('List the authenticated customer orders.', { tenant: 'required' })
   async list(@CurrentUser() user: AuthenticatedUser, @CurrentTenant() tenantId: string) {
     return { data: await this.orders.listCustomerOrders(user, tenantId) };
   }
@@ -31,7 +32,7 @@ export class CustomerOrdersController {
   @Get(':orderId')
   @ApiCookieAuth('customer_access_token')
   @UseGuards(CustomerAccessAuthGuard, TenantScopeGuard)
-  @ApiOperation({ summary: 'Get one authenticated customer order.' })
+  @ApiCustomerEndpoint('Get one authenticated customer order.', { tenant: 'required' })
   async detail(
     @CurrentUser() user: AuthenticatedUser,
     @CurrentTenant() tenantId: string,
@@ -43,7 +44,7 @@ export class CustomerOrdersController {
   @Post(':orderId/complete')
   @ApiCookieAuth('customer_access_token')
   @UseGuards(CustomerAccessAuthGuard, CsrfGuard, TenantScopeGuard)
-  @ApiOperation({ summary: 'Mark a ready order as completed by the authenticated customer.' })
+  @ApiCustomerEndpoint('Mark a ready order as completed by the authenticated customer.', { tenant: 'required' })
   async complete(
     @CurrentUser() user: AuthenticatedUser,
     @CurrentTenant() tenantId: string,
@@ -53,7 +54,7 @@ export class CustomerOrdersController {
   }
 
   @Post(':orderId/complete-verified')
-  @ApiOperation({ summary: 'Mark a ready order as completed by customer verification.' })
+  @ApiCustomerEndpoint('Mark a ready order as completed by customer verification.', { tenant: 'required' })
   async completeVerified(
     @CurrentTenant() tenantId: string,
     @Param('orderId') orderId: string,

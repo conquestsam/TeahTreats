@@ -17,6 +17,7 @@ export function useCurrentCustomerQuery(enabled = true) {
     queryKey: customerAuthQueryKey,
     queryFn: getCurrentCustomer,
     enabled,
-    retry: false
+    retry: false,
+    staleTime: 30 * 1000
   });
 }

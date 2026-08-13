@@ -38,7 +38,11 @@ const envSchema = z.object({
   PAYPAL_WEBHOOK_ID: z.string().optional(),
   GMAIL_USER: z.string().optional(),
   GMAIL_APP_PASSWORD: z.string().optional(),
-  GMAIL_FROM_EMAIL: z.string().optional()
+  GMAIL_FROM_EMAIL: z.string().optional(),
+  WEB_APP_URL: z.string().url().default('http://localhost:3000'),
+  OAUTH_GOOGLE_CLIENT_ID: z.string().optional(),
+  OAUTH_GOOGLE_CLIENT_SECRET: z.string().optional(),
+  OAUTH_GOOGLE_REDIRECT_URI: z.string().url().optional()
 
 });
 

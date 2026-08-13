@@ -1,6 +1,7 @@
 import { Body, Controller, Delete, Get, Param, Patch, Post, Req, Res, UseGuards } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { ApiHeader, ApiOperation, ApiTags } from '@nestjs/swagger';
+import { ApiHeader, ApiTags } from '@nestjs/swagger';
+import { ApiEndpoint } from '../../../common/decorators/openapi.decorator.js';
 import type { Request, Response } from 'express';
 import { randomUUID } from 'node:crypto';
 import { CurrentTenant } from '../../../common/decorators/current-tenant.decorator.js';
@@ -24,7 +25,7 @@ export class CartController {
   ) {}
 
   @Get()
-  @ApiOperation({ summary: 'Get or create the current guest cart.' })
+  @ApiEndpoint({ summary: 'Get or create the current guest cart.', tenant: 'required', auth: 'none' })
   async getCart(
     @CurrentTenant() tenantId: string,
     @CurrentUser() user: AuthenticatedUser | undefined,
@@ -39,7 +40,7 @@ export class CartController {
   }
 
   @Post('items')
-  @ApiOperation({ summary: 'Add an item to the current cart.' })
+  @ApiEndpoint({ summary: 'Add an item to the current cart.', tenant: 'required', auth: 'none' })
   async addItem(
     @CurrentTenant() tenantId: string,
     @CurrentUser() user: AuthenticatedUser | undefined,
@@ -55,7 +56,7 @@ export class CartController {
   }
 
   @Patch('items/:itemId')
-  @ApiOperation({ summary: 'Update a cart item quantity.' })
+  @ApiEndpoint({ summary: 'Update a cart item quantity.', tenant: 'required', auth: 'none' })
   async updateItem(
     @CurrentTenant() tenantId: string,
     @CurrentUser() user: AuthenticatedUser | undefined,
@@ -72,7 +73,7 @@ export class CartController {
   }
 
   @Delete('items/:itemId')
-  @ApiOperation({ summary: 'Remove an item from the current cart.' })
+  @ApiEndpoint({ summary: 'Remove an item from the current cart.', tenant: 'required', auth: 'none' })
   async removeItem(
     @CurrentTenant() tenantId: string,
     @CurrentUser() user: AuthenticatedUser | undefined,
@@ -88,7 +89,7 @@ export class CartController {
   }
 
   @Delete()
-  @ApiOperation({ summary: 'Clear the current cart.' })
+  @ApiEndpoint({ summary: 'Clear the current cart.', tenant: 'required', auth: 'none' })
   async clearCart(
     @CurrentTenant() tenantId: string,
     @CurrentUser() user: AuthenticatedUser | undefined,

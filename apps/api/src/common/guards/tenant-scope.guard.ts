@@ -1,6 +1,7 @@
-import { CanActivate, ExecutionContext, ForbiddenException, Injectable } from '@nestjs/common';
+import { CanActivate, ExecutionContext, Injectable } from '@nestjs/common';
 import { permissions } from '@snacks/shared';
 import { PrismaService } from '../../infrastructure/database/prisma.service.js';
+import { authExceptions } from '../errors/auth-contract.exception.js';
 import type { AuthenticatedRequest } from '../types/authenticated-request.js';
 
 @Injectable()
@@ -17,12 +18,12 @@ export class TenantScopeGuard implements CanActivate {
     const authenticatedTenantIds = request.user?.tenantIds ?? [];
 
     if (tenantHeaderProvided && !tenantIdOrSlug) {
-      throw new ForbiddenException('Tenant context is invalid.');
+      throw authExceptions.tenantInvalid();
     }
 
     if (!request.user) {
       if (!tenantIdOrSlug) {
-        throw new ForbiddenException('Tenant context is required.');
+        throw authExceptions.tenantRequired();
       }
       request.tenantId = await this.resolveTenantId(tenantIdOrSlug);
       return true;
@@ -30,7 +31,7 @@ export class TenantScopeGuard implements CanActivate {
 
     if (tenantIdOrSlug === 'all') {
       if (!request.user.permissions.includes(permissions.tenantsManage)) {
-        throw new ForbiddenException('You do not have access to all tenants.');
+        throw authExceptions.tenantForbidden();
       }
       request.tenantId = 'all';
       return true;
@@ -42,12 +43,12 @@ export class TenantScopeGuard implements CanActivate {
         request.tenantId = firstTenantId;
         return true;
       }
-      throw new ForbiddenException('Tenant context is required.');
+      throw authExceptions.tenantRequired();
     }
 
     const tenantId = await this.resolveTenantId(tenantIdOrSlug);
     if (!authenticatedTenantIds.includes(tenantId)) {
-      throw new ForbiddenException('You do not have access to this tenant.');
+      throw authExceptions.tenantForbidden();
     }
 
     request.tenantId = tenantId;
@@ -64,7 +65,7 @@ export class TenantScopeGuard implements CanActivate {
     });
 
     if (!tenant) {
-      throw new ForbiddenException('Tenant context is invalid.');
+      throw authExceptions.tenantInvalid();
     }
 
     return tenant.id;

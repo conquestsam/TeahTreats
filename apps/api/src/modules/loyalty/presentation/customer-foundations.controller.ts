@@ -1,5 +1,6 @@
 import { Body, Controller, Get, Param, Post, Req, Res, UseGuards } from '@nestjs/common';
-import { ApiHeader, ApiOperation, ApiTags } from '@nestjs/swagger';
+import { ApiHeader, ApiTags } from '@nestjs/swagger';
+import { ApiEndpoint } from '../../../common/decorators/openapi.decorator.js';
 import type { Request, Response } from 'express';
 import { randomUUID } from 'node:crypto';
 import { CurrentTenant } from '../../../common/decorators/current-tenant.decorator.js';
@@ -20,13 +21,13 @@ export class CustomerFoundationsController {
   constructor(private readonly foundations: LoyaltyFoundationsService) {}
 
   @Post('shop/bundles/preview')
-  @ApiOperation({ summary: 'Generate a dynamic bundle preview.' })
+  @ApiEndpoint({ summary: 'Generate a dynamic bundle preview.', tenant: 'required', auth: 'none' })
   async bundlePreview(@CurrentTenant() tenantId: string, @Body() dto: CreateBundlePreviewDto) {
     return { data: await this.foundations.createBundlePreview(tenantId, dto) };
   }
 
   @Post('shop/office-snack-plans')
-  @ApiOperation({ summary: 'Create a backend-generated office snack plan.' })
+  @ApiEndpoint({ summary: 'Create a backend-generated office snack plan.', tenant: 'required', auth: 'none' })
   async createSnackPlan(
     @CurrentTenant() tenantId: string,
     @CurrentUser() user: AuthenticatedUser | undefined,
@@ -36,7 +37,7 @@ export class CustomerFoundationsController {
   }
 
   @Get('shop/group-carts')
-  @ApiOperation({ summary: 'List current customer group carts.' })
+  @ApiEndpoint({ summary: 'List current customer group carts.', tenant: 'required', auth: 'none' })
   async myGroupCarts(
     @CurrentTenant() tenantId: string,
     @CurrentUser() user: AuthenticatedUser | undefined,
@@ -45,7 +46,7 @@ export class CustomerFoundationsController {
   }
 
   @Post('shop/group-carts')
-  @ApiOperation({ summary: 'Create a group cart.' })
+  @ApiEndpoint({ summary: 'Create a group cart.', tenant: 'required', auth: 'none' })
   async createGroupCart(
     @CurrentTenant() tenantId: string,
     @CurrentUser() user: AuthenticatedUser | undefined,
@@ -55,7 +56,7 @@ export class CustomerFoundationsController {
   }
 
   @Post('shop/group-carts/:groupCartId/items')
-  @ApiOperation({ summary: 'Add an item to a group cart intent.' })
+  @ApiEndpoint({ summary: 'Add an item to a group cart intent.', tenant: 'required', auth: 'none' })
   async addGroupCartItem(
     @CurrentTenant() tenantId: string,
     @CurrentUser() user: AuthenticatedUser | undefined,
@@ -66,7 +67,7 @@ export class CustomerFoundationsController {
   }
 
   @Post('shop/group-carts/:groupCartId/merge')
-  @ApiOperation({ summary: 'Copy group cart items into the checkout cart.' })
+  @ApiEndpoint({ summary: 'Copy group cart items into the checkout cart.', tenant: 'required', auth: 'none' })
   async mergeGroupCart(
     @CurrentTenant() tenantId: string,
     @CurrentUser() user: AuthenticatedUser | undefined,

@@ -1,6 +1,7 @@
 import { BadRequestException, Controller, Headers, Post, RawBodyRequest, Req } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { ApiOperation, ApiTags } from '@nestjs/swagger';
+import { ApiTags } from '@nestjs/swagger';
+import { ApiPublicEndpoint } from '../common/decorators/openapi.decorator.js';
 import { PaymentProvider } from '@prisma/client';
 import { createHmac, timingSafeEqual } from 'node:crypto';
 import type { Request } from 'express';
@@ -15,7 +16,7 @@ export class StripeWebhookController {
   ) {}
 
   @Post()
-  @ApiOperation({ summary: 'Receive Stripe payment webhooks.' })
+  @ApiPublicEndpoint('Receive Stripe payment webhooks.', 'Provider webhook endpoint. Signature verification is enforced when webhook secrets are configured.')
   async handle(@Req() request: RawBodyRequest<Request>, @Headers('stripe-signature') signature?: string) {
     const rawBody = this.getRawBody(request);
     const secret = this.config.get<string>('STRIPE_WEBHOOK_SECRET');

@@ -8,6 +8,7 @@ import { AdminShell } from '@/components/layout/admin-shell';
 import { useAdminLogoutMutation } from '@/hooks/AdminAuth/useAdminAuthMutations';
 import { useAdminCurrentUserQuery } from '@/hooks/AdminAuth/useAdminAuthQuery';
 import { useAdminRealtime } from '@/hooks/Realtime/useAdminRealtime';
+import { redirectOnce } from '@/lib/auth/auth-errors';
 
 interface AdminAuthGateProps {
   children: React.ReactNode;
@@ -21,7 +22,7 @@ export function AdminAuthGate({ children }: AdminAuthGateProps) {
 
   useEffect(() => {
     if (currentUserQuery.isError) {
-      window.location.replace('/admin/login');
+      redirectOnce('/admin/login');
     }
   }, [currentUserQuery.isError]);
 

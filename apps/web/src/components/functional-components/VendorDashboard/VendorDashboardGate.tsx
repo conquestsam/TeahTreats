@@ -5,6 +5,7 @@ import { useEffect } from 'react';
 import { VendorShell } from '@/components/layout/vendor-shell';
 import { useAdminLogoutMutation } from '@/hooks/AdminAuth/useAdminAuthMutations';
 import { useAdminCurrentUserQuery } from '@/hooks/AdminAuth/useAdminAuthQuery';
+import { redirectOnce } from '@/lib/auth/auth-errors';
 
 interface VendorDashboardGateProps {
   children: React.ReactNode;
@@ -16,7 +17,7 @@ export function VendorDashboardGate({ children }: VendorDashboardGateProps) {
 
   useEffect(() => {
     if (currentUserQuery.isError) {
-      window.location.replace('/admin/login');
+      redirectOnce('/admin/login');
     }
   }, [currentUserQuery.isError]);
 

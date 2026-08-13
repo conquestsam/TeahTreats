@@ -1,7 +1,8 @@
 import { Controller, Get, Query, UseGuards } from '@nestjs/common';
-import { ApiCookieAuth, ApiHeader, ApiOperation, ApiTags } from '@nestjs/swagger';
+import { ApiCookieAuth, ApiHeader, ApiTags } from '@nestjs/swagger';
 import { permissions } from '@snacks/shared';
 import { CurrentTenant } from '../../../common/decorators/current-tenant.decorator.js';
+import { ApiAdminEndpoint } from '../../../common/decorators/openapi.decorator.js';
 import { RequirePermissions } from '../../../common/decorators/require-permissions.decorator.js';
 import { JwtAccessAuthGuard } from '../../../common/guards/jwt-access-auth.guard.js';
 import { PermissionsGuard } from '../../../common/guards/permissions.guard.js';
@@ -19,7 +20,7 @@ export class AuditReviewController {
   constructor(private readonly audit: AuditReviewService) {}
 
   @Get('logs')
-  @ApiOperation({ summary: 'List recent tenant audit logs for review.' })
+  @ApiAdminEndpoint('List recent tenant audit logs for review.', { tenant: 'optional' })
   async list(@CurrentTenant() tenantId: string, @Query() query: AuditLogQueryDto) {
     return { data: await this.audit.list(tenantId, query) };
   }

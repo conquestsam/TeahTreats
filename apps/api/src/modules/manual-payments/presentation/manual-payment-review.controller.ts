@@ -1,7 +1,8 @@
 import { Body, Controller, Get, Param, Post, UseGuards } from '@nestjs/common';
-import { ApiCookieAuth, ApiHeader, ApiOperation, ApiTags } from '@nestjs/swagger';
+import { ApiCookieAuth, ApiHeader, ApiTags } from '@nestjs/swagger';
 import { permissions } from '@snacks/shared';
 import { CurrentTenant } from '../../../common/decorators/current-tenant.decorator.js';
+import { ApiAdminEndpoint } from '../../../common/decorators/openapi.decorator.js';
 import { CurrentUser } from '../../../common/decorators/current-user.decorator.js';
 import { RequirePermissions } from '../../../common/decorators/require-permissions.decorator.js';
 import { CsrfGuard } from '../../../common/guards/csrf.guard.js';
@@ -26,14 +27,14 @@ export class ManualPaymentReviewController {
 
   @Get('proofs')
   @RequirePermissions(permissions.manualPaymentsReview)
-  @ApiOperation({ summary: 'List pending manual payment proofs.' })
+  @ApiAdminEndpoint('List pending manual payment proofs.', { tenant: 'optional' })
   async listPending(@CurrentTenant() tenantId: string) {
     return { data: await this.reviews.listPending(tenantId) };
   }
 
   @Post('proofs/:proofId/approve')
   @RequirePermissions(permissions.manualPaymentsReview)
-  @ApiOperation({ summary: 'Approve a manual payment proof.' })
+  @ApiAdminEndpoint('Approve a manual payment proof.', { tenant: 'optional' })
   async approve(
     @CurrentUser() actor: AuthenticatedUser,
     @CurrentTenant() tenantId: string,
@@ -44,7 +45,7 @@ export class ManualPaymentReviewController {
 
   @Post('proofs/:proofId/reject')
   @RequirePermissions(permissions.manualPaymentsReview)
-  @ApiOperation({ summary: 'Reject a manual payment proof.' })
+  @ApiAdminEndpoint('Reject a manual payment proof.', { tenant: 'optional' })
   async reject(
     @CurrentUser() actor: AuthenticatedUser,
     @CurrentTenant() tenantId: string,

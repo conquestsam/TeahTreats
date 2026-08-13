@@ -1,4 +1,4 @@
-import { Injectable, UnauthorizedException } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
 import { domainEvents } from '@snacks/shared';
@@ -7,6 +7,7 @@ import { randomUUID } from 'node:crypto';
 import type { Prisma } from '@prisma/client';
 import { UserType } from '@prisma/client';
 import { PrismaService } from '../../../infrastructure/database/prisma.service.js';
+import { authExceptions } from '../../../common/errors/auth-contract.exception.js';
 import { OutboxService } from '../../outbox/application/outbox.service.js';
 import type { LoginDto } from '../presentation/dto/login.dto.js';
 
@@ -66,12 +67,12 @@ export class AuthService {
     });
 
     if (!user?.passwordHash || user.deletedAt || user.userType !== UserType.admin) {
-      throw new UnauthorizedException('Email or password is incorrect.');
+      throw authExceptions.invalidCredentials();
     }
 
     const passwordMatches = await argon2.verify(user.passwordHash, dto.password);
     if (!passwordMatches) {
-      throw new UnauthorizedException('Email or password is incorrect.');
+      throw authExceptions.invalidCredentials();
     }
 
     const session = await this.prisma.session.create({
@@ -112,7 +113,7 @@ export class AuthService {
 
   async refresh(refreshToken: string | undefined, context: RequestContext) {
     if (!refreshToken) {
-      throw new UnauthorizedException('Refresh session is required.');
+      throw authExceptions.refreshRequired();
     }
 
     const claims = await this.verifyRefreshToken(refreshToken);
@@ -126,12 +127,12 @@ export class AuthService {
     });
 
     if (!session || session.revokedAt || session.expiresAt <= new Date()) {
-      throw new UnauthorizedException('Refresh session is invalid.');
+      throw authExceptions.sessionExpired();
     }
 
     const matchesStoredToken = await argon2.verify(session.refreshTokenHash, refreshToken);
     if (!matchesStoredToken || session.user.deletedAt) {
-      throw new UnauthorizedException('Refresh session is invalid.');
+      throw authExceptions.sessionExpired();
     }
 
     const access = this.buildAccessClaims(session.user, session.id);
@@ -217,7 +218,7 @@ export class AuthService {
         secret: this.config.getOrThrow<string>('AUTH_REFRESH_TOKEN_SECRET')
       });
     } catch {
-      throw new UnauthorizedException('Refresh session is invalid.');
+      throw authExceptions.sessionExpired();
     }
   }
 
