@@ -1,4 +1,9 @@
 import type { TenantBusinessAddress, TenantNotificationChannel, TenantSummary } from '@snacks/shared';
+export type {
+  AdminTenantInput,
+  DeactivateTenantInput,
+  ReactivateTenantInput
+} from '@snacks/shared';
 
 export type AdminTenantModel = TenantSummary;
 
@@ -15,33 +20,4 @@ export function getTenantBusinessAddress(tenant: Partial<AdminTenantModel>): Ten
 
 export function tenantReadinessChannelsLabel(tenant: Partial<AdminTenantModel>) {
   return getTenantReadinessChannels(tenant).join(', ');
-}
-
-export interface AdminTenantInput {
-  name: string;
-  slug: string;
-  businessEmail?: string;
-  businessPhone?: string;
-  delegatedRoleApprovalRequired?: boolean;
-  manualPaymentEnabled?: boolean;
-  defaultCurrency?: string;
-  timezone?: string;
-  businessAddress?: {
-    line1?: string;
-    line2?: string;
-    city?: string;
-    state?: string;
-    postalCode?: string;
-    country?: string;
-  };
-  orderReadinessNotificationChannels?: Array<'email' | 'sms' | 'whatsapp'>;
-}
-
-export interface DeactivateTenantInput {
-  reason: string;
-  force?: boolean;
-}
-
-export interface ReactivateTenantInput {
-  reason?: string;
 }

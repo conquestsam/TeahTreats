@@ -86,16 +86,16 @@ export function useAdminProductMutations(input: {
       createAdminProductSku(payload.productId, payload.sku),
     onSuccess: async () => {
       await invalidateProducts();
-      notifySuccess('SKU added.');
+      notifySuccess('Price option added.');
       input.onSkuSaved();
     },
-    onError: () => notifyError('Could not add SKU.')
+    onError: () => notifyError('Could not add price option.')
   });
 
   const imageUploadMutation = useMutation({
     mutationFn: (payload: { productId: string; contentType: string }) =>
       requestAdminProductImageUpload(payload.productId, payload.contentType),
-    onSuccess: () => notifySuccess('Upload URL created.'),
+    onSuccess: () => notifySuccess('Photo ready.'),
     onError: () => notifyError('Could not create upload URL.')
   });
 

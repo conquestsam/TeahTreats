@@ -1,18 +1,17 @@
 import { apiFetch } from '@/lib/api/client';
 import { storefrontTenantId } from '@/constants/Storefront/storefrontConstants';
 import type {
+  ApiEnvelope,
   StorefrontAddToCartInput,
   StorefrontCollection,
+  StorefrontNewsletterInput,
+  StorefrontNewsletterSubscriptionSummary,
   StorefrontProductDetail,
   StorefrontProductList,
   StorefrontProductQuery,
   StorefrontRecommendationSection
-} from '@/types/Storefront/storefrontTypes';
+} from '@snacks/shared';
 import type { CustomerCartModel } from '@/types/CustomerCart/customerCartTypes';
-
-interface ApiEnvelope<TData> {
-  data: TData;
-}
 
 const tenantHeaders = {
   'x-tenant-id': storefrontTenantId
@@ -67,8 +66,8 @@ export function addStorefrontItemToCart(input: StorefrontAddToCartInput) {
   }).then((response) => response.data);
 }
 
-export function subscribeToStorefrontNewsletter(input: { email: string; source?: string }) {
-  return apiFetch<ApiEnvelope<{ id: string; email: string; status: string }>>('/shop/storefront/newsletter', {
+export function subscribeToStorefrontNewsletter(input: StorefrontNewsletterInput) {
+  return apiFetch<ApiEnvelope<StorefrontNewsletterSubscriptionSummary>>('/shop/storefront/newsletter', {
     method: 'POST',
     headers: tenantHeaders,
     body: JSON.stringify(input)

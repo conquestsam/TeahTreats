@@ -201,10 +201,10 @@ export class PaymentService {
         data: {
           paymentId: payment.id,
           manualPaymentMethodId: method.id,
-          receiptUrl: dto.receiptUrl,
+          ...(dto.receiptUrl ? { receiptUrl: dto.receiptUrl } : {}),
           ...(dto.objectKey ? { objectKey: dto.objectKey } : {}),
           ...(dto.storageProvider ? { storageProvider: dto.storageProvider } : {}),
-          contentType: dto.contentType,
+          ...(dto.contentType ? { contentType: dto.contentType } : {}),
           ...(dto.note ? { note: dto.note.trim() } : {})
         },
         include: { payment: true, manualPaymentMethod: true }
@@ -218,7 +218,7 @@ export class PaymentService {
         data: { status: OrderStatus.awaiting_admin_payment_approval }
       });
       await tx.orderStatusHistory.create({
-        data: { orderId: order.id, status: OrderStatus.manual_payment_proof_submitted, reason: 'Manual proof submitted.' }
+        data: { orderId: order.id, status: OrderStatus.manual_payment_proof_submitted, reason: 'Payment details submitted.' }
       });
       await tx.orderStatusHistory.create({
         data: { orderId: order.id, status: OrderStatus.awaiting_admin_payment_approval, reason: 'Awaiting payment review.' }
@@ -231,6 +231,8 @@ export class PaymentService {
         proofId: createdProof.id,
         orderId: order.id,
         paymentId: payment.id,
+        amount: this.formatMoney(order.totalCents, order.currency),
+        receiptAttached: Boolean(dto.receiptUrl),
         notify: ['admin.email', 'admin.sms', 'admin.whatsapp']
       });
       return createdProof;
@@ -241,7 +243,8 @@ export class PaymentService {
       paymentId: proof.paymentId,
       orderId: proof.payment.orderId,
       methodLabel: proof.manualPaymentMethod.label,
-      status: PaymentStatus.awaiting_admin_approval
+      status: PaymentStatus.awaiting_admin_approval,
+      receiptAttached: Boolean(proof.receiptUrl)
     };
     await this.storeIdempotent(resolvedTenantId, idempotencyKey, 'manual-proof-submit', response);
     return response;
@@ -467,5 +470,13 @@ export class PaymentService {
         payload: payload as Prisma.InputJsonValue
       }
     });
+  }
+
+  private formatMoney(amountCents: number, currency: string) {
+    return new Intl.NumberFormat('en-US', {
+      style: 'currency',
+      currency,
+      maximumFractionDigits: 2
+    }).format(amountCents / 100);
   }
 }

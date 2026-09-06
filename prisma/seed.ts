@@ -43,7 +43,7 @@ const seededStorefrontProducts: StorefrontSeedProduct[] = [
     category: 'Signature Drinks',
     flavor: 'Sorrel fruit',
     occasion: 'Everyday refreshment',
-    priceCents: 450,
+    priceCents: 350000,
     skuName: '330 ml can',
     quantity: 120,
     size: '330 ml',
@@ -74,7 +74,7 @@ const seededStorefrontProducts: StorefrontSeedProduct[] = [
     category: 'Fresh Pastries',
     flavor: 'Sweet golden dough',
     occasion: 'Party tray',
-    priceCents: 2800,
+    priceCents: 1200000,
     skuName: 'Small tray',
     quantity: 45,
     size: 'small tray',
@@ -105,7 +105,7 @@ const seededStorefrontProducts: StorefrontSeedProduct[] = [
     category: 'Party Trays',
     flavor: 'Savory spiced vegetable',
     occasion: 'Events and meetings',
-    priceCents: 4200,
+    priceCents: 1550000,
     skuName: 'Assorted tray',
     quantity: 34,
     size: 'assorted tray',
@@ -136,7 +136,7 @@ const seededStorefrontProducts: StorefrontSeedProduct[] = [
     category: 'Fresh Pastries',
     flavor: 'Savory beef',
     occasion: 'Lunch and events',
-    priceCents: 3600,
+    priceCents: 1800000,
     skuName: 'Dozen tray',
     quantity: 40,
     size: '12 pieces',
@@ -167,7 +167,7 @@ const seededStorefrontProducts: StorefrontSeedProduct[] = [
     category: 'Fresh Pastries',
     flavor: 'Seasoned beef and egg',
     occasion: 'Brunch and party trays',
-    priceCents: 2400,
+    priceCents: 900000,
     skuName: 'Six piece pack',
     quantity: 38,
     size: '6 pieces',
@@ -198,7 +198,7 @@ const seededStorefrontProducts: StorefrontSeedProduct[] = [
     category: 'Party Trays',
     flavor: 'Sweet and savory mix',
     occasion: 'Parties and office planning',
-    priceCents: 6500,
+    priceCents: 2650000,
     skuName: 'Large combo tray',
     quantity: 28,
     size: 'large tray',
@@ -227,13 +227,13 @@ const seededStorefrontProducts: StorefrontSeedProduct[] = [
   },
   {
     slug: 'black-gold-celebration-cake',
-    name: 'Black & Gold Celebration Cake',
-    description: 'Elegant black, cream, and gold celebration cake for milestone birthdays and premium events.',
+    name: 'Aso Ebi Black & Gold Celebration Cake',
+    description: 'Nigerian celebration cake finished with black, cream, and gold styling for birthdays, introductions, and premium owambe tables.',
     brand: 'TeshTreats Cakes',
-    category: 'Celebration Cakes',
-    flavor: 'Custom cake',
-    occasion: 'Birthday',
-    priceCents: 9500,
+    category: 'African Celebration Cakes',
+    flavor: 'Vanilla and malt sponge',
+    occasion: 'Owambe celebration',
+    priceCents: 6500000,
     skuName: 'Two-tier cake',
     quantity: 12,
     size: 'two-tier',
@@ -241,9 +241,9 @@ const seededStorefrontProducts: StorefrontSeedProduct[] = [
     unitLabel: 'cake',
     isPerishable: true,
     expiresInDays: 5,
-    tags: ['cake', 'custom', 'premium', 'gifting'],
+    tags: ['cake', 'custom', 'premium', 'owambe', 'gifting'],
     dietaryLabels: ['made-to-order'],
-    ingredients: ['cake sponge', 'buttercream', 'fondant accents', 'edible gold detail'],
+    ingredients: ['vanilla sponge', 'malted milk crumb', 'buttercream', 'fondant accents', 'edible gold detail'],
     allergens: ['wheat', 'milk', 'egg'],
     images: [
       {
@@ -261,14 +261,14 @@ const seededStorefrontProducts: StorefrontSeedProduct[] = [
     ]
   },
   {
-    slug: 'custom-photo-anniversary-cake',
-    name: 'Custom Photo Anniversary Cake',
-    description: 'Made-to-order photo cake for anniversaries, family celebrations, and meaningful milestones.',
+    slug: 'aso-ebi-photo-celebration-cake',
+    name: 'Aso Ebi Photo Celebration Cake',
+    description: 'Made-to-order photo cake for Nigerian anniversaries, family thanksgiving events, introductions, and milestone parties.',
     brand: 'TeshTreats Cakes',
-    category: 'Celebration Cakes',
-    flavor: 'Custom cake',
-    occasion: 'Anniversary',
-    priceCents: 12500,
+    category: 'African Celebration Cakes',
+    flavor: 'Coconut and vanilla sponge',
+    occasion: 'Family celebration',
+    priceCents: 9500000,
     skuName: 'Custom tiered cake',
     quantity: 8,
     size: 'custom tiered',
@@ -276,9 +276,9 @@ const seededStorefrontProducts: StorefrontSeedProduct[] = [
     unitLabel: 'cake',
     isPerishable: true,
     expiresInDays: 5,
-    tags: ['cake', 'custom', 'photo-cake', 'gifting'],
+    tags: ['cake', 'custom', 'photo-cake', 'aso-ebi', 'gifting'],
     dietaryLabels: ['made-to-order'],
-    ingredients: ['cake sponge', 'buttercream', 'edible print', 'floral accents'],
+    ingredients: ['coconut sponge', 'vanilla sponge', 'buttercream', 'edible print', 'floral accents'],
     allergens: ['wheat', 'milk', 'egg'],
     images: [
       {
@@ -292,14 +292,14 @@ const seededStorefrontProducts: StorefrontSeedProduct[] = [
     ]
   },
   {
-    slug: 'kids-custom-birthday-cake',
-    name: 'Kids Custom Birthday Cake',
-    description: 'Bright themed birthday cake for children, customized with colors, characters, and celebration toppers.',
+    slug: 'ankara-kids-birthday-cake',
+    name: 'Ankara Kids Birthday Cake',
+    description: 'Bright children’s birthday cake customized with Ankara-inspired colors, age toppers, and family celebration details.',
     brand: 'TeshTreats Cakes',
-    category: 'Celebration Cakes',
-    flavor: 'Vanilla celebration',
-    occasion: 'Kids party',
-    priceCents: 7800,
+    category: 'African Celebration Cakes',
+    flavor: 'Vanilla and coconut celebration',
+    occasion: 'Kids birthday',
+    priceCents: 4200000,
     skuName: 'One-tier custom cake',
     quantity: 10,
     size: 'one-tier',
@@ -307,30 +307,26 @@ const seededStorefrontProducts: StorefrontSeedProduct[] = [
     unitLabel: 'cake',
     isPerishable: true,
     expiresInDays: 5,
-    tags: ['cake', 'custom', 'kids-party', 'new-arrival'],
+    tags: ['cake', 'custom', 'kids-party', 'ankara-inspired', 'new-arrival'],
     dietaryLabels: ['made-to-order'],
-    ingredients: ['cake sponge', 'buttercream', 'fondant decoration', 'food coloring'],
+    ingredients: ['vanilla sponge', 'coconut sponge', 'buttercream', 'fondant decoration', 'food coloring'],
     allergens: ['wheat', 'milk', 'egg'],
     images: [
       {
-        url: '/brand/products/hello-kitty-cake.jpg',
-        alt: 'Pink Hello Kitty themed birthday cake'
-      },
-      {
         url: '/brand/products/custom-celebration-cakes-hero.jpg',
-        alt: 'Custom PlayStation and rainbow birthday cakes'
+        alt: 'Custom colorful birthday cakes for African family celebrations'
       }
     ]
   },
   {
     slug: 'custom-celebration-cakes',
-    name: 'Custom Celebration Cakes',
-    description: 'A custom cake booking product for birthdays, graduations, anniversaries, and themed events.',
+    name: 'Custom African Celebration Cakes',
+    description: 'A custom cake booking product for birthdays, graduations, naming ceremonies, introductions, anniversaries, and themed African events.',
     brand: 'TeshTreats Cakes',
-    category: 'Celebration Cakes',
-    flavor: 'Custom flavor',
-    occasion: 'Made-to-order celebration',
-    priceCents: 7000,
+    category: 'African Celebration Cakes',
+    flavor: 'Custom African-inspired flavor',
+    occasion: 'Made-to-order African celebration',
+    priceCents: 5000000,
     skuName: 'Starting custom order',
     quantity: 15,
     size: 'custom',
@@ -338,9 +334,9 @@ const seededStorefrontProducts: StorefrontSeedProduct[] = [
     unitLabel: 'order',
     isPerishable: true,
     expiresInDays: 5,
-    tags: ['cake', 'custom', 'gifting', 'bundle-ready'],
+    tags: ['cake', 'custom', 'african-celebration', 'gifting', 'bundle-ready'],
     dietaryLabels: ['made-to-order'],
-    ingredients: ['custom cake base', 'buttercream', 'fondant or edible decor'],
+    ingredients: ['custom cake base', 'buttercream', 'fondant or edible African-inspired decor'],
     allergens: ['wheat', 'milk', 'egg'],
     images: [
       {
@@ -376,7 +372,8 @@ const retiredPlatformStorefrontSlugs = [
   'hibiscus-glazed-popcorn',
   'chocolate-wafer-minis',
   'office-snack-sampler',
-  'premium-gifting-box'
+  'premium-gifting-box',
+  'campus-trail-mix'
 ];
 
 async function main() {
@@ -391,41 +388,41 @@ async function main() {
   await prisma.tenant.upsert({
     where: { slug: 'platform' },
     update: {
-      businessEmail: 'ops@snacks.local',
-      businessPhone: '+15550001000',
+      businessEmail: 'ops@teshtreats.local',
+      businessPhone: '+2348030001000',
       active: true,
       delegatedRoleApprovalRequired: true,
       manualPaymentEnabled: true,
-      defaultCurrency: 'USD',
-      timezone: 'America/New_York',
+      defaultCurrency: 'NGN',
+      timezone: 'Africa/Lagos',
       metadata: {
         businessAddress: {
-          line1: '100 Market Street',
-          city: 'Austin',
-          state: 'TX',
-          postalCode: '78701',
-          country: 'US'
+          line1: 'Lekki Phase 1 Kitchen',
+          city: 'Lagos',
+          state: 'Lagos',
+          postalCode: '105102',
+          country: 'NG'
         },
         orderReadinessNotificationChannels: ['email', 'sms']
       }
     },
     create: {
       slug: 'platform',
-      name: 'Platform Store',
-      businessEmail: 'ops@snacks.local',
-      businessPhone: '+15550001000',
+      name: 'TeshTreats Lagos Kitchen',
+      businessEmail: 'ops@teshtreats.local',
+      businessPhone: '+2348030001000',
       active: true,
       delegatedRoleApprovalRequired: true,
       manualPaymentEnabled: true,
-      defaultCurrency: 'USD',
-      timezone: 'America/New_York',
+      defaultCurrency: 'NGN',
+      timezone: 'Africa/Lagos',
       metadata: {
         businessAddress: {
-          line1: '100 Market Street',
-          city: 'Austin',
-          state: 'TX',
-          postalCode: '78701',
-          country: 'US'
+          line1: 'Lekki Phase 1 Kitchen',
+          city: 'Lagos',
+          state: 'Lagos',
+          postalCode: '105102',
+          country: 'NG'
         },
         orderReadinessNotificationChannels: ['email', 'sms']
       }
@@ -567,45 +564,50 @@ async function main() {
     permissions.manualPaymentsReview
   ]);
 
-  const vendorTenant = await prisma.tenant.upsert({
+  await prisma.tenant.updateMany({
     where: { slug: 'campus-cafeteria' },
+    data: { active: false }
+  });
+
+  const vendorTenant = await prisma.tenant.upsert({
+    where: { slug: 'lekki-kitchen-partner' },
     update: {
-      name: 'Campus Cafeteria',
-      businessEmail: 'vendor@campus-snacks.local',
-      businessPhone: '+15550002000',
+      name: 'Lekki Small Chops Partner',
+      businessEmail: 'partner@teshtreats.local',
+      businessPhone: '+2348030002000',
       active: true,
       delegatedRoleApprovalRequired: true,
       manualPaymentEnabled: true,
-      defaultCurrency: 'USD',
-      timezone: 'America/New_York',
+      defaultCurrency: 'NGN',
+      timezone: 'Africa/Lagos',
       metadata: {
         businessAddress: {
-          line1: '12 College Walk',
-          city: 'Raleigh',
-          state: 'NC',
-          postalCode: '27695',
-          country: 'US'
+          line1: 'Admiralty Way Prep Studio',
+          city: 'Lekki',
+          state: 'Lagos',
+          postalCode: '105102',
+          country: 'NG'
         },
         orderReadinessNotificationChannels: ['email', 'whatsapp']
       }
     },
     create: {
-      slug: 'campus-cafeteria',
-      name: 'Campus Cafeteria',
-      businessEmail: 'vendor@campus-snacks.local',
-      businessPhone: '+15550002000',
+      slug: 'lekki-kitchen-partner',
+      name: 'Lekki Small Chops Partner',
+      businessEmail: 'partner@teshtreats.local',
+      businessPhone: '+2348030002000',
       active: true,
       delegatedRoleApprovalRequired: true,
       manualPaymentEnabled: true,
-      defaultCurrency: 'USD',
-      timezone: 'America/New_York',
+      defaultCurrency: 'NGN',
+      timezone: 'Africa/Lagos',
       metadata: {
         businessAddress: {
-          line1: '12 College Walk',
-          city: 'Raleigh',
-          state: 'NC',
-          postalCode: '27695',
-          country: 'US'
+          line1: 'Admiralty Way Prep Studio',
+          city: 'Lekki',
+          state: 'Lagos',
+          postalCode: '105102',
+          country: 'NG'
         },
         orderReadinessNotificationChannels: ['email', 'whatsapp']
       }
@@ -656,15 +658,15 @@ async function main() {
       email: 'vendor@snacks.local'
     },
     update: {
-      name: 'Campus Vendor',
-      phone: '+15551230000',
+      name: 'Lekki Kitchen Partner',
+      phone: '+2348030003000',
       userType: 'admin',
       passwordHash
     },
     create: {
       email: 'vendor@snacks.local',
-      name: 'Campus Vendor',
-      phone: '+15551230000',
+      name: 'Lekki Kitchen Partner',
+      phone: '+2348030003000',
       userType: 'admin',
       passwordHash
     }
@@ -675,15 +677,15 @@ async function main() {
       email: 'customer@snacks.local'
     },
     update: {
-      name: 'Sample Customer',
-      phone: '+15551234567',
+      name: 'Amaka Okafor',
+      phone: '+2348031234567',
       userType: 'customer',
       passwordHash
     },
     create: {
       email: 'customer@snacks.local',
-      name: 'Sample Customer',
-      phone: '+15551234567',
+      name: 'Amaka Okafor',
+      phone: '+2348031234567',
       userType: 'customer',
       passwordHash
     }
@@ -723,10 +725,10 @@ async function main() {
 
   const meatPieMetadata = {
     isPerishable: true,
-    brand: 'Snacks Kitchen',
-    category: 'Fresh Bites',
+    brand: 'TeshTreats Bakery',
+    category: 'Fresh Nigerian Pastries',
     flavor: 'Savory beef',
-    occasion: 'Lunch',
+    occasion: 'Lunch and small chops tray',
     ingredients: ['flour', 'beef', 'butter', 'onion', 'pepper'],
     allergens: ['wheat', 'milk'],
     nutritionFacts: {
@@ -739,8 +741,8 @@ async function main() {
     storageInstructions: 'Keep refrigerated. Reheat before serving.',
     shelfLifeNotes: 'Best within 2 days of preparation.',
     bundleEligible: true,
-    seoTitle: 'Fresh Meat Pie',
-    seoDescription: 'Order fresh meat pies with live availability and secure checkout.'
+    seoTitle: 'Nigerian Beef Meat Pie',
+    seoDescription: 'Order fresh Nigerian beef meat pies with live availability and secure checkout.'
   };
 
   const meatPie = await prisma.product.upsert({
@@ -751,19 +753,19 @@ async function main() {
       }
     },
     update: {
-      description: 'Warm snack pie prepared fresh.',
-      brand: 'Snacks Kitchen',
-      category: 'Fresh Bites',
+      description: 'Warm Nigerian snack pie prepared fresh with spiced beef, carrot, and potato filling.',
+      brand: 'TeshTreats Bakery',
+      category: 'Fresh Nigerian Pastries',
       status: 'active',
       metadata: meatPieMetadata
     },
     create: {
       tenantId: tenant.id,
-      name: 'Fresh Meat Pie',
+      name: 'Nigerian Beef Meat Pie',
       slug: 'fresh-meat-pie',
-      description: 'Warm snack pie prepared fresh.',
-      brand: 'Snacks Kitchen',
-      category: 'Fresh Bites',
+      description: 'Warm Nigerian snack pie prepared fresh with spiced beef, carrot, and potato filling.',
+      brand: 'TeshTreats Bakery',
+      category: 'Fresh Nigerian Pastries',
       status: 'active',
       metadata: meatPieMetadata,
       skus: {
@@ -771,8 +773,8 @@ async function main() {
           {
             tenantId: tenant.id,
             name: 'Single pie',
-            priceCents: 450,
-            currency: 'USD',
+            priceCents: 180000,
+            currency: 'NGN',
             active: true,
             metadata: {
               size: '6 oz',
@@ -930,7 +932,7 @@ async function main() {
           where: { id: existingSku.id },
           data: {
             priceCents: seedProduct.priceCents,
-            currency: 'USD',
+            currency: 'NGN',
             active: true,
             metadata: skuMetadata
           }
@@ -941,7 +943,7 @@ async function main() {
             productId: product.id,
             name: seedProduct.skuName,
             priceCents: seedProduct.priceCents,
-            currency: 'USD',
+            currency: 'NGN',
             active: true,
             metadata: skuMetadata
           }
@@ -981,16 +983,28 @@ async function main() {
       }
     });
 
-    if (!existingSeedBatch) {
+    const seedBatchExpiry = seedProduct.expiresInDays
+      ? new Date(Date.now() + seedProduct.expiresInDays * 24 * 60 * 60 * 1000)
+      : null;
+
+    if (existingSeedBatch) {
+      await prisma.inventoryBatch.update({
+        where: { id: existingSeedBatch.id },
+        data: {
+          quantity: Math.max(existingSeedBatch.quantity, seedProduct.quantity),
+          reserved: 0,
+          expiredAt: null,
+          expiresAt: seedBatchExpiry
+        }
+      });
+    } else {
       await prisma.inventoryBatch.create({
         data: {
           tenantId: tenant.id,
           skuId: sku.id,
           quantity: seedProduct.quantity,
           reserved: 0,
-          expiresAt: seedProduct.expiresInDays
-            ? new Date(Date.now() + seedProduct.expiresInDays * 24 * 60 * 60 * 1000)
-            : null,
+          expiresAt: seedBatchExpiry,
           adjustments: {
             create: {
               tenantId: tenant.id,
@@ -1029,79 +1043,80 @@ async function main() {
     }
   });
 
-  const trailMix = await prisma.product.upsert({
+  const ijebuCrunch = await prisma.product.upsert({
     where: {
       tenantId_slug: {
         tenantId: vendorTenant.id,
-        slug: 'campus-trail-mix'
+        slug: 'ijebu-garri-groundnut-crunch'
       }
     },
     update: {
-      description: 'Sweet and salty snack mix for study breaks.',
-      brand: 'Campus Cafeteria',
-      category: 'Packaged Snacks',
+      name: 'Ijebu Garri & Groundnut Crunch',
+      description: 'A crisp Nigerian snack mix of roasted groundnuts, lightly sweetened garri clusters, coconut chips, and chin chin crumbs.',
+      brand: 'Lekki Small Chops Partner',
+      category: 'African Pantry Snacks',
       status: 'active',
       metadata: {
         isPerishable: false,
-        brand: 'Campus Cafeteria',
-        category: 'Packaged Snacks',
-        flavor: 'Sweet and salty',
-        occasion: 'Study break',
-        ingredients: ['peanuts', 'raisins', 'pretzels', 'chocolate chips'],
-        allergens: ['peanuts', 'wheat', 'milk'],
+        brand: 'Lekki Small Chops Partner',
+        category: 'African Pantry Snacks',
+        flavor: 'Roasted groundnut and coconut',
+        occasion: 'Office pantry and family snacking',
+        ingredients: ['ijebu garri', 'roasted groundnuts', 'coconut chips', 'chin chin crumbs', 'date sugar'],
+        allergens: ['peanuts', 'wheat'],
         nutritionFacts: {
-          calories: '260',
-          protein: '7g'
+          calories: '240',
+          protein: '6g'
         },
-        dietaryLabels: ['grab-and-go'],
-        tags: ['campus', 'packaged', 'study'],
+        dietaryLabels: ['grab-and-go', 'african-owned'],
+        tags: ['garri', 'groundnut', 'chin-chin', 'office', 'african-pantry'],
         storageInstructions: 'Store in a cool, dry place.',
-        shelfLifeNotes: 'Best within 90 days.',
+        shelfLifeNotes: 'Best within 45 days.',
         bundleEligible: true,
-        seoTitle: 'Campus Trail Mix',
-        seoDescription: 'Order campus trail mix for quick study snacks.'
+        seoTitle: 'Ijebu Garri & Groundnut Crunch',
+        seoDescription: 'Order an African pantry snack mix with garri, groundnuts, coconut chips, and chin chin crumbs.'
       }
     },
     create: {
       tenantId: vendorTenant.id,
-      name: 'Campus Trail Mix',
-      slug: 'campus-trail-mix',
-      description: 'Sweet and salty snack mix for study breaks.',
-      brand: 'Campus Cafeteria',
-      category: 'Packaged Snacks',
+      name: 'Ijebu Garri & Groundnut Crunch',
+      slug: 'ijebu-garri-groundnut-crunch',
+      description: 'A crisp Nigerian snack mix of roasted groundnuts, lightly sweetened garri clusters, coconut chips, and chin chin crumbs.',
+      brand: 'Lekki Small Chops Partner',
+      category: 'African Pantry Snacks',
       status: 'active',
       metadata: {
         isPerishable: false,
-        brand: 'Campus Cafeteria',
-        category: 'Packaged Snacks',
-        flavor: 'Sweet and salty',
-        occasion: 'Study break',
-        ingredients: ['peanuts', 'raisins', 'pretzels', 'chocolate chips'],
-        allergens: ['peanuts', 'wheat', 'milk'],
+        brand: 'Lekki Small Chops Partner',
+        category: 'African Pantry Snacks',
+        flavor: 'Roasted groundnut and coconut',
+        occasion: 'Office pantry and family snacking',
+        ingredients: ['ijebu garri', 'roasted groundnuts', 'coconut chips', 'chin chin crumbs', 'date sugar'],
+        allergens: ['peanuts', 'wheat'],
         nutritionFacts: {
-          calories: '260',
-          protein: '7g'
+          calories: '240',
+          protein: '6g'
         },
-        dietaryLabels: ['grab-and-go'],
-        tags: ['campus', 'packaged', 'study'],
+        dietaryLabels: ['grab-and-go', 'african-owned'],
+        tags: ['garri', 'groundnut', 'chin-chin', 'office', 'african-pantry'],
         storageInstructions: 'Store in a cool, dry place.',
-        shelfLifeNotes: 'Best within 90 days.',
+        shelfLifeNotes: 'Best within 45 days.',
         bundleEligible: true,
-        seoTitle: 'Campus Trail Mix',
-        seoDescription: 'Order campus trail mix for quick study snacks.'
+        seoTitle: 'Ijebu Garri & Groundnut Crunch',
+        seoDescription: 'Order an African pantry snack mix with garri, groundnuts, coconut chips, and chin chin crumbs.'
       },
       skus: {
         create: [
           {
             tenantId: vendorTenant.id,
-            name: 'Single pack',
-            priceCents: 325,
-            currency: 'USD',
+            name: 'Snack pouch',
+            priceCents: 250000,
+            currency: 'NGN',
             active: true,
             metadata: {
-              size: '4 oz',
+              size: '120 g',
               packCount: 1,
-              unitLabel: 'pack'
+              unitLabel: 'pouch'
             }
           }
         ]
@@ -1114,50 +1129,60 @@ async function main() {
       id: 'seed-campus-trail-mix-image'
     },
     update: {
-      productId: trailMix.id,
-      url: 'https://images.unsplash.com/photo-1599599810769-bcde5a160d32?auto=format&fit=crop&w=900&q=80',
-      alt: 'Trail mix snack bowl with nuts and dried fruit',
+      productId: ijebuCrunch.id,
+      url: '/brand/products/chin-chin-crunch-box.jpg',
+      alt: 'African pantry snack mix with chin chin and roasted groundnuts',
       sortOrder: 0,
-      storageProvider: 'cloudinary',
+      storageProvider: 'local',
       contentType: 'image/jpeg'
     },
     create: {
       id: 'seed-campus-trail-mix-image',
-      productId: trailMix.id,
-      url: 'https://images.unsplash.com/photo-1599599810769-bcde5a160d32?auto=format&fit=crop&w=900&q=80',
-      alt: 'Trail mix snack bowl with nuts and dried fruit',
+      productId: ijebuCrunch.id,
+      url: '/brand/products/chin-chin-crunch-box.jpg',
+      alt: 'African pantry snack mix with chin chin and roasted groundnuts',
       sortOrder: 0,
-      storageProvider: 'cloudinary',
+      storageProvider: 'local',
       contentType: 'image/jpeg'
     }
   });
 
-  const trailMixSku = await prisma.sku.findFirstOrThrow({
+  await prisma.product.updateMany({
     where: {
       tenantId: vendorTenant.id,
-      productId: trailMix.id,
-      name: 'Single pack'
+      slug: 'campus-trail-mix'
+    },
+    data: {
+      status: 'archived'
     }
   });
 
-  const existingTrailMixBatch = await prisma.inventoryBatch.findFirst({
+  const ijebuCrunchSku = await prisma.sku.findFirstOrThrow({
     where: {
       tenantId: vendorTenant.id,
-      skuId: trailMixSku.id
+      productId: ijebuCrunch.id,
+      name: 'Snack pouch'
     }
   });
 
-  if (!existingTrailMixBatch) {
+  const existingIjebuCrunchBatch = await prisma.inventoryBatch.findFirst({
+    where: {
+      tenantId: vendorTenant.id,
+      skuId: ijebuCrunchSku.id
+    }
+  });
+
+  if (!existingIjebuCrunchBatch) {
     await prisma.inventoryBatch.create({
       data: {
         tenantId: vendorTenant.id,
-        skuId: trailMixSku.id,
+        skuId: ijebuCrunchSku.id,
         quantity: 24,
         reserved: 0,
         adjustments: {
           create: {
             tenantId: vendorTenant.id,
-            skuId: trailMixSku.id,
+            skuId: ijebuCrunchSku.id,
             type: 'initial',
             quantityDelta: 24,
             reason: 'Seed vendor stock for local development.'

@@ -1,6 +1,6 @@
 import { Suspense } from 'react';
 import { AppShell } from '../../../components/layout/app-shell';
-import { StorefrontProductsContent } from '../../../contents/functional-contents/Storefront/StorefrontProductsContent';
+import { StorefrontProductsContent } from '../../../contents/Storefront/StorefrontProductsContent';
 
 export default function ProductsPage() {
   return (

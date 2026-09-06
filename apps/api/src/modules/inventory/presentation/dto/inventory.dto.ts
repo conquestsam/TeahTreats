@@ -1,5 +1,5 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsDateString, IsInt, IsOptional, IsString, IsUUID, Min, MinLength, NotEquals } from 'class-validator';
+import { IsBoolean, IsDateString, IsInt, IsObject, IsOptional, IsString, IsUUID, MaxLength, Min, MinLength, NotEquals } from 'class-validator';
 
 export class CreateInventoryBatchDto {
   @ApiProperty()
@@ -20,6 +20,40 @@ export class CreateInventoryBatchDto {
   @IsString()
   @MinLength(2)
   reason!: string;
+
+  @ApiPropertyOptional({ example: 'BATCH-20260218-LK' })
+  @IsOptional()
+  @IsString()
+  @MaxLength(80)
+  batchCode?: string;
+
+  @ApiPropertyOptional({ example: 'Cold Room 01' })
+  @IsOptional()
+  @IsString()
+  @MaxLength(120)
+  storageLocation?: string;
+
+  @ApiPropertyOptional({ example: 'Bakery Station' })
+  @IsOptional()
+  @IsString()
+  @MaxLength(120)
+  storageZone?: string;
+
+  @ApiPropertyOptional({ example: 'Internal Kitchen' })
+  @IsOptional()
+  @IsString()
+  @MaxLength(120)
+  source?: string;
+
+  @ApiPropertyOptional({ example: true })
+  @IsOptional()
+  @IsBoolean()
+  qualityChecked?: boolean;
+
+  @ApiPropertyOptional({ example: { supplier: 'Fresh Chef Prep' } })
+  @IsOptional()
+  @IsObject()
+  metadata?: Record<string, unknown>;
 }
 
 export class AdjustInventoryBatchDto {

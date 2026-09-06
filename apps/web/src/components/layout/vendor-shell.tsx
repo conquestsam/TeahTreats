@@ -4,7 +4,7 @@ import { Badge, Button, Group, Text } from '@mantine/core';
 import { motion } from 'motion/react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { TeahTreatsLogo } from '@/components/functional-components/TeahTreatsStorefront/TeahTreatsLogo';
+import { TeahTreatsLogo } from '@/components/TeahTreatsStorefront/TeahTreatsLogo';
 
 interface VendorShellProps {
   children: React.ReactNode;

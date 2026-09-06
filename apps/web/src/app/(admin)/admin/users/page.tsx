@@ -1,5 +1,5 @@
-import { AdminAuthGate } from '../../../../components/functional-components/AdminAuth/AdminAuthGate';
-import { AdminUserContent } from '../../../../contents/functional-contents/AdminUser/AdminUserContent';
+import { AdminAuthGate } from '../../../../components/AdminAuth/AdminAuthGate';
+import { AdminUserContent } from '../../../../contents/AdminUser/AdminUserContent';
 
 export default function AdminUsersPage() {
   return (

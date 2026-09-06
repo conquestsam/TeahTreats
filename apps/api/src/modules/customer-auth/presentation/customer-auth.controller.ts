@@ -8,7 +8,6 @@ import { ApiCustomerEndpoint, ApiEndpoint, ApiPublicEndpoint } from '../../../co
 import { authExceptions } from '../../../common/errors/auth-contract.exception.js';
 import { Public } from '../../../common/decorators/public.decorator.js';
 import { RateLimit } from '../../../common/decorators/rate-limit.decorator.js';
-import { CsrfGuard } from '../../../common/guards/csrf.guard.js';
 import { CustomerAccessAuthGuard } from '../../../common/guards/customer-access-auth.guard.js';
 import { RateLimitGuard } from '../../../common/guards/rate-limit.guard.js';
 import { TenantScopeGuard } from '../../../common/guards/tenant-scope.guard.js';
@@ -173,17 +172,24 @@ export class CustomerAuthController {
   }
 
   @Post('logout')
-  @ApiCookieAuth('customer_access_token')
-  @UseGuards(CustomerAccessAuthGuard, CsrfGuard, TenantScopeGuard)
-  @ApiCustomerEndpoint('Revoke the current customer session.', { tenant: 'required', csrf: true, status: 201 })
+  @Public()
+  @ApiEndpoint({
+    summary: 'Clear customer auth cookies and revoke the current session when it can be identified.',
+    auth: 'optional',
+    tenant: 'none',
+    status: 201
+  })
   async logout(
-    @CurrentUser() user: AuthenticatedUser,
-    @CurrentTenant() tenantId: string,
+    @Req() request: Request,
     @Res({ passthrough: true }) response: Response,
   ) {
-    await this.auth.logout(user.id, user.sessionId, tenantId);
+    const cookies = request.cookies as Record<string, string | undefined> | undefined;
+    const result = await this.auth.logoutBySessionCookies({
+      accessToken: cookies?.customer_access_token,
+      refreshToken: cookies?.customer_refresh_token
+    });
     this.cookies.clearAuthCookies(response);
-    return { data: { ok: true } };
+    return { data: result };
   }
 
   private webRedirect(path: string) {

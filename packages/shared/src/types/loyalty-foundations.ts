@@ -65,3 +65,28 @@ export interface GroupCartSummary {
   }>;
   createdAt: string;
 }
+
+export interface CustomerBundlePreviewInput {
+  participantCount?: number;
+  budgetTargetCents?: number;
+}
+
+export interface OfficeSnackPlanInput {
+  name: string;
+  participantCount: number;
+  budgetTargetCents: number;
+  preferredCategories?: string[];
+  preferredTags?: string[];
+}
+
+export interface CreateGroupCartInput {
+  name: string;
+}
+
+export interface AddGroupCartItemInput {
+  skuId: string;
+  quantity: number;
+  participantName?: string;
+  participantEmail?: string;
+  note?: string;
+}

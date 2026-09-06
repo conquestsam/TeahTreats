@@ -1,10 +1,15 @@
 import { z } from 'zod';
 
 export const createInventoryBatchSchema = z.object({
-  skuId: z.string().min(1, 'SKU is required.'),
+  skuId: z.string().min(1, 'Choose a product option.'),
   quantity: z.number().min(0, 'Quantity cannot be negative.'),
   expiresAt: z.string().optional(),
-  reason: z.string().trim().min(2, 'Reason is required.')
+  reason: z.string().trim().min(2, 'Add a short note.'),
+  batchCode: z.string().max(80, 'Use 80 characters or less.').optional(),
+  storageLocation: z.string().max(120, 'Use 120 characters or less.').optional(),
+  storageZone: z.string().max(120, 'Use 120 characters or less.').optional(),
+  source: z.string().max(120, 'Use 120 characters or less.').optional(),
+  qualityChecked: z.boolean().optional()
 });
 
 export const adjustInventoryBatchSchema = z.object({

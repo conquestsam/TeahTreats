@@ -45,12 +45,12 @@ export function useCustomerPaymentMutations(onProofSubmitted: () => void) {
     onSuccess: () => {
       notifications.show({
         color: 'green',
-        title: 'Receipt submitted',
-        message: 'Your payment is waiting for review.'
+        title: 'Payment submitted',
+        message: 'Your payment details are waiting for review.'
       });
       onProofSubmitted();
     },
-    onError: (error) => fail(error, 'Could not submit receipt.')
+    onError: (error) => fail(error, 'Could not submit payment details.')
   });
 
   return { initiateMutation, paypalCaptureMutation, uploadMutation, proofMutation };

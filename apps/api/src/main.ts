@@ -27,9 +27,9 @@ async function bootstrap() {
   app.useGlobalFilters(new HttpExceptionFilter());
 
   const documentConfig = new DocumentBuilder()
-    .setTitle('TeahTreats API')
+    .setTitle('TeshTreats API')
     .setDescription(
-      'REST API for the TeahTreats snacks e-commerce modular monolith. Protected browser mutations use HTTP-only cookies, tenant scoping, and CSRF headers.',
+      'REST API for the TeshTreats snacks e-commerce modular monolith. Protected browser mutations use HTTP-only cookies, tenant scoping, and CSRF headers.',
     )
     .setVersion('1.0')
     .addCookieAuth('access_token', {

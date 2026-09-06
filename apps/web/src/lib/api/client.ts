@@ -32,7 +32,9 @@ export async function apiFetch<TResponse>(
     headers.set('x-tenant-id', temporaryTenantId);
   }
 
-  const csrfToken = readCookie('csrf_token');
+  const csrfToken = unsafeMethods.has(method) && !headers.has('x-csrf-token')
+    ? await ensureCsrfToken(headers)
+    : readCookie('csrf_token');
   if (csrfToken && unsafeMethods.has(method) && !headers.has('x-csrf-token')) {
     headers.set('x-csrf-token', csrfToken);
   }
@@ -80,6 +82,27 @@ function readCookie(name: string) {
     .join('=');
 
   return value ? decodeURIComponent(value) : null;
+}
+
+async function ensureCsrfToken(headers: Headers) {
+  const existing = readCookie('csrf_token');
+  if (existing || typeof window === 'undefined') {
+    return existing;
+  }
+
+  try {
+    const response = await fetch(`${apiBaseUrl}/auth/csrf`, {
+      credentials: 'include',
+      headers
+    });
+    if (!response.ok) {
+      return null;
+    }
+    const body = (await response.json()) as { data?: { csrfToken?: string } };
+    return body.data?.csrfToken ?? readCookie('csrf_token');
+  } catch {
+    return null;
+  }
 }
 
 async function refreshSession(path: string, headers: Headers) {

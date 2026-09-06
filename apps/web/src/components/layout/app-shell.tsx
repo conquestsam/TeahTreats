@@ -1,19 +1,25 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
-import { Burger, Drawer } from '@mantine/core';
-import { useDisclosure } from '@mantine/hooks';
+import { Drawer } from '@mantine/core';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { TeahTreatsLogo } from '@/components/functional-components/TeahTreatsStorefront/TeahTreatsLogo';
+import { TeahTreatsLogo } from '@/components/TeahTreatsStorefront/TeahTreatsLogo';
 import { useCustomerCartQuery } from '@/hooks/CustomerCart/useCustomerCartQuery';
 import { useCurrentCustomerQuery } from '@/hooks/CustomerAuth/useCustomerAuthQuery';
 
 import { useCustomerLogoutMutation } from '@/hooks/CustomerAuth/useCustomerAuthMutations';
+import { useUiShellStore } from '@/lib/store/ui-shell-store';
+import { AppHeader } from './AppHeader';
+import { AppBottomNav } from './AppBottomNav';
+import { ShellUserMenu } from './ShellUserMenu';
+import type { ShellNavSection } from './shell-types';
 
 export function AppShell({ children }: Readonly<{ children: React.ReactNode }>) {
   const pathname = usePathname();
-  const [opened, { open, close }] = useDisclosure(false);
+  const mobileNavOpen = useUiShellStore((state) => state.mobileNavOpen);
+  const openMobileNav = useUiShellStore((state) => state.openMobileNav);
+  const closeMobileNav = useUiShellStore((state) => state.closeMobileNav);
   const cartQuery = useCustomerCartQuery();
   const customerQuery = useCurrentCustomerQuery();
   const logoutMutation = useCustomerLogoutMutation();
@@ -35,52 +41,58 @@ export function AppShell({ children }: Readonly<{ children: React.ReactNode }>) 
   const isAuthed = Boolean(customerQuery.data);
 
   const guestLinks = [
-    { href: '/products', label: 'Collections' },
+    { href: '/products', label: 'Menu' },
     { href: '/bundles', label: 'Bundles' },
-    { href: '/office-snack-planner', label: 'Office Plans' },
-    { href: '/products?occasion=Gift', label: 'Gifting' }
+    { href: '/office-snack-planner', label: 'Office Plans' }
   ];
 
   const authLinks = [
-    { href: '/products', label: 'Collections' },
+    { href: '/products', label: 'Menu' },
     { href: '/account', label: 'Dashboard' },
     { href: '/account/orders', label: 'My Orders' },
-    { href: '/account/loyalty', label: 'Rewards & Perks' },
+    { href: '/account/loyalty', label: 'Rewards' },
     { href: '/office-snack-planner', label: 'Office Plans' }
   ];
 
   const navLinks = isAuthed ? authLinks : guestLinks;
+  const customerCartNavItem = totalCartCount > 0
+    ? { href: '/cart', label: 'Cart', hint: String(totalCartCount) }
+    : { href: '/cart', label: 'Cart' };
+  const customerBottomNav: ShellNavSection[] = [
+    {
+      items: [
+        { href: '/products', label: 'Shop' },
+        { href: '/search', label: 'Search' },
+        customerCartNavItem,
+        { href: isAuthed ? '/account' : '/login', label: isAuthed ? 'Account' : 'Sign in' }
+      ]
+    }
+  ];
 
   const isActive = (href: string) =>
     pathname === href || (href === '/products' && pathname.startsWith('/products'));
 
   return (
     <div className="tt-shell">
-      {/* ── Header ── */}
-      <header className="sticky top-0 z-40" style={{
-        background: 'rgba(10, 10, 10, 0.92)',
-        backdropFilter: 'blur(24px) saturate(1.5)',
-        borderBottom: '1px solid rgba(184, 147, 62, 0.18)'
-      }}>
-        <div className="tt-container" style={{ paddingBlock: '16px' }}>
-          <div className="tt-header-row">
-            <TeahTreatsLogo />
-
-            {/* Desktop nav */}
-            <nav className="tt-desktop-nav hidden lg:flex">
-              {navLinks.map((link) => (
-                <Link
-                  key={link.href}
-                  href={link.href as never}
-                  className={isActive(link.href) ? 'tt-nav-link tt-nav-link-active' : 'tt-nav-link'}
-                >
-                  {link.label}
-                </Link>
-              ))}
-            </nav>
-
-            {/* Actions */}
-            <div className="tt-header-actions">
+      <AppHeader
+        mobileMenuOpen={mobileNavOpen}
+        navigation={(
+          <nav className="tt-desktop-nav flex">
+            {navLinks.map((link) => (
+              <Link
+                key={link.href}
+                href={link.href as never}
+                className={isActive(link.href) ? 'tt-nav-link tt-nav-link-active' : 'tt-nav-link'}
+              >
+                {link.label}
+              </Link>
+            ))}
+          </nav>
+        )}
+        onMobileMenuToggle={openMobileNav}
+        variant="customer"
+        actions={(
+          <div className="tt-header-actions">
               <Link href="/search" className="tt-icon-action" style={{
                 display: 'inline-flex', alignItems: 'center', gap: 6, padding: '10px 16px',
                 borderRadius: 10, textDecoration: 'none'
@@ -124,7 +136,7 @@ export function AppShell({ children }: Readonly<{ children: React.ReactNode }>) 
                 </span>
               </Link>
 
-              <Link href={(isAuthed ? "/account" : "/login") as never} className="hidden sm:inline-flex" style={{
+              <Link href={isAuthed ? '/account' : '/login'} className="tt-account-action hidden sm:inline-flex" style={{
                 alignItems: 'center', padding: '10px 22px', borderRadius: 10,
                 border: '1px solid rgba(184, 147, 62, 0.4)',
                 background: isAuthed ? 'rgba(184, 147, 62, 0.08)' : 'transparent',
@@ -135,24 +147,14 @@ export function AppShell({ children }: Readonly<{ children: React.ReactNode }>) 
               }}>
                 {isAuthed ? (customerQuery.data?.name.split(' ')[0] || 'Account') : 'Sign In'}
               </Link>
-
-              <Burger
-                opened={opened}
-                onClick={open}
-                hiddenFrom="lg"
-                aria-label="Open navigation"
-                color="#FAF7F2"
-                size="sm"
-              />
             </div>
-          </div>
-        </div>
-      </header>
+        )}
+      />
 
       {/* ── Mobile Drawer ── */}
       <Drawer
-        opened={opened}
-        onClose={close}
+        opened={mobileNavOpen}
+        onClose={closeMobileNav}
         title={<TeahTreatsLogo />}
         position="right"
         size="300px"
@@ -167,7 +169,7 @@ export function AppShell({ children }: Readonly<{ children: React.ReactNode }>) 
             <Link
               key={link.href}
               href={link.href as never}
-              onClick={close}
+              onClick={closeMobileNav}
               style={{
                 display: 'flex', alignItems: 'center', padding: '14px 18px',
                 borderRadius: 12, border: '1px solid rgba(184, 147, 62, 0.15)',
@@ -182,26 +184,18 @@ export function AppShell({ children }: Readonly<{ children: React.ReactNode }>) 
           ))}
 
           {isAuthed ? (
-            <button
-              type="button"
-              onClick={() => {
-                close();
+            <ShellUserMenu
+              onSignOut={() => {
+                closeMobileNav();
                 logoutMutation.mutate();
               }}
-              style={{
-                display: 'flex', alignItems: 'center', padding: '14px 18px',
-                borderRadius: 12, border: '1px solid rgba(155, 27, 48, 0.35)',
-                color: '#f87171', background: 'rgba(155, 27, 48, 0.12)',
-                fontSize: '0.95rem', fontWeight: 600, cursor: 'pointer',
-                textAlign: 'left', width: '100%', marginTop: 12
-              }}
-            >
-              Sign Out
-            </button>
+              signingOut={logoutMutation.isPending}
+              user={{ name: customerQuery.data?.name ?? 'Customer', role: 'Customer', badge: 'Active' }}
+            />
           ) : (
             <Link
               href="/login"
-              onClick={close}
+              onClick={closeMobileNav}
               style={{
                 display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '14px 18px',
                 borderRadius: 12, border: '1px solid rgba(184, 147, 62, 0.4)',
@@ -220,6 +214,13 @@ export function AppShell({ children }: Readonly<{ children: React.ReactNode }>) 
       <main style={{ minHeight: '100vh', background: 'var(--tt-obsidian)', color: 'var(--tt-cream)' }}>
         {children}
       </main>
+
+      <AppBottomNav
+        activePathname={pathname}
+        navSections={customerBottomNav}
+        maxItems={4}
+        onNavigate={closeMobileNav}
+      />
 
       {/* ── Footer ── */}
       <footer style={{
@@ -299,7 +300,7 @@ export function AppShell({ children }: Readonly<{ children: React.ReactNode }>) 
             flexWrap: 'wrap', gap: 12
           }}>
             <p style={{ fontSize: '0.75rem', color: 'var(--tt-cream-dim)', margin: 0 }}>
-              © {new Date().getFullYear()} TeahTreats. All rights reserved.
+              © {new Date().getFullYear()} TeshTreats. All rights reserved.
             </p>
             <p style={{ fontSize: '0.72rem', color: 'var(--tt-cream-dim)', margin: 0 }}>
               Crafted with care for snack lovers everywhere.

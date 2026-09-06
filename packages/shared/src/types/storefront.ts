@@ -63,3 +63,29 @@ export interface StorefrontRecommendationSection {
   title: string;
   items: StorefrontProductCard[];
 }
+
+export interface StorefrontProductQuery {
+  page?: number | undefined;
+  pageSize?: number | undefined;
+  q?: string | undefined;
+  category?: string | undefined;
+  brand?: string | undefined;
+  tag?: string | undefined;
+  sort?: StorefrontSortOption | undefined;
+}
+
+export interface StorefrontAddToCartInput {
+  skuId: string;
+  quantity: number;
+}
+
+export interface StorefrontNewsletterInput {
+  email: string;
+  source?: string;
+}
+
+export interface StorefrontNewsletterSubscriptionSummary {
+  id: string;
+  email: string;
+  status: string;
+}

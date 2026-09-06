@@ -1,5 +1,5 @@
-import { AdminAuthGate } from '@/components/functional-components/AdminAuth/AdminAuthGate';
-import { AdminReportContent } from '../../../../contents/functional-contents/AdminReport/AdminReportContent';
+import { AdminAuthGate } from '@/components/AdminAuth/AdminAuthGate';
+import { AdminReportContent } from '../../../../contents/AdminReport/AdminReportContent';
 
 export default function AdminReportsPage() {
   return (

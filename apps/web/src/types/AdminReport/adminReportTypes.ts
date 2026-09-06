@@ -5,7 +5,8 @@ import type {
   RevenueByDayReportItem,
   SalesSummaryReport,
   StockReportItem,
-  TopProductReportItem
+  TopProductReportItem,
+  AdminReportDateRangeInput
 } from '@snacks/shared';
 
 export type AdminReportsDashboardModel = AdminReportsDashboardSummary;
@@ -15,8 +16,4 @@ export type AdminOrdersByStatusModel = OrdersByStatusReportItem;
 export type AdminTopProductModel = TopProductReportItem;
 export type AdminStockReportItemModel = StockReportItem;
 export type AdminRepeatCustomerReportModel = RepeatCustomerReport;
-
-export interface AdminReportDateRangeInput {
-  from?: string;
-  to?: string;
-}
+export type { AdminReportDateRangeInput };

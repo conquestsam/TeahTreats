@@ -1,10 +1,22 @@
+import type { CheckoutCustomerFormValues } from '@/validation/CustomerCart/customerCartValidation';
+
 export const customerCartQueryKey = ['customer-cart'] as const;
 
-export const checkoutCustomerInitialValues = {
+export const checkoutCustomerInitialValues: CheckoutCustomerFormValues = {
   name: '',
   email: '',
   phone: '',
-  address: ''
+  address: '',
+  fulfillmentMethod: 'delivery_handoff',
+  recipientName: '',
+  addressLine1: '',
+  addressLine2: '',
+  city: '',
+  state: '',
+  postalCode: '',
+  handoffInstructions: '',
+  deliveryDate: '',
+  deliveryWindow: '4:00 PM - 7:00 PM'
 };
 
 export const customerTenantId = process.env.NEXT_PUBLIC_TEMP_TENANT_ID ?? 'platform';

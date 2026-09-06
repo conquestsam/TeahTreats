@@ -1,5 +1,5 @@
 import { AppShell } from '../../../components/layout/app-shell';
-import { CustomerCartContent } from '../../../contents/functional-contents/CustomerCart/CustomerCartContent';
+import { CustomerCartContent } from '../../../contents/CustomerCart/CustomerCartContent';
 
 export default function CartPage() {
   return (

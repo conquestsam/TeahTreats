@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import type { Response } from 'express';
 import { randomBytes, timingSafeEqual } from 'node:crypto';
+import { defaultAccessTokenTtl, defaultRefreshTokenTtl, durationToMs } from '../../../common/auth/token-lifetime.js';
 import { authExceptions } from '../../../common/errors/auth-contract.exception.js';
 
 const accessCookieName = 'customer_access_token';
@@ -16,13 +17,13 @@ export class CustomerAuthCookieService {
     response.cookie(accessCookieName, tokens.accessToken, {
       ...this.baseCookieOptions(),
       httpOnly: true,
-      maxAge: 15 * 60 * 1000,
+      maxAge: durationToMs(this.config.get<string>('AUTH_ACCESS_TOKEN_TTL') ?? defaultAccessTokenTtl),
       path: '/'
     });
     response.cookie(refreshCookieName, tokens.refreshToken, {
       ...this.baseCookieOptions(),
       httpOnly: true,
-      maxAge: 30 * 24 * 60 * 60 * 1000,
+      maxAge: durationToMs(this.config.get<string>('AUTH_REFRESH_TOKEN_TTL') ?? defaultRefreshTokenTtl),
       path: '/api/v1/customer-auth'
     });
   }
@@ -32,7 +33,7 @@ export class CustomerAuthCookieService {
     response.cookie(csrfCookieName, csrfToken, {
       ...this.baseCookieOptions(),
       httpOnly: false,
-      maxAge: 30 * 24 * 60 * 60 * 1000,
+      maxAge: durationToMs(this.config.get<string>('AUTH_REFRESH_TOKEN_TTL') ?? defaultRefreshTokenTtl),
       path: '/'
     });
     return csrfToken;

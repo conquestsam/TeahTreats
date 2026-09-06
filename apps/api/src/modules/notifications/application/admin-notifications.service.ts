@@ -101,8 +101,8 @@ export class AdminNotificationsService {
       channels,
       recipients,
       context: {
-        title: 'TeahTreats smoke test',
-        message: 'This is a TeahTreats notification smoke test from the admin panel.'
+        title: 'TeshTreats smoke test',
+        message: 'This is a TeshTreats notification smoke test from the admin panel.'
       },
       metadata: { source: 'admin-smoke-test' },
       deliveryScope: `smoke:${Date.now()}`

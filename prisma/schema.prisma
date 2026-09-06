@@ -385,6 +385,7 @@ model InventoryBatch {
   reserved    Int      @default(0)
   expiresAt   DateTime?
   expiredAt   DateTime?
+  metadata    Json     @default("{}")
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
   sku         Sku      @relation(fields: [skuId], references: [id], onDelete: Cascade)
@@ -462,6 +463,7 @@ model Order {
   id          String       @id @default(uuid())
   tenantId    String
   userId      String?
+  checkoutMode String       @default("guest")
   status      OrderStatus  @default(checkout_started)
   totalCents  Int
   subtotalCents Int      @default(0)
@@ -484,6 +486,7 @@ model Order {
   @@index([tenantId, createdAt])
   @@index([tenantId, userId, createdAt])
   @@index([tenantId, userId, status])
+  @@index([tenantId, checkoutMode, createdAt])
   @@index([tenantId, reservationExpiresAt])
   @@index([tenantId, status, reservationExpiresAt])
   @@index([reservationExpiresAt])
@@ -581,7 +584,7 @@ model ManualPaymentProof {
   id                    String   @id @default(uuid())
   paymentId             String
   manualPaymentMethodId String
-  receiptUrl            String
+  receiptUrl            String?
   objectKey             String?
   storageProvider       String?
   contentType           String?

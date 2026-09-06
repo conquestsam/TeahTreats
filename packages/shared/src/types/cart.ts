@@ -29,10 +29,15 @@ export interface CustomerCartSummary {
 export interface CheckoutStartedSummary {
   orderId: string;
   status: string;
+  checkoutMode: CustomerCheckoutMode;
+  isGuestCheckout: boolean;
   customer: {
     name: string;
     email: string;
     phone: string;
+    recipientName?: string;
+    fulfillmentMethod?: CustomerFulfillmentMethod;
+    deliveryWindowLabel?: string;
   };
   subtotalCents: number;
   discountCents: number;
@@ -44,4 +49,39 @@ export interface CheckoutStartedSummary {
     amountCents: number;
   }>;
   reservationExpiresAt: string;
+}
+
+export interface AddCartItemInput {
+  skuId: string;
+  quantity: number;
+}
+
+export interface UpdateCartItemInput {
+  quantity: number;
+}
+
+export interface CheckoutCustomerInput {
+  name: string;
+  email: string;
+  phone: string;
+  address: string;
+  fulfillmentMethod?: CustomerFulfillmentMethod;
+  recipientName?: string;
+  addressLine1?: string;
+  addressLine2?: string;
+  city?: string;
+  state?: string;
+  postalCode?: string;
+  handoffInstructions?: string;
+  deliveryDate?: string;
+  deliveryWindow?: string;
+  couponCode?: string;
+}
+
+export type CustomerFulfillmentMethod = 'delivery_handoff' | 'store_pickup' | 'scheduled_delivery';
+export type CustomerCheckoutMode = 'guest' | 'account';
+
+export interface ValidateCouponInput {
+  code: string;
+  email?: string;
 }

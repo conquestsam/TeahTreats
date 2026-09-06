@@ -27,7 +27,7 @@ export function smokeTestAdminNotifications(input: {
   email?: string;
   phone?: string;
 }) {
-  return apiFetch<ApiEnvelope<{ created: number; results: Array<{ channel: string; status: string; message: string }> }>>(
+  return apiFetch<ApiEnvelope<{ created: number; results: Array<{ channel: string; recipient: string; status: string; message: string }> }>>(
     '/admin/notifications/smoke-test',
     {
       method: 'POST',

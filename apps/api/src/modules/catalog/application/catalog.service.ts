@@ -15,7 +15,10 @@ import type { CreateSkuDto, UpdateSkuDto } from '../presentation/dto/sku.dto.js'
 
 const productInclude = {
   skus: {
-    orderBy: { name: 'asc' as const }
+    orderBy: { name: 'asc' as const },
+    include: {
+      batches: true
+    }
   },
   images: {
     orderBy: { sortOrder: 'asc' as const }
@@ -45,18 +48,20 @@ export class CatalogService {
     ProductPolicy.ensureTenantContext(tenantId);
     const resolvedTenantId = await this.resolveTenantId(tenantId);
 
-    return this.prisma.product.findMany({
+    const products = await this.prisma.product.findMany({
       where: { tenantId: resolvedTenantId },
       include: productInclude,
       orderBy: { updatedAt: 'desc' }
     });
+
+    return products.map((product) => this.toAdminProductSummary(product));
   }
 
   async getProduct(tenantId: string, productId: string) {
     ProductPolicy.ensureTenantContext(tenantId);
     const resolvedTenantId = await this.resolveTenantId(tenantId);
 
-    return ProductPolicy.ensureFound(
+    const product = ProductPolicy.ensureFound(
       await this.prisma.product.findFirst({
         where: {
           id: productId,
@@ -65,6 +70,8 @@ export class CatalogService {
         include: productInclude
       }),
     );
+
+    return this.toAdminProductSummary(product);
   }
 
   async createProduct(tenantId: string, dto: CreateProductDto) {
@@ -100,7 +107,7 @@ export class CatalogService {
         }
       });
 
-      return product;
+      return this.toAdminProductSummary(product);
     });
   }
 
@@ -144,7 +151,7 @@ export class CatalogService {
         }
       });
 
-      return product;
+      return this.toAdminProductSummary(product);
     });
   }
 
@@ -169,7 +176,7 @@ export class CatalogService {
         }
       });
 
-      return product;
+      return this.toAdminProductSummary(product);
     });
   }
 
@@ -194,7 +201,7 @@ export class CatalogService {
         }
       });
 
-      return product;
+      return this.toAdminProductSummary(product);
     });
   }
 
@@ -604,4 +611,121 @@ export class CatalogService {
     const trimmed = value.trim();
     return trimmed.length > 0 ? trimmed : undefined;
   }
+
+  private toAdminProductSummary(product: AdminProductWithDetails) {
+    const skuSummaries = product.skus.map((sku) => {
+      const available = sku.batches.reduce((sum, batch) => {
+        const expired = Boolean(batch.expiredAt) || Boolean(batch.expiresAt && batch.expiresAt <= new Date());
+        return expired ? sum : sum + Math.max(batch.quantity - batch.reserved, 0);
+      }, 0);
+      const reserved = sku.batches.reduce((sum, batch) => sum + batch.reserved, 0);
+      const lowStockThreshold = this.numberFromRecord(this.objectRecord(sku.metadata), 'lowStockThreshold');
+      const stockStatus = available <= 0
+        ? 'out_of_stock'
+        : lowStockThreshold !== undefined && available <= lowStockThreshold
+          ? 'low_stock'
+          : 'in_stock';
+
+      return {
+        id: sku.id,
+        tenantId: sku.tenantId,
+        productId: sku.productId,
+        name: sku.name,
+        priceCents: sku.priceCents,
+        currency: sku.currency,
+        active: sku.active,
+        metadata: this.objectRecord(sku.metadata),
+        available,
+        reserved,
+        lowStockThreshold: lowStockThreshold ?? null,
+        stockStatus,
+        stockStatusLabel: this.stockStatusLabel(stockStatus)
+      };
+    });
+    const activeSkus = skuSummaries.filter((sku) => sku.active);
+    const prices = activeSkus.map((sku) => sku.priceCents);
+    const minPriceCents = prices.length ? Math.min(...prices) : null;
+    const maxPriceCents = prices.length ? Math.max(...prices) : null;
+    const currency = activeSkus[0]?.currency ?? product.skus[0]?.currency ?? 'USD';
+    const totalAvailable = skuSummaries.reduce((sum, sku) => sum + sku.available, 0);
+    const totalReserved = skuSummaries.reduce((sum, sku) => sum + sku.reserved, 0);
+    const lowStockSkuCount = skuSummaries.filter((sku) => sku.stockStatus === 'low_stock' || sku.stockStatus === 'out_of_stock').length;
+    const stockStatus = skuSummaries.length === 0
+      ? 'not_tracked'
+      : totalAvailable <= 0
+        ? 'out_of_stock'
+        : lowStockSkuCount > 0
+          ? 'low_stock'
+          : 'in_stock';
+
+    return {
+      id: product.id,
+      tenantId: product.tenantId,
+      name: product.name,
+      slug: product.slug,
+      description: product.description,
+      brand: product.brand,
+      category: product.category,
+      status: product.status,
+      metadata: this.objectRecord(product.metadata),
+      skus: skuSummaries,
+      images: product.images.map((image) => ({
+        id: image.id,
+        productId: image.productId,
+        url: image.url,
+        objectKey: image.objectKey,
+        storageProvider: image.storageProvider,
+        contentType: image.contentType,
+        alt: image.alt,
+        sortOrder: image.sortOrder
+      })),
+      primaryImageUrl: product.images[0]?.url ?? null,
+      skuCount: skuSummaries.length,
+      activeSkuCount: activeSkus.length,
+      minPriceCents,
+      maxPriceCents,
+      currency,
+      priceRangeLabel: this.priceRangeLabel(minPriceCents, maxPriceCents, currency),
+      totalAvailable,
+      totalReserved,
+      lowStockSkuCount,
+      stockStatus,
+      stockStatusLabel: stockStatus === 'not_tracked' ? 'Not tracked' : this.stockStatusLabel(stockStatus),
+      createdAt: product.createdAt.toISOString(),
+      updatedAt: product.updatedAt.toISOString()
+    };
+  }
+
+  private numberFromRecord(record: Record<string, unknown>, key: string) {
+    const value = record[key];
+    return typeof value === 'number' && Number.isFinite(value) ? value : undefined;
+  }
+
+  private stockStatusLabel(status: 'in_stock' | 'low_stock' | 'out_of_stock') {
+    const labels = {
+      in_stock: 'In stock',
+      low_stock: 'Low stock',
+      out_of_stock: 'Out of stock'
+    };
+    return labels[status];
+  }
+
+  private priceRangeLabel(minPriceCents: number | null, maxPriceCents: number | null, currency: string) {
+    if (minPriceCents === null || maxPriceCents === null) {
+      return 'Add price';
+    }
+    const min = this.formatMoney(minPriceCents, currency);
+    const max = this.formatMoney(maxPriceCents, currency);
+    return minPriceCents === maxPriceCents ? min : `${min} - ${max}`;
+  }
+
+  private formatMoney(amountCents: number, currency: string) {
+    return new Intl.NumberFormat('en-US', {
+      style: 'currency',
+      currency: currency || 'USD',
+      maximumFractionDigits: 2
+    }).format(amountCents / 100);
+  }
 }
+
+type AdminProductWithDetails = Prisma.ProductGetPayload<{ include: typeof productInclude }>;

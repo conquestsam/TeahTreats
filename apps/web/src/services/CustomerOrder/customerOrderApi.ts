@@ -20,9 +20,25 @@ export function getCustomerOrder(orderId: string) {
   }).then((response) => response.data);
 }
 
+export function lookupCustomerOrder(input: { orderId: string; email: string; phone: string }) {
+  return apiFetch<ApiEnvelope<CustomerOrderDetail>>(`/shop/orders/${input.orderId}/lookup`, {
+    method: 'POST',
+    headers: tenantHeaders,
+    body: JSON.stringify({ email: input.email, phone: input.phone })
+  }).then((response) => response.data);
+}
+
 export function completeCustomerOrder(orderId: string) {
   return apiFetch<ApiEnvelope<CustomerOrderDetail>>(`/shop/orders/${orderId}/complete`, {
     method: 'POST',
     headers: tenantHeaders
+  }).then((response) => response.data);
+}
+
+export function claimGuestOrder(input: { orderId: string; email: string; phone: string }) {
+  return apiFetch<ApiEnvelope<CustomerOrderDetail>>(`/shop/orders/${input.orderId}/claim`, {
+    method: 'POST',
+    headers: tenantHeaders,
+    body: JSON.stringify({ email: input.email, phone: input.phone })
   }).then((response) => response.data);
 }

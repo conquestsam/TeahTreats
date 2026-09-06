@@ -8,7 +8,7 @@ import { CustomerAccessAuthGuard } from '../../../common/guards/customer-access-
 import { TenantScopeGuard } from '../../../common/guards/tenant-scope.guard.js';
 import type { AuthenticatedUser } from '../../../common/types/authenticated-request.js';
 import { OrdersService } from '../application/orders.service.js';
-import { CompleteCustomerOrderDto } from './dto/order-management.dto.js';
+import { ClaimGuestOrderDto, CompleteCustomerOrderDto, LookupCustomerOrderDto } from './dto/order-management.dto.js';
 
 @ApiTags('shop/orders')
 @ApiHeader({
@@ -39,6 +39,29 @@ export class CustomerOrdersController {
     @Param('orderId') orderId: string,
   ) {
     return { data: await this.orders.getCustomerOrder(user, tenantId, orderId) };
+  }
+
+  @Post(':orderId/lookup')
+  @ApiCustomerEndpoint('Get one customer order after verifying checkout contact.', { tenant: 'required' })
+  async lookup(
+    @CurrentTenant() tenantId: string,
+    @Param('orderId') orderId: string,
+    @Body() dto: LookupCustomerOrderDto,
+  ) {
+    return { data: await this.orders.lookupCustomerOrder(tenantId, orderId, dto) };
+  }
+
+  @Post(':orderId/claim')
+  @ApiCookieAuth('customer_access_token')
+  @UseGuards(CustomerAccessAuthGuard, CsrfGuard, TenantScopeGuard)
+  @ApiCustomerEndpoint('Save a verified guest order to the signed-in customer account.', { tenant: 'required' })
+  async claim(
+    @CurrentUser() user: AuthenticatedUser,
+    @CurrentTenant() tenantId: string,
+    @Param('orderId') orderId: string,
+    @Body() dto: ClaimGuestOrderDto,
+  ) {
+    return { data: await this.orders.claimGuestOrder(user, tenantId, orderId, dto) };
   }
 
   @Post(':orderId/complete')

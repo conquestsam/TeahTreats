@@ -102,6 +102,11 @@ export class CheckoutService {
       const customerName = user?.userType === 'customer' ? user.name : dto.name.trim();
       const customerEmail = user?.userType === 'customer' ? user.email : dto.email.toLowerCase();
       const customerPhone = dto.phone.trim();
+      const checkoutMode = user?.userType === 'customer' ? 'account' : 'guest';
+      const fulfillmentMethod = dto.fulfillmentMethod ?? 'delivery_handoff';
+      const deliveryWindowLabel = dto.deliveryDate || dto.deliveryWindow
+        ? [dto.deliveryDate, dto.deliveryWindow].filter(Boolean).join(' • ')
+        : null;
       const discount = await this.promotions.calculateCouponDiscount({
         tenantId: resolvedTenantId,
         items: pricingItems,
@@ -116,6 +121,7 @@ export class CheckoutService {
         data: {
           tenantId: resolvedTenantId,
           ...(user?.userType === 'customer' ? { userId: user.id } : {}),
+          checkoutMode,
           status: OrderStatus.inventory_reserved,
           subtotalCents: totalCents,
           discountCents,
@@ -131,7 +137,18 @@ export class CheckoutService {
             name: customerName,
             email: customerEmail,
             phone: customerPhone,
-            address: dto.address.trim()
+            address: dto.address.trim(),
+            fulfillmentMethod,
+            recipientName: dto.recipientName?.trim() || customerName,
+            addressLine1: dto.addressLine1?.trim() || null,
+            addressLine2: dto.addressLine2?.trim() || null,
+            city: dto.city?.trim() || null,
+            state: dto.state?.trim() || null,
+            postalCode: dto.postalCode?.trim() || null,
+            handoffInstructions: dto.handoffInstructions?.trim() || null,
+            deliveryDate: dto.deliveryDate || null,
+            deliveryWindow: dto.deliveryWindow || null,
+            deliveryWindowLabel
           },
           items: {
             create: cart.items.map((item) => ({
@@ -194,10 +211,15 @@ export class CheckoutService {
       const response = {
         orderId: order.id,
         status: order.status,
+        checkoutMode,
+        isGuestCheckout: checkoutMode === 'guest',
         customer: {
           name: customerName,
           email: customerEmail,
-          phone: customerPhone
+          phone: customerPhone,
+          fulfillmentMethod,
+          recipientName: dto.recipientName?.trim() || customerName,
+          ...(deliveryWindowLabel ? { deliveryWindowLabel } : {})
         },
         subtotalCents: totalCents,
         discountCents,

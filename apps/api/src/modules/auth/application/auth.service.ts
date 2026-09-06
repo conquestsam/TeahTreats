@@ -8,6 +8,7 @@ import type { Prisma } from '@prisma/client';
 import { UserType } from '@prisma/client';
 import { PrismaService } from '../../../infrastructure/database/prisma.service.js';
 import { authExceptions } from '../../../common/errors/auth-contract.exception.js';
+import { defaultAccessTokenTtl, defaultRefreshTokenTtl, durationToMs, durationToSeconds } from '../../../common/auth/token-lifetime.js';
 import { OutboxService } from '../../outbox/application/outbox.service.js';
 import type { LoginDto } from '../presentation/dto/login.dto.js';
 
@@ -126,12 +127,28 @@ export class AuthService {
       }
     });
 
-    if (!session || session.revokedAt || session.expiresAt <= new Date()) {
+    if (!session) {
+      await this.revokeSessionFamily(claims.sub);
+      throw authExceptions.sessionExpired();
+    }
+
+    if (session.revokedAt) {
+      await this.revokeSessionFamily(session.userId);
+      throw authExceptions.sessionExpired();
+    }
+
+    if (session.expiresAt <= new Date()) {
       throw authExceptions.sessionExpired();
     }
 
     const matchesStoredToken = await argon2.verify(session.refreshTokenHash, refreshToken);
-    if (!matchesStoredToken || session.user.deletedAt) {
+    if (!matchesStoredToken) {
+      await this.revokeSessionFamily(session.userId);
+      throw authExceptions.sessionExpired();
+    }
+
+    if (session.user.deletedAt) {
+      await this.revokeSessionFamily(session.userId);
       throw authExceptions.sessionExpired();
     }
 
@@ -179,6 +196,43 @@ export class AuthService {
     return { ok: true };
   }
 
+  async logoutBySessionCookies(tokens: { accessToken: string | undefined; refreshToken: string | undefined }) {
+    const accessClaims = await this.tryVerifyAccessToken(tokens.accessToken);
+    const refreshClaims = await this.tryVerifyRefreshToken(tokens.refreshToken);
+    const userId = accessClaims?.sub ?? refreshClaims?.sub;
+    const sessionId = accessClaims?.sessionId ?? refreshClaims?.sessionId;
+
+    if (!userId || !sessionId) {
+      return { ok: true as const, revoked: false };
+    }
+
+    const result = await this.prisma.session.updateMany({
+      where: {
+        id: sessionId,
+        userId,
+        revokedAt: null
+      },
+      data: { revokedAt: new Date() }
+    });
+
+    if (result.count > 0) {
+      void this.outbox.enqueue({
+        id: randomUUID(),
+        name: domainEvents.userLoggedOut,
+        tenantId: accessClaims?.tenantIds[0] ?? null,
+        aggregateId: userId,
+        payload: {
+          userId,
+          sessionId,
+          reason: 'logout-cookie-fallback'
+        },
+        occurredAt: new Date().toISOString()
+      });
+    }
+
+    return { ok: true as const, revoked: result.count > 0 };
+  }
+
   safeUser(user: AccessClaims) {
     return {
       id: user.sub,
@@ -201,11 +255,11 @@ export class AuthService {
     const [accessToken, refreshToken] = await Promise.all([
       this.jwt.signAsync(access, {
         secret: this.config.getOrThrow<string>('AUTH_ACCESS_TOKEN_SECRET'),
-        expiresIn: '15m'
+        expiresIn: durationToSeconds(this.config.get<string>('AUTH_ACCESS_TOKEN_TTL') ?? defaultAccessTokenTtl)
       }),
       this.jwt.signAsync(refreshClaims, {
         secret: this.config.getOrThrow<string>('AUTH_REFRESH_TOKEN_SECRET'),
-        expiresIn: '30d'
+        expiresIn: durationToSeconds(this.config.get<string>('AUTH_REFRESH_TOKEN_TTL') ?? defaultRefreshTokenTtl)
       })
     ]);
 
@@ -220,6 +274,42 @@ export class AuthService {
     } catch {
       throw authExceptions.sessionExpired();
     }
+  }
+
+  private async tryVerifyAccessToken(accessToken: string | undefined) {
+    if (!accessToken) {
+      return null;
+    }
+    try {
+      return await this.jwt.verifyAsync<AccessClaims>(accessToken, {
+        secret: this.config.getOrThrow<string>('AUTH_ACCESS_TOKEN_SECRET')
+      });
+    } catch {
+      return null;
+    }
+  }
+
+  private async tryVerifyRefreshToken(refreshToken: string | undefined) {
+    if (!refreshToken) {
+      return null;
+    }
+    try {
+      return await this.jwt.verifyAsync<RefreshClaims>(refreshToken, {
+        secret: this.config.getOrThrow<string>('AUTH_REFRESH_TOKEN_SECRET')
+      });
+    } catch {
+      return null;
+    }
+  }
+
+  private async revokeSessionFamily(userId: string) {
+    await this.prisma.session.updateMany({
+      where: {
+        userId,
+        revokedAt: null
+      },
+      data: { revokedAt: new Date() }
+    });
   }
 
   private buildAccessClaims(user: UserWithAccess, sessionId: string): AccessClaims {
@@ -249,7 +339,7 @@ export class AuthService {
   }
 
   private refreshExpiresAt() {
-    return new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
+    return new Date(Date.now() + durationToMs(this.config.get<string>('AUTH_REFRESH_TOKEN_TTL') ?? defaultRefreshTokenTtl));
   }
 
   private userAccessInclude() {

@@ -18,7 +18,14 @@ import type {
 const batchInclude = {
   sku: {
     include: {
-      product: true
+      product: {
+        include: {
+          images: {
+            orderBy: { sortOrder: 'asc' as const },
+            take: 1
+          }
+        }
+      }
     }
   },
   adjustments: {
@@ -53,7 +60,17 @@ export class InventoryService {
           status: { not: ProductStatus.archived }
         }
       },
-      include: { product: true },
+      include: {
+        product: {
+          include: {
+            images: {
+              orderBy: { sortOrder: 'asc' },
+              take: 1
+            }
+          }
+        },
+        batches: true
+      },
       orderBy: [{ product: { name: 'asc' } }, { name: 'asc' }]
     });
 
@@ -64,7 +81,15 @@ export class InventoryService {
       productName: sku.product.name,
       productStatus: sku.product.status,
       active: sku.active,
-      isPerishable: this.isPerishable(sku.metadata, sku.product.metadata)
+      isPerishable: this.isPerishable(sku.metadata, sku.product.metadata),
+      priceCents: sku.priceCents,
+      currency: sku.currency,
+      unitLabel: this.textFromMetadata(sku.metadata, 'unitLabel') ?? 'units',
+      imageUrl: sku.product.images[0]?.url ?? null,
+      available: sku.batches.reduce((sum, batch) => {
+        const expired = Boolean(batch.expiredAt) || Boolean(batch.expiresAt && batch.expiresAt <= new Date());
+        return expired ? sum : sum + Math.max(batch.quantity - batch.reserved, 0);
+      }, 0)
     }));
   }
 
@@ -104,6 +129,7 @@ export class InventoryService {
           quantity: dto.quantity,
           reserved: 0,
           ...(expiresAt ? { expiresAt } : {}),
+          metadata: this.toJson(this.batchMetadata(undefined, dto)),
           adjustments: {
             create: {
               tenantId: resolvedTenantId,
@@ -349,6 +375,15 @@ export class InventoryService {
   private toBatchSummary(batch: InventoryBatchWithDetails) {
     const available = Math.max(batch.quantity - batch.reserved, 0);
     const expired = Boolean(batch.expiredAt) || Boolean(batch.expiresAt && batch.expiresAt <= new Date());
+    const metadata = this.objectRecord(batch.metadata);
+    const lowStockThreshold = this.numberFromMetadata(batch.sku.metadata, 'lowStockThreshold') ?? 5;
+    const status = expired
+      ? 'expired'
+      : available <= 0
+        ? 'out_of_stock'
+        : available <= lowStockThreshold
+          ? 'low_stock'
+          : 'in_stock';
 
     return {
       id: batch.id,
@@ -358,9 +393,20 @@ export class InventoryService {
       productId: batch.sku.productId,
       productName: batch.sku.product.name,
       productStatus: batch.sku.product.status,
+      productImageUrl: batch.sku.product.images[0]?.url ?? null,
+      batchCode: this.textFromRecord(metadata, 'batchCode') ?? this.shortBatchCode(batch.id),
       quantity: batch.quantity,
       reserved: batch.reserved,
       available,
+      unitLabel: this.textFromMetadata(batch.sku.metadata, 'unitLabel') ?? 'units',
+      storageLocation: this.textFromRecord(metadata, 'storageLocation') ?? null,
+      storageZone: this.textFromRecord(metadata, 'storageZone') ?? null,
+      source: this.textFromRecord(metadata, 'source') ?? null,
+      qualityChecked: metadata.qualityChecked === true,
+      status,
+      statusLabel: this.batchStatusLabel(status),
+      expiryLabel: this.expiryLabel(batch.expiresAt, batch.expiredAt),
+      metadata,
       expiresAt: batch.expiresAt?.toISOString() ?? null,
       expiredAt: batch.expiredAt?.toISOString() ?? null,
       sellable: !expired && batch.sku.active && batch.sku.product.status === ProductStatus.active && available > 0,
@@ -375,6 +421,83 @@ export class InventoryService {
         createdAt: adjustment.createdAt.toISOString()
       }))
     };
+  }
+
+  private batchMetadata(current: unknown, input: CreateInventoryBatchDto) {
+    const next = { ...this.objectRecord(current), ...(input.metadata ?? {}) };
+    this.assignText(next, 'batchCode', input.batchCode);
+    this.assignText(next, 'storageLocation', input.storageLocation);
+    this.assignText(next, 'storageZone', input.storageZone);
+    this.assignText(next, 'source', input.source);
+    if (input.qualityChecked !== undefined) {
+      next.qualityChecked = input.qualityChecked;
+    }
+    return next;
+  }
+
+  private toJson(value: Record<string, unknown>): Prisma.InputJsonObject {
+    return value as Prisma.InputJsonObject;
+  }
+
+  private objectRecord(value: unknown) {
+    if (!value || typeof value !== 'object' || Array.isArray(value)) {
+      return {};
+    }
+    return value as Record<string, unknown>;
+  }
+
+  private assignText(target: Record<string, unknown>, key: string, value: string | undefined) {
+    const text = value?.trim();
+    if (text) {
+      target[key] = text;
+    }
+  }
+
+  private textFromMetadata(metadata: Prisma.JsonValue, key: string) {
+    return this.textFromRecord(this.objectRecord(metadata), key);
+  }
+
+  private textFromRecord(record: Record<string, unknown>, key: string) {
+    const value = record[key];
+    return typeof value === 'string' && value.trim() ? value.trim() : undefined;
+  }
+
+  private numberFromMetadata(metadata: Prisma.JsonValue, key: string) {
+    const value = this.objectRecord(metadata)[key];
+    return typeof value === 'number' && Number.isFinite(value) ? value : undefined;
+  }
+
+  private shortBatchCode(id: string) {
+    return `B-${id.replace(/-/g, '').slice(0, 6).toUpperCase()}`;
+  }
+
+  private batchStatusLabel(status: 'in_stock' | 'low_stock' | 'out_of_stock' | 'expired') {
+    const labels = {
+      in_stock: 'In stock',
+      low_stock: 'Low stock',
+      out_of_stock: 'Out of stock',
+      expired: 'Expired'
+    };
+    return labels[status];
+  }
+
+  private expiryLabel(expiresAt: Date | null, expiredAt: Date | null) {
+    if (expiredAt) {
+      return 'Expired';
+    }
+    if (!expiresAt) {
+      return 'No expiry date';
+    }
+    const ms = expiresAt.getTime() - Date.now();
+    if (ms <= 0) {
+      return 'Expired';
+    }
+    const hours = Math.ceil(ms / (60 * 60 * 1000));
+    if (hours < 24) {
+      return `Expires in ${hours} hour${hours === 1 ? '' : 's'}`;
+    }
+    const days = Math.ceil(hours / 24);
+    return `Expires in ${days} day${days === 1 ? '' : 's'}`;
   }
 
   private async writeAudit(

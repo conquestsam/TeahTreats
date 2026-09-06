@@ -82,7 +82,9 @@ export class NotificationTemplateService {
         reason: this.string(payload.reason),
         title: this.string(payload.title),
         message: this.string(payload.message),
-        actionUrl: this.string(payload.actionUrl)
+        amount: this.string(payload.amount) ?? (order ? this.formatMoney(order.totalCents, order.currency) : undefined),
+        actionUrl: this.string(payload.actionUrl),
+        actionLabel: this.string(payload.actionLabel)
       },
       metadata: {
         source: 'outbox',
@@ -148,7 +150,7 @@ export class NotificationTemplateService {
     const to = notification.recipient || (typeof metadata.to === 'string' ? metadata.to : '');
     return {
       to,
-      subject: notification.subject ?? 'Snacks Commerce',
+      subject: notification.subject ?? 'TeahTreats',
       body: notification.body,
       html
     };
@@ -157,7 +159,7 @@ export class NotificationTemplateService {
   private branding(tenant: Tenant | null) {
     const metadata = this.object(tenant?.metadata ?? {});
     return {
-      brandName: typeof metadata.brandName === 'string' ? metadata.brandName : tenant?.name ?? 'Snacks Commerce',
+      brandName: typeof metadata.brandName === 'string' ? metadata.brandName : tenant?.name ?? 'TeahTreats',
       supportEmail: tenant?.businessEmail ?? (typeof metadata.supportEmail === 'string' ? metadata.supportEmail : null),
       supportPhone: tenant?.businessPhone ?? (typeof metadata.supportPhone === 'string' ? metadata.supportPhone : null)
     };
@@ -208,6 +210,14 @@ export class NotificationTemplateService {
 
   private string(value: unknown) {
     return typeof value === 'string' && value.trim() ? value.trim() : undefined;
+  }
+
+  private formatMoney(amountCents: number, currency: string) {
+    return new Intl.NumberFormat('en-US', {
+      style: 'currency',
+      currency,
+      maximumFractionDigits: 2
+    }).format(amountCents / 100);
   }
 
   private deliveryKey(

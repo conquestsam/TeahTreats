@@ -5,7 +5,12 @@ export const createInventoryBatchInitialValues = {
   skuId: '',
   quantity: 0,
   expiresAt: '',
-  reason: ''
+  reason: '',
+  batchCode: '',
+  storageLocation: '',
+  storageZone: '',
+  source: 'Internal Kitchen',
+  qualityChecked: true
 };
 
 export const adjustInventoryBatchInitialValues = {

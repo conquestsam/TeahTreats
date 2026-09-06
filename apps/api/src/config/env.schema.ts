@@ -7,6 +7,8 @@ const envSchema = z.object({
   APP_CORS_ORIGIN: z.string().default('http://localhost:3000'),
   AUTH_ACCESS_TOKEN_SECRET: z.string().default('dev-access-secret-change-me'),
   AUTH_REFRESH_TOKEN_SECRET: z.string().default('dev-refresh-secret-change-me'),
+  AUTH_ACCESS_TOKEN_TTL: z.string().regex(/^\d+(ms|s|m|h|d)$/).default('15m'),
+  AUTH_REFRESH_TOKEN_TTL: z.string().regex(/^\d+(ms|s|m|h|d)$/).default('30d'),
   AUTH_COOKIE_DOMAIN: z.string().optional(),
   AUTH_COOKIE_SAMESITE: z.enum(['lax', 'strict', 'none']).default('lax'),
   AUTH_COOKIE_SECURE: z.preprocess((value) => value === '' ? undefined : value, z.coerce.boolean().optional()),

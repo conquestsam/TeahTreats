@@ -1,5 +1,5 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
-import { domainEvents } from '@snacks/shared';
+import { adminOrderStatusLabels, domainEvents } from '@snacks/shared';
 import { randomUUID } from 'node:crypto';
 import { InventoryAdjustmentType, OrderStatus, PaymentStatus, Prisma } from '@prisma/client';
 import { PrismaService } from '../../../infrastructure/database/prisma.service.js';
@@ -10,7 +10,19 @@ const proofInclude = {
     include: {
       order: {
         include: {
-          items: true
+          items: {
+            include: {
+              sku: {
+                include: {
+                  product: {
+                    include: {
+                      images: { orderBy: { sortOrder: 'asc' as const }, take: 1 }
+                    }
+                  }
+                }
+              }
+            }
+          }
         }
       }
     }
@@ -73,7 +85,7 @@ export class ManualPaymentReviewService {
         data: { status: OrderStatus.paid }
       });
       await tx.orderStatusHistory.create({
-        data: { orderId: proof.payment.orderId, status: OrderStatus.paid, actorId: actor.id, reason: 'Manual payment approved.' }
+        data: { orderId: proof.payment.orderId, status: OrderStatus.paid, actorId: actor.id, reason: 'Payment approved.' }
       });
       await this.writeAudit(tx, resolvedTenantId, actor.id, 'payment.manual-proof-approved', proof.id, {
         proofId: proof.id,
@@ -107,7 +119,7 @@ export class ManualPaymentReviewService {
             channel: 'email',
             recipient: customer.email || null,
             subject: 'Payment approved',
-            body: `Manual payment for order ${proof.payment.orderId} was approved.`,
+            body: `Payment for order ${proof.payment.orderId} was approved.`,
             status: customer.email ? 'pending' : 'skipped',
             lastError: customer.email ? null : 'Recipient is missing.',
             metadata: { to: customer.email || null, orderId: proof.payment.orderId }
@@ -117,7 +129,7 @@ export class ManualPaymentReviewService {
             channel: 'sms',
             recipient: customer.phone || null,
             subject: 'Payment approved',
-            body: `Manual payment for order ${proof.payment.orderId} was approved.`,
+            body: `Payment for order ${proof.payment.orderId} was approved.`,
             status: customer.phone ? 'pending' : 'skipped',
             lastError: customer.phone ? null : 'Recipient is missing.',
             metadata: { to: customer.phone || null, orderId: proof.payment.orderId }
@@ -199,8 +211,8 @@ export class ManualPaymentReviewService {
             tenantId: resolvedTenantId,
             channel: 'email',
             recipient: customer.email || null,
-            subject: 'Payment rejected',
-            body: `Manual payment for order ${proof.payment.orderId} was rejected.`,
+            subject: 'Payment needs update',
+            body: `Payment for order ${proof.payment.orderId} was not approved.`,
             status: customer.email ? 'pending' : 'skipped',
             lastError: customer.email ? null : 'Recipient is missing.',
             metadata: { to: customer.email || null, orderId: proof.payment.orderId }
@@ -209,8 +221,8 @@ export class ManualPaymentReviewService {
             tenantId: resolvedTenantId,
             channel: 'sms',
             recipient: customer.phone || null,
-            subject: 'Payment rejected',
-            body: `Manual payment for order ${proof.payment.orderId} was rejected.`,
+            subject: 'Payment needs update',
+            body: `Payment for order ${proof.payment.orderId} was not approved.`,
             status: customer.phone ? 'pending' : 'skipped',
             lastError: customer.phone ? null : 'Recipient is missing.',
             metadata: { to: customer.phone || null, orderId: proof.payment.orderId }
@@ -267,19 +279,27 @@ export class ManualPaymentReviewService {
       id: proof.id,
       paymentId: proof.paymentId,
       orderId: proof.payment.orderId,
+      shortOrderRef: this.shortRef(proof.payment.orderId),
+      receiptReference: this.receiptReference(proof),
       methodLabel: proof.manualPaymentMethod.label,
+      methodInstructions: proof.manualPaymentMethod.instructions,
       customerName,
       customerEmail,
       customerPhone,
       customerAddress: this.formatCustomerAddress(customer.address),
+      customerSummary: [customerPhone, this.formatCustomerAddress(customer.address)].filter(Boolean).join(' • '),
       amountCents: proof.payment.amountCents,
       currency: proof.payment.currency,
       paymentStatus: proof.payment.status,
+      paymentStatusLabel: this.readableLabel(proof.payment.status),
       orderStatus: proof.payment.order.status,
+      orderStatusLabel: adminOrderStatusLabels[proof.payment.order.status],
       reconciliationStatus: proof.payment.reconciliationStatus,
+      reconciliationStatusLabel: this.readableLabel(proof.payment.reconciliationStatus),
+      reviewStatusLabel: proof.reviewedAt ? 'Reviewed' : 'Needs review',
       reconciledAt: proof.payment.reconciledAt?.toISOString() ?? null,
       lastProviderEventId: proof.payment.lastProviderEventId,
-      receiptUrl: proof.receiptUrl,
+      receiptUrl: proof.receiptUrl ?? null,
       note: proof.note,
       orderSubtotalCents: proof.payment.order.subtotalCents,
       orderDiscountCents: proof.payment.order.discountCents,
@@ -289,6 +309,7 @@ export class ManualPaymentReviewService {
       items: proof.payment.order.items.map((item) => ({
         productName: item.productName,
         skuName: item.skuName,
+        imageUrl: this.itemImageUrl(item),
         quantity: item.quantity,
         unitPriceCents: item.unitPriceCents,
         lineTotalCents: item.lineTotalCents
@@ -390,6 +411,32 @@ export class ManualPaymentReviewService {
       .map((key) => address[key])
       .filter((part): part is string => typeof part === 'string' && part.trim().length > 0)
       .join(', ');
+  }
+
+  private shortRef(id: string) {
+    return `TT-${id.replace(/-/g, '').slice(0, 6).toUpperCase()}`;
+  }
+
+  private receiptReference(proof: ProofWithDetails) {
+    if (!proof.receiptUrl && !proof.objectKey) {
+      return 'No receipt attached';
+    }
+    const source = proof.objectKey || proof.receiptUrl || proof.id;
+    const fileName = source.split('/').filter(Boolean).at(-1) || source;
+    const clean = fileName.split('?')[0] || fileName;
+    return clean.length > 24 ? `${clean.slice(0, 21)}...` : clean;
+  }
+
+  private readableLabel(value: string) {
+    return value
+      .split('_')
+      .filter(Boolean)
+      .map((part) => `${part.charAt(0).toUpperCase()}${part.slice(1)}`)
+      .join(' ');
+  }
+
+  private itemImageUrl(item: { sku: { product: { images: Array<{ url: string }> } } | null }) {
+    return item.sku?.product.images[0]?.url ?? null;
   }
 }
 

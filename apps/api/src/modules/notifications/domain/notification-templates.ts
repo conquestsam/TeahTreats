@@ -1,7 +1,9 @@
 import { domainEvents } from '@snacks/shared';
+import { renderNotificationEmailHtml } from '../../../infrastructure/notifications/templates/notification-template-design.js';
 
 export const notificationTemplateKeys = {
   signup: 'signup',
+  primaryContactVerificationChallenge: 'primary-contact-verification-challenge',
   accountLogin: 'account-login',
   orderConfirmation: 'order-confirmation',
   paymentPending: 'payment-pending',
@@ -43,6 +45,7 @@ export interface NotificationTemplateContext {
   title?: string;
   message?: string;
   actionUrl?: string;
+  actionLabel?: string;
 }
 
 export interface RenderedNotificationTemplate {
@@ -54,10 +57,19 @@ export interface RenderedNotificationTemplate {
 type TemplateRenderer = (context: NotificationTemplateContext) => RenderedNotificationTemplate;
 
 function render(subject: string, body: string, context?: NotificationTemplateContext): RenderedNotificationTemplate {
+  const emailContext = {
+    brandName: context?.brandName ?? 'TeahTreats',
+    subject,
+    body,
+    ...(context?.supportEmail ? { supportEmail: context.supportEmail } : {}),
+    ...(context?.supportPhone ? { supportPhone: context.supportPhone } : {}),
+    ...(context?.actionUrl ? { actionUrl: context.actionUrl } : {}),
+    ...(context?.actionLabel ? { actionLabel: context.actionLabel } : {})
+  };
   return {
     subject,
     body,
-    html: renderEmailHtml(subject, body, context)
+    html: renderNotificationEmailHtml(emailContext)
   };
 }
 
@@ -72,6 +84,8 @@ function order(context: NotificationTemplateContext) {
 export const notificationTemplateRegistry: Record<NotificationTemplateKey, TemplateRenderer> = {
   [notificationTemplateKeys.signup]: (context) =>
     render(`Welcome to ${context.brandName}`, `Hi ${customer(context)}, your ${context.brandName} account is ready.`, context),
+  [notificationTemplateKeys.primaryContactVerificationChallenge]: (context) =>
+    render('Confirm your contact details', `Hi ${customer(context)}, please confirm your email or phone so we can send order updates to the right place.`, context),
   [notificationTemplateKeys.accountLogin]: (context) =>
     render('Account sign-in', `Hi ${customer(context)}, your ${context.brandName} account was just used to sign in.`, context),
   [notificationTemplateKeys.orderConfirmation]: (context) =>
@@ -79,7 +93,7 @@ export const notificationTemplateRegistry: Record<NotificationTemplateKey, Templ
   [notificationTemplateKeys.paymentPending]: (context) =>
     render('Payment pending', `${order(context)} is waiting for payment confirmation.`, context),
   [notificationTemplateKeys.paymentProofSubmittedAdminAlert]: (context) =>
-    render('Payment proof needs review', `${order(context)} has a new manual payment receipt for admin review.`, context),
+    render('Payment needs review', `${order(context)} has new payment details to review.${context.amount ? ` Amount: ${context.amount}.` : ''}`, context),
   [notificationTemplateKeys.paymentApproved]: (context) =>
     render('Payment approved', `${order(context)} payment was approved. We will start preparing it soon.`, context),
   [notificationTemplateKeys.paymentRejected]: (context) =>
@@ -107,11 +121,11 @@ export const notificationTemplateRegistry: Record<NotificationTemplateKey, Templ
   [notificationTemplateKeys.groupCartUpdate]: (context) =>
     render('Group cart update', context.message ?? 'Your group cart has a new update.', context),
   [notificationTemplateKeys.tenantUpdate]: (context) =>
-    render('Tenant update', context.message ?? 'A tenant setting or status was updated.', context),
+    render('Store update', context.message ?? 'A store setting was updated.', context),
   [notificationTemplateKeys.settingsUpdate]: (context) =>
     render('Settings updated', context.message ?? 'Store settings were updated.', context),
   [notificationTemplateKeys.vendorAccessUpdate]: (context) =>
-    render('Vendor access update', context.message ?? 'Vendor access was updated.', context),
+    render('Partner access update', context.message ?? 'Partner access was updated.', context),
   [notificationTemplateKeys.inventoryAlert]: (context) =>
     render('Inventory alert', context.message ?? 'Inventory needs review.', context),
   [notificationTemplateKeys.refundPlaceholder]: (context) =>
@@ -122,6 +136,7 @@ export const notificationTemplateRegistry: Record<NotificationTemplateKey, Templ
 
 export const domainEventNotificationTemplates: Partial<Record<string, NotificationTemplateKey>> = {
   [domainEvents.customerSignedUp]: notificationTemplateKeys.signup,
+  [domainEvents.primaryContactVerificationChallenge]: notificationTemplateKeys.primaryContactVerificationChallenge,
   [domainEvents.customerLoggedIn]: notificationTemplateKeys.accountLogin,
   [domainEvents.userLoggedIn]: notificationTemplateKeys.accountLogin,
   [domainEvents.orderCreated]: notificationTemplateKeys.orderConfirmation,
@@ -164,48 +179,3 @@ export const domainEventNotificationTemplates: Partial<Record<string, Notificati
   [domainEvents.inventoryBatchExpired]: notificationTemplateKeys.inventoryAlert,
   [domainEvents.inventoryQuantityAdjusted]: notificationTemplateKeys.inventoryAlert
 };
-
-function renderEmailHtml(subject: string, body: string, context?: NotificationTemplateContext) {
-  const brandName = escapeHtml(context?.brandName ?? 'TeahTreats');
-  const safeSubject = escapeHtml(subject);
-  const safeBody = escapeHtml(body);
-  const supportEmail = context?.supportEmail ? escapeHtml(context.supportEmail) : '';
-  const supportPhone = context?.supportPhone ? escapeHtml(context.supportPhone) : '';
-  const actionUrl = context?.actionUrl ? escapeHtml(context.actionUrl) : '';
-  const supportLine = supportEmail || supportPhone
-    ? `<p style="margin:18px 0 0;color:#8f877c;font-size:13px;line-height:1.6;">Need help? ${supportEmail ? `Email ${supportEmail}` : ''}${supportEmail && supportPhone ? ' or ' : ''}${supportPhone ? `call ${supportPhone}` : ''}.</p>`
-    : '';
-  const cta = actionUrl
-    ? `<a href="${actionUrl}" style="display:inline-block;margin-top:24px;padding:12px 18px;background:#9B1B30;color:#FAF7F2;text-decoration:none;border-radius:6px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;font-size:12px;">Open TeahTreats</a>`
-    : '';
-
-  return `
-    <div style="margin:0;padding:0;background:#0A0A0A;font-family:Inter,Arial,sans-serif;color:#FAF7F2;">
-      <div style="max-width:640px;margin:0 auto;padding:32px 18px;">
-        <div style="border:1px solid rgba(184,147,62,.28);background:#111111;border-radius:10px;overflow:hidden;">
-          <div style="padding:24px 28px;border-bottom:1px solid rgba(184,147,62,.18);">
-            <div style="font-size:11px;letter-spacing:.32em;text-transform:uppercase;color:#B8933E;">${brandName}</div>
-            <h1 style="margin:12px 0 0;font-family:Georgia,'Times New Roman',serif;font-size:28px;line-height:1.08;color:#FAF7F2;font-weight:600;">${safeSubject}</h1>
-          </div>
-          <div style="padding:26px 28px;">
-            <p style="margin:0;color:#d8d0c4;font-size:15px;line-height:1.75;">${safeBody}</p>
-            ${cta}
-            ${supportLine}
-          </div>
-          <div style="padding:18px 28px;background:#0E0E0E;border-top:1px solid rgba(184,147,62,.12);">
-            <p style="margin:0;color:#6f685f;font-size:12px;line-height:1.6;">This message was sent by ${brandName}. If this was not expected, contact store support.</p>
-          </div>
-        </div>
-      </div>
-    </div>
-  `;
-}
-
-function escapeHtml(value: string) {
-  return value
-    .replaceAll('&', '&amp;')
-    .replaceAll('<', '&lt;')
-    .replaceAll('>', '&gt;')
-    .replaceAll('"', '&quot;')
-    .replaceAll("'", '&#039;');
-}

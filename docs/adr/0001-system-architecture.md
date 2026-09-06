@@ -207,6 +207,219 @@ Rendering strategy:
 
 Use TanStack Query for server state, cache invalidation, optimistic UI where safe, and refetching after realtime events.
 
+### Frontend State And Data Fetching Standardization
+
+Phase 1 decision, added during the 2026 auth and UI reconstruction:
+
+- TanStack Query is the only approved frontend owner for server state.
+- Zustand is the only approved frontend owner for reusable client/UI state.
+- React `useState` remains acceptable for local, single-component form fields and ephemeral component-only state.
+- No Redux, SWR, Apollo client cache, Jotai, Valtio, MobX, custom global context stores, or ad hoc server-state mirrors should be introduced.
+- The frontend must call backend APIs through the shared API client unless a backend-issued signed upload URL explicitly instructs the browser to upload directly to object storage.
+
+State ownership rules:
+
+```text
+TanStack Query owns:
+  auth current user
+  products
+  categories
+  cart items and totals
+  checkout/order/payment status
+  admin dashboard/report data
+  inventory
+  notifications
+  users, roles, tenants, settings
+
+Zustand owns:
+  mobile navigation open/closed
+  cart/search drawer open/closed
+  selected client-only modal ids
+  admin sidebar collapsed state
+  non-critical UI preferences
+  temporary wizard step state when the server has not accepted a draft yet
+
+React local state owns:
+  input text before submit
+  one-component modal form fields
+  hover/animation flags
+  transient upload preview state
+```
+
+Server-state anti-patterns to remove over time:
+
+- Fetching backend data directly in `useEffect`.
+- Storing API response objects in Zustand.
+- Increasing cart totals locally before the backend confirms the mutation.
+- Duplicating backend DTOs in frontend type files when a shared or generated contract exists.
+- Swallowing backend error codes and replacing them with generic frontend messages.
+
+Implementation baseline:
+
+- `apps/web/src/lib/api/client.ts` is the browser API gateway. It sets credentials, tenant headers, CSRF headers, parses backend error contracts, and performs one eligible refresh attempt.
+- `apps/web/src/lib/query/query-client.ts` owns global TanStack Query defaults.
+- `apps/web/src/lib/store/ui-shell-store.ts` is the first approved Zustand store and owns shared shell UI state such as mobile navigation and admin sidebar collapse.
+- Feature hooks under `apps/web/src/hooks/<DomainContext>/` should wrap TanStack Query or Zustand rather than creating a third state pattern.
+
+Phase 1 user stories:
+
+- As a customer, I want cart, account, payment, and order data to reflect backend truth so I do not see fake success or stale totals.
+- As an admin, I want dashboard, reports, inventory, product, order, and notification data to refresh consistently after each mutation.
+- As a developer, I want one server-state tool and one UI-state tool so I can trace ownership quickly and avoid conflicting caches.
+- As an operator, I want production and local behavior to match because API, cookie, tenant, and refresh handling live in one client path.
+
+Phase 1 acceptance criteria:
+
+- New backend reads use `useQuery`.
+- New backend writes use `useMutation` with explicit invalidation.
+- New reusable UI state uses Zustand under `lib/store`.
+- New API calls go through `apiFetch`, except direct uploads to backend-issued signed URLs.
+- Route files stay thin and import content components.
+- Contents compose hooks, components, loading states, error states, and modals.
+- Components do not own API calls unless they are intentionally tiny feature components documented as such.
+
+### Phase 2 Auth Lifecycle Standardization
+
+Auth lifecycle decision, added during reconstruction:
+
+- Backend owns auth truth, auth error codes, and safe user-facing auth messages.
+- Frontend displays backend auth messages and may only invent transport-level copy such as `API server is offline or unreachable.`
+- Admin/vendor auth and customer auth remain separate browser sessions with separate access and refresh cookie names.
+- Access token TTL is configurable through `AUTH_ACCESS_TOKEN_TTL`.
+- Refresh token and persisted session TTL are configurable through `AUTH_REFRESH_TOKEN_TTL`.
+- Current default remains `AUTH_ACCESS_TOKEN_TTL=15m` and `AUTH_REFRESH_TOKEN_TTL=30d` until refresh behavior is proven stable in staging.
+- A `1d` access token may be used later only when production cookies are `HttpOnly`, `Secure`, correctly scoped, and cross-site settings are verified between Vercel and Render.
+
+Current token and cookie model:
+
+```text
+Admin/vendor:
+  access cookie: access_token, HttpOnly, path /
+  refresh cookie: refresh_token, HttpOnly, path /api/v1/auth
+
+Customer:
+  access cookie: customer_access_token, HttpOnly, path /
+  refresh cookie: customer_refresh_token, HttpOnly, path /api/v1/customer-auth
+
+Shared browser CSRF token:
+  csrf_token, readable by frontend, path /
+```
+
+Auth response and error rules:
+
+- Wrong admin/customer email and wrong password both return `AUTH_INVALID_CREDENTIALS` with `Email or password is incorrect.`
+- Expired or revoked access/refresh sessions return `AUTH_SESSION_EXPIRED` only when the session is actually invalid.
+- Missing refresh cookies return `AUTH_REFRESH_REQUIRED`.
+- Missing or invalid CSRF token returns `AUTH_CSRF_REQUIRED` or `AUTH_CSRF_INVALID`.
+- Missing or forbidden tenant access returns a tenant-specific auth code.
+- Missing permissions return `AUTH_PERMISSION_DENIED`.
+
+Refresh behavior:
+
+- Authenticated admin and customer current-user requests may attempt exactly one silent refresh after a 401.
+- Login, signup, CSRF, and refresh endpoints must not recursively trigger refresh.
+- Logout may attempt one silent refresh before retrying logout, so an expired access token with a valid refresh token can still revoke the session and clear cookies.
+- Auth gates redirect once to their actor-specific login route after refresh fails.
+- Logout endpoints are safe cleanup endpoints: they clear actor cookies even when access tokens, CSRF, or tenant context are already stale.
+- When a logout request can identify the session from an access or refresh cookie, it revokes that session before clearing cookies.
+- Refresh-token replay after rotation is treated as reuse. Because the current schema does not yet have a session-family id, the conservative implementation revokes all active sessions for the user.
+
+Actor redirects:
+
+```text
+Admin/vendor login: /admin/login
+Admin/vendor after login: /admin/dashboard
+Customer login: /login
+Customer after login/signup: /account
+Customer after logout: /
+```
+
+Remaining auth hardening:
+
+- Tenant-scoped permissions should replace the current flat permission union.
+- MFA setup exists, but privileged admin route enforcement still needs a dedicated guard.
+- Add explicit session-family identifiers so reuse detection can revoke only the related login family instead of every active user session.
+- Emit a dedicated audit/security event for refresh-token reuse.
+
+### Phase 3 Type Contract Cleanup
+
+Type contract decision:
+
+- Frontend code must not import Nest controllers, services, modules, guards, or Prisma-backed backend runtime files.
+- Reusable request and response contracts should live in `packages/shared` or be generated from Swagger/OpenAPI.
+- Existing frontend type folders may remain temporarily as compatibility re-export files, but they should not own copied backend response shapes.
+- Backend responses should use stable envelopes such as `{ data: ... }`, and frontend services should type those envelopes from the shared package.
+
+Phase 3 user story:
+
+- As a developer, I want frontend types to match backend responses so bugs do not come from copied stale interfaces.
+
+Phase 3 implementation order:
+
+1. Auth contracts: admin auth user, customer auth user, CSRF response, logout response, login inputs.
+2. Storefront/product contracts: product cards, product details, image summaries, SKU summaries, category summaries.
+3. Cart and checkout contracts: cart summary, cart item, coupon preview, checkout start response.
+4. Order/payment contracts: customer order, admin order, payment status, manual proof, gateway status.
+5. Admin operations contracts: inventory, dashboard/reports, notifications, tenants, users, settings.
+
+Phase 3 acceptance criteria:
+
+- Auth, product, cart, order, payment, inventory, and reports types are shared or generated.
+- No backend runtime module is imported by the frontend.
+- Typecheck catches response shape drift before runtime.
+- Frontend services return backend-owned shapes and do not invent parallel DTOs.
+
+Phase 3 implementation baseline:
+
+- Shared auth contracts live in `packages/shared/src/types/auth.ts`.
+- Shared product/admin product contracts live in `packages/shared/src/types/product.ts`.
+- Storefront query, add-to-cart, and newsletter contracts live in `packages/shared/src/types/storefront.ts`.
+- Cart checkout/coupon input contracts live in `packages/shared/src/types/cart.ts`.
+- Order list/detail/action contracts live in `packages/shared/src/types/order.ts`.
+- Payment verification, gateway status, receipt upload, PayPal capture, and manual proof contracts live in `packages/shared/src/types/payment.ts`.
+- Inventory batch adjustment/create contracts live in `packages/shared/src/types/inventory.ts`.
+- Report date range contracts live in `packages/shared/src/types/report.ts`.
+- Existing files under `apps/web/src/types/<DomainContext>/` are compatibility aliases or UI-only types until the next cleanup removes them entirely.
+
+### Phase 4 Directory Restructure
+
+Directory decision:
+
+- Next.js route files stay inside `apps/web/src/app`.
+- Route files should be thin: they import a shell/gate and a single content component.
+- Page orchestration belongs in `apps/web/src/contents/<DomainContext>`.
+- Reusable visual UI belongs in `apps/web/src/components/<DomainContext>`.
+- API clients belong in `apps/web/src/services/<DomainContext>` today and may move incrementally into `apps/web/src/lib/api/<DomainContext>` when a domain is touched.
+- Shared API infrastructure belongs in `apps/web/src/lib/api`.
+- TanStack Query setup and shared query utilities belong in `apps/web/src/lib/query`.
+- Zustand stores belong in `apps/web/src/lib/store`.
+- Legacy path names `components/functional-components`, `contents/functional-contents`, `contents/admin`, and `contents/shop` are removed.
+
+Phase 4 user story:
+
+- As a developer, I want predictable file placement so I can find pages, contents, components, hooks, stores, and APIs quickly.
+
+Phase 4 accepted structure:
+
+```text
+apps/web/src/app/(admin)/admin/products/page.tsx
+apps/web/src/contents/AdminProduct/AdminProductContent.tsx
+apps/web/src/components/AdminProduct/AdminProductTable.tsx
+apps/web/src/hooks/AdminProduct/useAdminProductQuery.ts
+apps/web/src/services/AdminProduct/adminProductApi.ts
+apps/web/src/lib/api/client.ts
+apps/web/src/lib/query/query-client.ts
+apps/web/src/lib/store/ui-shell-store.ts
+apps/web/src/types/AdminProduct/adminProductTypes.ts
+```
+
+Phase 4 migration rule:
+
+- Do not create new `functional-*` directories.
+- When touching a legacy domain, move it fully to purpose-named directories and update imports in the same change.
+- Keep UI-only types close to web until they become true API contracts.
+- Do not mix API calls into visual components; contents/hooks call services, components render props.
+
 Use Mantine for:
 
 - Admin layouts
@@ -238,8 +451,8 @@ apps/web/src/<category>/<DomainContext>/<DomainContextThing>
 Examples:
 
 ```text
-components/functional-components/AdminProduct/AdminProductTable.tsx
-contents/functional-contents/AdminProduct/AdminProductContent.tsx
+components/AdminProduct/AdminProductTable.tsx
+contents/AdminProduct/AdminProductContent.tsx
 hooks/AdminProduct/useAdminProductForm.ts
 validation/AdminProduct/adminProductValidation.ts
 constants/AdminProduct/adminProductConstants.ts
@@ -260,12 +473,12 @@ This convention is required because the app will have several domains and role-s
 
 Responsibilities:
 
-- `components/functional-components/<DomainContext>/`: reusable UI components for the domain. Components receive props and should not own API calls.
-- `contents/functional-contents/<DomainContext>/`: page or route composition for the domain. Contents connect hooks, components, loading states, empty states, and modal flow.
+- `components/<DomainContext>/`: reusable UI components for the domain. Components receive props and should not own API calls.
+- `contents/<DomainContext>/`: page or route composition for the domain. Contents connect hooks, components, loading states, empty states, and modal flow.
 - `hooks/<DomainContext>/`: domain-specific React hooks for forms, modals, queries, mutations, and client workflow state.
 - `validation/<DomainContext>/`: frontend validation helpers that mirror backend rules for better UX.
 - `constants/<DomainContext>/`: domain-specific UI constants, query keys, option lists, and labels.
-- `types/<DomainContext>/`: frontend domain types and view models.
+- `types/<DomainContext>/`: compatibility aliases and UI-only types. API contracts should move to `packages/shared` or generated OpenAPI types.
 - `services/<DomainContext>/`: API service functions that call NestJS endpoints.
 
 Avoid generic files such as:
@@ -282,7 +495,7 @@ Use context-specific names instead:
 ```text
 hooks/AdminProduct/useAdminProductForm.ts
 validation/AdminProduct/adminProductValidation.ts
-components/functional-components/AdminProduct/AdminProductTable.tsx
+components/AdminProduct/AdminProductTable.tsx
 services/AdminProduct/adminProductApi.ts
 ```
 
@@ -431,8 +644,8 @@ Implementation approach:
 - Keep Mantine for admin and operational workflows.
 - Use Mantine primitives only where useful on the storefront, but apply TeahTreats Tailwind styling for brand surfaces.
 - Create storefront-specific domains:
-  - `components/functional-components/TeahTreatsStorefront/`
-  - `contents/functional-contents/TeahTreatsStorefront/`
+  - `components/TeahTreatsStorefront/`
+  - `contents/TeahTreatsStorefront/`
   - `hooks/TeahTreatsStorefront/`
   - `constants/TeahTreatsStorefront/`
   - `types/TeahTreatsStorefront/`
@@ -1736,12 +1949,11 @@ e-commerce/
             inventory/
             orders/
         components/
-          functional-components/
-            AdminProduct/
-            AdminOrder/
-            AdminInventory/
-            CustomerCart/
-            CustomerCheckout/
+          AdminProduct/
+          AdminOrder/
+          AdminInventory/
+          CustomerCart/
+          CustomerCheckout/
           ui/
           layout/
           navigation/
@@ -1749,15 +1961,11 @@ e-commerce/
           overlays/
           media/
         contents/
-          functional-contents/
-            AdminProduct/
-            AdminOrder/
-            AdminInventory/
-            CustomerCart/
-            CustomerCheckout/
-          shop/
-          admin/
-          checkout/
+          AdminProduct/
+          AdminOrder/
+          AdminInventory/
+          CustomerCart/
+          CustomerCheckout/
           account/
           vendor/
         hooks/

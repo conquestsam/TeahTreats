@@ -12,14 +12,14 @@ export class EmailService {
 
   constructor(config: ConfigService) {
     const resendApiKey = config.get<string>('RESEND_API_KEY');
+    const gmailUser = config.get<string>('GMAIL_USER');
+    const gmailPass = config.get<string>('GMAIL_APP_PASSWORD');
     this.fromEmail =
       config.get<string>('RESEND_FROM_EMAIL') ||
       config.get<string>('GMAIL_FROM_EMAIL') ||
-      'TeahTreats <orders@teah-treats.local>';
+      gmailUser ||
+      'TeshTreats <orders@teshtreats.local>';
     this.resend = resendApiKey ? new Resend(resendApiKey) : null;
-
-    const gmailUser = config.get<string>('GMAIL_USER');
-    const gmailPass = config.get<string>('GMAIL_APP_PASSWORD');
 
     this.gmailTransporter = (gmailUser && gmailPass) ? nodemailer.createTransport({
       service: 'gmail',

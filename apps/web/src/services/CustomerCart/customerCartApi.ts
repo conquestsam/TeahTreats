@@ -1,28 +1,26 @@
 import { apiFetch } from '@/lib/api/client';
 import { customerTenantId } from '@/constants/CustomerCart/customerCartConstants';
 import type {
+  ApiEnvelope,
   CheckoutCustomerInput,
-  CheckoutStartedModel,
-  CustomerCouponPreviewModel,
-  CustomerCartModel
-} from '@/types/CustomerCart/customerCartTypes';
-
-interface ApiEnvelope<TData> {
-  data: TData;
-}
+  CheckoutStartedSummary,
+  CouponValidationSummary,
+  CustomerCartSummary,
+  ValidateCouponInput
+} from '@snacks/shared';
 
 const tenantHeaders = {
   'x-tenant-id': customerTenantId
 };
 
 export function getCustomerCart() {
-  return apiFetch<ApiEnvelope<CustomerCartModel>>('/shop/cart', {
+  return apiFetch<ApiEnvelope<CustomerCartSummary>>('/shop/cart', {
     headers: tenantHeaders
   }).then((response) => response.data);
 }
 
 export function updateCustomerCartItem(itemId: string, quantity: number) {
-  return apiFetch<ApiEnvelope<CustomerCartModel>>(`/shop/cart/items/${itemId}`, {
+  return apiFetch<ApiEnvelope<CustomerCartSummary>>(`/shop/cart/items/${itemId}`, {
     method: 'PATCH',
     headers: tenantHeaders,
     body: JSON.stringify({ quantity })
@@ -30,14 +28,14 @@ export function updateCustomerCartItem(itemId: string, quantity: number) {
 }
 
 export function removeCustomerCartItem(itemId: string) {
-  return apiFetch<ApiEnvelope<CustomerCartModel>>(`/shop/cart/items/${itemId}`, {
+  return apiFetch<ApiEnvelope<CustomerCartSummary>>(`/shop/cart/items/${itemId}`, {
     method: 'DELETE',
     headers: tenantHeaders
   }).then((response) => response.data);
 }
 
 export function startCustomerCheckout(input: CheckoutCustomerInput) {
-  return apiFetch<ApiEnvelope<CheckoutStartedModel>>('/shop/checkout/start', {
+  return apiFetch<ApiEnvelope<CheckoutStartedSummary>>('/shop/checkout/start', {
     method: 'POST',
     headers: {
       ...tenantHeaders,
@@ -47,8 +45,8 @@ export function startCustomerCheckout(input: CheckoutCustomerInput) {
   }).then((response) => response.data);
 }
 
-export function validateCustomerCoupon(input: { code: string; email?: string }) {
-  return apiFetch<ApiEnvelope<CustomerCouponPreviewModel>>('/shop/promotions/validate-coupon', {
+export function validateCustomerCoupon(input: ValidateCouponInput) {
+  return apiFetch<ApiEnvelope<CouponValidationSummary>>('/shop/promotions/validate-coupon', {
     method: 'POST',
     headers: tenantHeaders,
     body: JSON.stringify(input)

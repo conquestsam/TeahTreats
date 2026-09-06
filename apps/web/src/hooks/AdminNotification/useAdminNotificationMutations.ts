@@ -33,10 +33,11 @@ export function useAdminNotificationMutations(onDone: () => void) {
     onSuccess: (result) => {
       const failed = result.results.filter((item) => item.status === 'failed').length;
       const skipped = result.results.filter((item) => item.status === 'skipped').length;
+      const sent = result.results.filter((item) => item.status === 'sent').length;
       notifications.show({
         color: failed > 0 ? 'red' : skipped > 0 ? 'yellow' : 'green',
-        title: 'Smoke test finished',
-        message: `${result.results.length} channel checks completed. ${failed} failed, ${skipped} skipped.`
+        title: sent > 0 ? 'Test email accepted' : 'Smoke test finished',
+        message: result.results[0]?.message ?? `${result.results.length} channel checks completed. ${failed} failed, ${skipped} skipped.`
       });
       void queryClient.invalidateQueries({ queryKey: adminNotificationQueryKey });
     },

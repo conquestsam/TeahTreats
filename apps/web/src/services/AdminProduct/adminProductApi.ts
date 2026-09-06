@@ -1,17 +1,14 @@
 import { apiFetch } from '@/lib/api/client';
 import type {
-  AdminProductModel,
+  ApiEnvelope,
+  AdminProductSummary as AdminProductModel,
   CreateAdminProductImageInput,
   CreateAdminProductInput,
   CreateAdminProductSkuInput,
   AdminProductImageUploadSummary,
   UpdateAdminProductImageInput,
   UpdateAdminProductInput
-} from '@/types/AdminProduct/adminProductTypes';
-
-interface ApiEnvelope<TData> {
-  data: TData;
-}
+} from '@snacks/shared';
 
 export function listAdminProducts() {
   return apiFetch<ApiEnvelope<AdminProductModel[]>>('/admin/catalog/products').then(

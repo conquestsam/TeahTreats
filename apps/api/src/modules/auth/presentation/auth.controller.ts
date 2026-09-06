@@ -118,15 +118,23 @@ export class AuthController {
   }
 
   @Post('logout')
-  @ApiCookieAuth('access_token')
-  @UseGuards(JwtAccessAuthGuard, CsrfGuard)
-  @ApiAdminEndpoint('Revoke the current session and clear auth cookies.', { csrf: true, status: 201 })
+  @Public()
+  @ApiEndpoint({
+    summary: 'Clear admin auth cookies and revoke the current session when it can be identified.',
+    auth: 'optional',
+    tenant: 'none',
+    status: 201
+  })
   async logout(
-    @CurrentUser() user: AuthenticatedUser,
+    @Req() request: Request,
     @Res({ passthrough: true }) response: Response,
   ) {
-    await this.auth.logout(user);
+    const cookies = request.cookies as Record<string, string | undefined> | undefined;
+    const result = await this.auth.logoutBySessionCookies({
+      accessToken: cookies?.access_token,
+      refreshToken: cookies?.refresh_token
+    });
     this.cookies.clearAuthCookies(response);
-    return { data: { ok: true } };
+    return { data: result };
   }
 }

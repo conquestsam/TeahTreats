@@ -59,3 +59,8 @@ export interface AdminReportsDashboardSummary {
   manualPaymentPendingCount: number;
   repeatCustomers: RepeatCustomerReport;
 }
+
+export interface AdminReportDateRangeInput {
+  from?: string;
+  to?: string;
+}

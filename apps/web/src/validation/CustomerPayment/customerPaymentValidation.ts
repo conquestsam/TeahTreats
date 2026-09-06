@@ -5,8 +5,8 @@ export const manualProofSchema = z.object({
   email: z.string().min(1, 'Email is required.').email('Enter a valid email.'),
   phone: z.string().min(7, 'Phone is required.'),
   manualPaymentMethodId: z.string().min(1, 'Payment method is required.'),
-  receiptUrl: z.string().min(1, 'Receipt URL is required.'),
-  contentType: z.enum(['image/jpeg', 'image/jpg', 'image/png', 'image/webp', 'application/pdf']),
+  receiptUrl: z.string().max(2048, 'Receipt link is too long.').optional(),
+  contentType: z.enum(['image/jpeg', 'image/jpg', 'image/png', 'image/webp', 'application/pdf']).optional(),
   objectKey: z.string().optional(),
   storageProvider: z.string().optional(),
   note: z.string().max(500, 'Use 500 characters or less.').optional()

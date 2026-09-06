@@ -4,9 +4,11 @@ import type {
   StorefrontProductCard,
   StorefrontProductDetail,
   StorefrontProductList,
+  StorefrontProductQuery,
   StorefrontRecommendationSection,
   StorefrontSkuSummary,
-  StorefrontSortOption
+  StorefrontSortOption,
+  StorefrontAddToCartInput
 } from '@snacks/shared';
 
 export type {
@@ -15,22 +17,9 @@ export type {
   StorefrontProductCard,
   StorefrontProductDetail,
   StorefrontProductList,
+  StorefrontProductQuery,
   StorefrontRecommendationSection,
   StorefrontSkuSummary,
-  StorefrontSortOption
+  StorefrontSortOption,
+  StorefrontAddToCartInput
 };
-
-export interface StorefrontProductQuery {
-  page?: number | undefined;
-  pageSize?: number | undefined;
-  q?: string | undefined;
-  category?: string | undefined;
-  brand?: string | undefined;
-  tag?: string | undefined;
-  sort?: StorefrontSortOption | undefined;
-}
-
-export interface StorefrontAddToCartInput {
-  skuId: string;
-  quantity: number;
-}

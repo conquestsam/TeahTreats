@@ -4,14 +4,16 @@ import { apiFetch } from '@/lib/api/client';
 import type {
   CustomerAuthResponse,
   CustomerLoginInput,
-  CustomerSignupInput
-} from '@/types/CustomerAuth/customerAuthTypes';
+  CustomerSignupInput,
+  CsrfResponse,
+  LogoutResponse
+} from '@snacks/shared';
 
 const tenantHeaders = { 'x-tenant-id': customerTenantId };
 const apiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL ?? 'http://localhost:4000/api/v1';
 
 export function getCustomerCsrf() {
-  return apiFetch<{ data: { csrfToken: string } }>('/customer-auth/csrf', {
+  return apiFetch<CsrfResponse>('/customer-auth/csrf', {
     headers: tenantHeaders,
     skipAuthRefresh: true
   });
@@ -37,16 +39,14 @@ export function loginCustomer(input: CustomerLoginInput) {
 
 export function getCurrentCustomer() {
   return apiFetch<CustomerAuthResponse>('/customer-auth/me', {
-    headers: tenantHeaders,
-    skipAuthRefresh: true
+    headers: tenantHeaders
   }).then((response) => response.data);
 }
 
 export function logoutCustomer() {
-  return apiFetch<{ data: { ok: true } }>('/customer-auth/logout', {
+  return apiFetch<LogoutResponse>('/customer-auth/logout', {
     method: 'POST',
-    headers: tenantHeaders,
-    skipAuthRefresh: true
+    headers: tenantHeaders
   }).then((response) => response.data);
 }
 

@@ -1,5 +1,5 @@
 import { AppShell } from '../../../../components/layout/app-shell';
-import { StorefrontProductDetailContent } from '../../../../contents/functional-contents/Storefront/StorefrontProductDetailContent';
+import { StorefrontProductDetailContent } from '../../../../contents/Storefront/StorefrontProductDetailContent';
 
 export default async function ProductDetailPage({
   params

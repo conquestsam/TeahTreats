@@ -1,8 +1,8 @@
 import { apiFetch } from '@/lib/api/client';
-import type { AdminAuthResponse, AdminLoginInput } from '@/types/AdminAuth/adminAuthTypes';
+import type { AdminAuthResponse, AdminLoginInput, CsrfResponse, LogoutResponse } from '@snacks/shared';
 
 export function getAdminCsrf() {
-  return apiFetch<{ data: { csrfToken: string } }>('/auth/csrf');
+  return apiFetch<CsrfResponse>('/auth/csrf');
 }
 
 export function loginAdmin(input: AdminLoginInput) {
@@ -18,8 +18,7 @@ export function getCurrentAdminUser() {
 }
 
 export function logoutAdmin() {
-  return apiFetch<{ data: { ok: true } }>('/auth/logout', {
-    method: 'POST',
-    skipAuthRefresh: true
+  return apiFetch<LogoutResponse>('/auth/logout', {
+    method: 'POST'
   });
 }

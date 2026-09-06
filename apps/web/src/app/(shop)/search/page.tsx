@@ -1,6 +1,6 @@
 import { Suspense } from 'react';
 import { AppShell } from '../../../components/layout/app-shell';
-import { StorefrontSearchContent } from '../../../contents/functional-contents/Storefront/StorefrontSearchContent';
+import { StorefrontSearchContent } from '../../../contents/Storefront/StorefrontSearchContent';
 
 export default function SearchPage() {
   return (

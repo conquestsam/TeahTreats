@@ -24,9 +24,20 @@ export interface AdminInventoryBatchSummary {
   productId: string;
   productName: string;
   productStatus: string;
+  productImageUrl: string | null;
+  batchCode: string;
   quantity: number;
   reserved: number;
   available: number;
+  unitLabel: string;
+  storageLocation: string | null;
+  storageZone: string | null;
+  source: string | null;
+  qualityChecked: boolean;
+  status: 'in_stock' | 'low_stock' | 'out_of_stock' | 'expired';
+  statusLabel: string;
+  expiryLabel: string;
+  metadata: Record<string, unknown>;
   expiresAt: string | null;
   expiredAt: string | null;
   sellable: boolean;
@@ -43,4 +54,33 @@ export interface AdminInventorySkuOption {
   productStatus: string;
   active: boolean;
   isPerishable: boolean;
+  priceCents: number;
+  currency: string;
+  unitLabel: string;
+  imageUrl: string | null;
+  available: number;
+}
+
+export interface CreateInventoryBatchInput {
+  skuId: string;
+  quantity: number;
+  expiresAt?: string;
+  reason: string;
+  batchCode?: string;
+  storageLocation?: string;
+  storageZone?: string;
+  source?: string;
+  qualityChecked?: boolean;
+  metadata?: Record<string, unknown>;
+}
+
+export interface AdjustInventoryBatchInput {
+  quantityDelta: number;
+  reason: string;
+}
+
+export interface ReserveInventoryInput {
+  skuId: string;
+  quantity: number;
+  orderId?: string;
 }

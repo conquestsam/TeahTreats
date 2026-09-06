@@ -4,7 +4,17 @@ export const checkoutCustomerSchema = z.object({
   name: z.string().trim().min(2, 'Name is required.'),
   email: z.string().trim().min(1, 'Email is required.').email('Enter a valid email.'),
   phone: z.string().trim().min(7, 'Phone is required.'),
-  address: z.string().trim().min(5, 'Address is required.')
+  address: z.string().trim().min(5, 'Address is required.'),
+  fulfillmentMethod: z.enum(['delivery_handoff', 'store_pickup', 'scheduled_delivery']).default('delivery_handoff'),
+  recipientName: z.string().trim().max(120, 'Use 120 characters or less.').optional(),
+  addressLine1: z.string().trim().max(180, 'Use 180 characters or less.').optional(),
+  addressLine2: z.string().trim().max(120, 'Use 120 characters or less.').optional(),
+  city: z.string().trim().max(80, 'Use 80 characters or less.').optional(),
+  state: z.string().trim().max(40, 'Use 40 characters or less.').optional(),
+  postalCode: z.string().trim().max(20, 'Use 20 characters or less.').optional(),
+  handoffInstructions: z.string().trim().max(500, 'Use 500 characters or less.').optional(),
+  deliveryDate: z.string().trim().max(32, 'Use 32 characters or less.').optional(),
+  deliveryWindow: z.string().trim().max(80, 'Use 80 characters or less.').optional()
 });
 
 export type CheckoutCustomerFormValues = z.infer<typeof checkoutCustomerSchema>;

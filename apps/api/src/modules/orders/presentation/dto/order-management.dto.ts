@@ -19,3 +19,7 @@ export class CompleteCustomerOrderDto {
   @MinLength(7)
   phone!: string;
 }
+
+export class LookupCustomerOrderDto extends CompleteCustomerOrderDto {}
+
+export class ClaimGuestOrderDto extends CompleteCustomerOrderDto {}

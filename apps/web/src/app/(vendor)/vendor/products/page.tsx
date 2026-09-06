@@ -1,5 +1,5 @@
-import { VendorDashboardGate } from '../../../../components/functional-components/VendorDashboard/VendorDashboardGate';
-import { VendorProductContent } from '../../../../contents/functional-contents/VendorProduct/VendorProductContent';
+import { VendorDashboardGate } from '../../../../components/VendorDashboard/VendorDashboardGate';
+import { VendorProductContent } from '../../../../contents/VendorProduct/VendorProductContent';
 
 export default function VendorProductsPage() {
   return (

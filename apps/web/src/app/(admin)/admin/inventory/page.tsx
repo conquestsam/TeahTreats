@@ -1,5 +1,5 @@
-import { AdminAuthGate } from '../../../../components/functional-components/AdminAuth/AdminAuthGate';
-import { AdminInventoryContent } from '../../../../contents/functional-contents/AdminInventory/AdminInventoryContent';
+import { AdminAuthGate } from '../../../../components/AdminAuth/AdminAuthGate';
+import { AdminInventoryContent } from '../../../../contents/AdminInventory/AdminInventoryContent';
 
 export default function AdminInventoryPage() {
   return (

@@ -1,10 +1,10 @@
-import { AdminAuthGate } from '../../../../components/functional-components/AdminAuth/AdminAuthGate';
-import { OperationsCenter } from '../../../../contents/admin/operations-center';
+import { AdminAuthGate } from '../../../../components/AdminAuth/AdminAuthGate';
+import { AdminDashboardContent } from '../../../../contents/AdminDashboard/AdminDashboardContent';
 
 export default function AdminDashboardPage() {
   return (
     <AdminAuthGate>
-      <OperationsCenter />
+      <AdminDashboardContent />
     </AdminAuthGate>
   );
 }

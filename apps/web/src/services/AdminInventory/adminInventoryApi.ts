@@ -1,36 +1,33 @@
 import { apiFetch } from '@/lib/api/client';
 import type {
+  ApiEnvelope,
   AdjustInventoryBatchInput,
-  AdminInventoryBatchModel,
-  AdminInventorySkuOptionModel,
+  AdminInventoryBatchSummary,
+  AdminInventorySkuOption,
   CreateInventoryBatchInput
-} from '@/types/AdminInventory/adminInventoryTypes';
-
-interface ApiEnvelope<TData> {
-  data: TData;
-}
+} from '@snacks/shared';
 
 export function listInventoryBatches() {
-  return apiFetch<ApiEnvelope<AdminInventoryBatchModel[]>>('/admin/inventory/batches').then(
+  return apiFetch<ApiEnvelope<AdminInventoryBatchSummary[]>>('/admin/inventory/batches').then(
     (response) => response.data,
   );
 }
 
 export function listInventorySkuOptions() {
-  return apiFetch<ApiEnvelope<AdminInventorySkuOptionModel[]>>(
+  return apiFetch<ApiEnvelope<AdminInventorySkuOption[]>>(
     '/admin/inventory/sku-options',
   ).then((response) => response.data);
 }
 
 export function createInventoryBatch(input: CreateInventoryBatchInput) {
-  return apiFetch<ApiEnvelope<AdminInventoryBatchModel>>('/admin/inventory/batches', {
+  return apiFetch<ApiEnvelope<AdminInventoryBatchSummary>>('/admin/inventory/batches', {
     method: 'POST',
     body: JSON.stringify(input)
   }).then((response) => response.data);
 }
 
 export function adjustInventoryBatch(batchId: string, input: AdjustInventoryBatchInput) {
-  return apiFetch<ApiEnvelope<AdminInventoryBatchModel>>(
+  return apiFetch<ApiEnvelope<AdminInventoryBatchSummary>>(
     `/admin/inventory/batches/${batchId}/adjust`,
     {
       method: 'POST',
@@ -40,7 +37,7 @@ export function adjustInventoryBatch(batchId: string, input: AdjustInventoryBatc
 }
 
 export function expireInventoryBatch(batchId: string) {
-  return apiFetch<ApiEnvelope<AdminInventoryBatchModel>>(
+  return apiFetch<ApiEnvelope<AdminInventoryBatchSummary>>(
     `/admin/inventory/batches/${batchId}/expire`,
     { method: 'POST' },
   ).then((response) => response.data);

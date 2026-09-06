@@ -8,7 +8,7 @@ export function useAdminProductSkuForm() {
   return useForm({
     initialValues: {
       name: '',
-      priceCents: 100,
+      priceCents: 1,
       currency: 'USD',
       active: true,
       size: '',

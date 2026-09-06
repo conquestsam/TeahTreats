@@ -1,10 +1,10 @@
 import { AppShell } from '../../components/layout/app-shell';
-import { HomeContent } from '../../contents/shop/home-content';
+import { StorefrontHomeContent } from '../../contents/Storefront/StorefrontHomeContent';
 
 export default function ShopHomePage() {
   return (
     <AppShell>
-      <HomeContent />
+      <StorefrontHomeContent />
     </AppShell>
   );
 }

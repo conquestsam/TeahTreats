@@ -1,5 +1,5 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
-import { domainEvents } from '@snacks/shared';
+import { adminOrderStatusLabels, domainEvents } from '@snacks/shared';
 import { randomUUID } from 'node:crypto';
 import {
   InventoryAdjustmentType,
@@ -11,7 +11,19 @@ import type { AuthenticatedUser } from '../../../common/types/authenticated-requ
 import { OrderPolicy } from '../domain/order-policy.js';
 
 const orderInclude = {
-  items: true,
+  items: {
+    include: {
+      sku: {
+        include: {
+          product: {
+            include: {
+              images: { orderBy: { sortOrder: 'asc' as const }, take: 1 }
+            }
+          }
+        }
+      }
+    }
+  },
   payments: {
     orderBy: { createdAt: 'desc' as const }
   },
@@ -30,6 +42,26 @@ const orderInclude = {
   }
 } as const;
 
+const orderListInclude = {
+  items: {
+    include: {
+      sku: {
+        include: {
+          product: {
+            include: {
+              images: { orderBy: { sortOrder: 'asc' as const }, take: 1 }
+            }
+          }
+        }
+      }
+    }
+  },
+  payments: {
+    orderBy: { createdAt: 'desc' as const },
+    take: 1
+  }
+} as const;
+
 @Injectable()
 export class OrdersService {
   constructor(private readonly prisma: PrismaService) {}
@@ -38,13 +70,7 @@ export class OrdersService {
     const resolvedTenantId = await this.resolveTenantId(tenantId);
     const orders = await this.prisma.order.findMany({
       where: { tenantId: resolvedTenantId },
-      include: {
-        items: true,
-        payments: {
-          orderBy: { createdAt: 'desc' },
-          take: 1
-        }
-      },
+      include: orderListInclude,
       orderBy: { createdAt: 'desc' },
       take: 100
     });
@@ -64,13 +90,7 @@ export class OrdersService {
         tenantId: resolvedTenantId,
         userId: user.id
       },
-      include: {
-        items: true,
-        payments: {
-          orderBy: { createdAt: 'desc' },
-          take: 1
-        }
-      },
+      include: orderListInclude,
       orderBy: { createdAt: 'desc' },
       take: 50
     });
@@ -81,6 +101,70 @@ export class OrdersService {
   async getCustomerOrder(user: AuthenticatedUser, tenantId: string, orderId: string) {
     const resolvedTenantId = await this.resolveTenantId(tenantId);
     return this.toOrderDetail(await this.findCustomerOrder(resolvedTenantId, user.id, orderId));
+  }
+
+  async lookupCustomerOrder(tenantId: string, orderId: string, input: { email: string; phone: string }) {
+    const resolvedTenantId = await this.resolveTenantId(tenantId);
+    const order = await this.findOrder(resolvedTenantId, orderId);
+    OrderPolicy.ensureCustomerMatches(order.customer, input);
+    return this.toOrderDetail(order);
+  }
+
+  async claimGuestOrder(user: AuthenticatedUser, tenantId: string, orderId: string, input: { email: string; phone: string }) {
+    const resolvedTenantId = await this.resolveTenantId(tenantId);
+    const order = await this.findOrder(resolvedTenantId, orderId);
+
+    if (order.userId && order.userId !== user.id) {
+      throw new BadRequestException('This order is already saved to another account.');
+    }
+
+    if (order.userId === user.id && order.checkoutMode === 'account') {
+      return this.toOrderDetail(order);
+    }
+
+    OrderPolicy.ensureCustomerMatches(order.customer, input);
+    if (user.email.trim().toLowerCase() !== input.email.trim().toLowerCase()) {
+      throw new BadRequestException('Sign in with the same email used at checkout to save this order.');
+    }
+
+    const updated = await this.prisma.order.update({
+      where: { id: order.id },
+      data: {
+        userId: user.id,
+        checkoutMode: 'account'
+      },
+      include: orderInclude
+    });
+
+    await this.prisma.auditLog.create({
+      data: {
+        tenantId: resolvedTenantId,
+        actorId: user.id,
+        action: 'customer.order-claimed',
+        target: order.id,
+        metadata: {
+          orderId: order.id,
+          checkoutModeBefore: order.checkoutMode,
+          customerEmail: input.email
+        }
+      }
+    }).catch(() => null);
+    await this.prisma.outboxEvent.create({
+      data: {
+        id: randomUUID(),
+        tenantId: resolvedTenantId,
+        aggregateId: order.id,
+        name: domainEvents.customerOrderClaimed,
+        payload: {
+          orderId: order.id,
+          userId: user.id,
+          email: user.email,
+          sideEffects: ['customer.orders.invalidate']
+        }
+      }
+    }).catch(() => null);
+
+    return this.toOrderDetail(updated);
   }
 
   async markPreparing(actor: AuthenticatedUser, tenantId: string, orderId: string) {
@@ -456,13 +540,31 @@ export class OrdersService {
       customerValue && typeof customerValue === 'object' && !Array.isArray(customerValue)
         ? (customerValue as Record<string, unknown>)
         : {};
+    const fulfillmentMethod = customer.fulfillmentMethod;
 
     return {
       name: typeof customer.name === 'string' ? customer.name : 'Customer',
       email: typeof customer.email === 'string' ? customer.email : '',
       phone: typeof customer.phone === 'string' ? customer.phone : '',
-      address: this.formatCustomerAddress(customer.address)
+      address: this.formatCustomerAddress(customer.address),
+      fulfillmentMethod: fulfillmentMethod === 'delivery_handoff' || fulfillmentMethod === 'store_pickup' || fulfillmentMethod === 'scheduled_delivery'
+        ? fulfillmentMethod
+        : undefined,
+      recipientName: this.optionalCustomerString(customer.recipientName),
+      addressLine1: this.optionalCustomerString(customer.addressLine1),
+      addressLine2: this.optionalCustomerString(customer.addressLine2),
+      city: this.optionalCustomerString(customer.city),
+      state: this.optionalCustomerString(customer.state),
+      postalCode: this.optionalCustomerString(customer.postalCode),
+      handoffInstructions: this.optionalCustomerString(customer.handoffInstructions),
+      deliveryDate: this.optionalCustomerString(customer.deliveryDate),
+      deliveryWindow: this.optionalCustomerString(customer.deliveryWindow),
+      deliveryWindowLabel: this.optionalCustomerString(customer.deliveryWindowLabel)
     };
+  }
+
+  private optionalCustomerString(value: unknown) {
+    return typeof value === 'string' && value.trim().length > 0 ? value : undefined;
   }
 
   private formatCustomerAddress(value: unknown) {
@@ -479,18 +581,32 @@ export class OrdersService {
       .join(', ');
   }
 
-  private toOrderListItem(order: Prisma.OrderGetPayload<{ include: { items: true; payments: true } }>) {
+  private toOrderListItem(order: Prisma.OrderGetPayload<{ include: typeof orderListInclude }>) {
     const customer = this.readCustomer(order.customer);
+    const paymentStatus = order.payments[0]?.status ?? null;
+
     return {
       id: order.id,
+      shortRef: this.shortRef(order.id),
+      checkoutMode: order.checkoutMode === 'account' ? 'account' : 'guest',
+      isGuestCheckout: order.checkoutMode !== 'account',
       status: order.status,
+      statusLabel: adminOrderStatusLabels[order.status],
       totalCents: order.totalCents,
       currency: order.currency,
       customerName: customer.name,
       customerEmail: customer.email,
       customerPhone: customer.phone,
+      customerSummary: this.customerSummary(customer),
       itemCount: order.items.reduce((total, item) => total + item.quantity, 0),
-      paymentStatus: order.payments[0]?.status ?? null,
+      itemPreview: order.items.slice(0, 3).map((item) => ({
+        productName: item.productName,
+        skuName: item.skuName,
+        quantity: item.quantity,
+        imageUrl: this.itemImageUrl(item)
+      })),
+      paymentStatus,
+      paymentStatusLabel: paymentStatus ? this.readableLabel(paymentStatus) : null,
       reservationExpiresAt: order.reservationExpiresAt?.toISOString() ?? null,
       createdAt: order.createdAt.toISOString(),
       updatedAt: order.updatedAt.toISOString()
@@ -499,11 +615,30 @@ export class OrdersService {
 
   private toOrderDetail(order: OrderWithDetails) {
     const customer = this.readCustomer(order.customer);
+    const paymentStatus = order.payments[0]?.status ?? null;
+
     return {
       id: order.id,
+      shortRef: this.shortRef(order.id),
+      checkoutMode: order.checkoutMode === 'account' ? 'account' : 'guest',
+      isGuestCheckout: order.checkoutMode !== 'account',
       status: order.status,
+      statusLabel: adminOrderStatusLabels[order.status],
       totalCents: order.totalCents,
       currency: order.currency,
+      customerName: customer.name,
+      customerEmail: customer.email,
+      customerPhone: customer.phone,
+      customerSummary: this.customerSummary(customer),
+      itemCount: order.items.reduce((total, item) => total + item.quantity, 0),
+      itemPreview: order.items.slice(0, 3).map((item) => ({
+        productName: item.productName,
+        skuName: item.skuName,
+        quantity: item.quantity,
+        imageUrl: this.itemImageUrl(item)
+      })),
+      paymentStatus,
+      paymentStatusLabel: paymentStatus ? this.readableLabel(paymentStatus) : null,
       customer,
       reservationExpiresAt: order.reservationExpiresAt?.toISOString() ?? null,
       createdAt: order.createdAt.toISOString(),
@@ -513,6 +648,7 @@ export class OrdersService {
         skuId: item.skuId,
         productName: item.productName,
         skuName: item.skuName,
+        imageUrl: this.itemImageUrl(item),
         unitPriceCents: item.unitPriceCents,
         quantity: item.quantity,
         lineTotalCents: item.lineTotalCents
@@ -528,6 +664,7 @@ export class OrdersService {
       history: order.history.map((history) => ({
         id: history.id,
         status: history.status,
+        label: adminOrderStatusLabels[history.status],
         reason: history.reason,
         actorId: history.actorId,
         createdAt: history.createdAt.toISOString()
@@ -541,6 +678,26 @@ export class OrdersService {
         committed: reservation.committed
       }))
     };
+  }
+
+  private shortRef(id: string) {
+    return `TT-${id.replace(/-/g, '').slice(0, 6).toUpperCase()}`;
+  }
+
+  private readableLabel(value: string) {
+    return value
+      .split('_')
+      .filter(Boolean)
+      .map((part) => `${part.charAt(0).toUpperCase()}${part.slice(1)}`)
+      .join(' ');
+  }
+
+  private customerSummary(customer: { name: string; email: string; phone: string; address: string }) {
+    return [customer.phone, customer.address].filter(Boolean).join(' • ');
+  }
+
+  private itemImageUrl(item: { sku: { product: { images: Array<{ url: string }> } } | null }) {
+    return item.sku?.product.images[0]?.url ?? null;
   }
 }
 

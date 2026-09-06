@@ -112,11 +112,10 @@ jobs:
             cd "$APP_DIR"
             git fetch origin main
             git reset --hard origin/main
-            corepack enable
-            pnpm install --frozen-lockfile
-            pnpm db:generate
-            pnpm db:deploy
-            docker compose -f docker-compose.prod.yml up -d --build api worker
+            docker compose -f docker-compose.prod.yml up -d postgres redis opensearch
+            docker compose -f docker-compose.prod.yml build api
+            docker compose -f docker-compose.prod.yml --profile migrate run --rm migrate
+            docker compose -f docker-compose.prod.yml up -d api worker
             docker image prune -f
           REMOTE
         env:

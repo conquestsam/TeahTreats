@@ -7,6 +7,7 @@ import { queryClient } from '@/lib/query/query-client';
 import { loginAdmin, logoutAdmin } from '@/services/AdminAuth/adminAuthApi';
 import type { AdminLoginInput } from '@/types/AdminAuth/adminAuthTypes';
 import { adminAuthQueryKeys } from '@/constants/AdminAuth/adminAuthConstants';
+import { authRedirects } from '@/lib/auth/auth-routes';
 
 export function useAdminLoginMutation() {
   const router = useRouter();
@@ -20,7 +21,7 @@ export function useAdminLoginMutation() {
         title: 'Signed in',
         message: 'Welcome back.'
       });
-      router.replace('/admin/dashboard');
+      router.replace(authRedirects.adminAfterLogin);
     },
     onError: (error) => {
       notifications.show({
@@ -42,7 +43,7 @@ export function useAdminLogoutMutation() {
         title: 'Signed out',
         message: 'Your session has ended.'
       });
-      window.location.replace('/admin/login');
+      window.location.replace(authRedirects.adminLogin);
     },
     onError: (error) => {
       notifications.show({

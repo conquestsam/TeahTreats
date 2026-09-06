@@ -1,5 +1,5 @@
 import { AppShell } from '../../../components/layout/app-shell';
-import { LegalPageContent } from '../../../contents/functional-contents/Legal/LegalPageContent';
+import { LegalPageContent } from '../../../contents/Legal/LegalPageContent';
 
 export default function TermsPage() {
   return (

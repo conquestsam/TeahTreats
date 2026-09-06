@@ -49,11 +49,12 @@ export class SubmitManualProofDto extends CustomerVerificationDto {
   @IsUUID()
   manualPaymentMethodId!: string;
 
-  @ApiProperty()
+  @ApiPropertyOptional()
+  @IsOptional()
   @IsString()
   @MinLength(3)
   @MaxLength(2048)
-  receiptUrl!: string;
+  receiptUrl?: string;
 
   @ApiPropertyOptional()
   @IsOptional()
@@ -65,9 +66,10 @@ export class SubmitManualProofDto extends CustomerVerificationDto {
   @IsString()
   storageProvider?: string;
 
-  @ApiProperty()
+  @ApiPropertyOptional()
+  @IsOptional()
   @IsIn(['image/jpeg', 'image/jpg', 'image/png', 'image/webp', 'application/pdf'])
-  contentType!: string;
+  contentType?: string;
 
   @ApiPropertyOptional({ maxLength: 500 })
   @IsOptional()

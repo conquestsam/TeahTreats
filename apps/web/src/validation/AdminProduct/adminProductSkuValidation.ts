@@ -5,5 +5,5 @@ export function validateAdminProductSkuName(value: string) {
 }
 
 export function validateAdminProductSkuPrice(value: number) {
-  return value < 1 ? 'Price must be greater than 0.' : null;
+  return value <= 0 ? 'Enter a price greater than 0.' : null;
 }
