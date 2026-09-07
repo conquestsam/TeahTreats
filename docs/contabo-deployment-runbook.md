@@ -43,6 +43,21 @@ cp .env.production.example .env.production
 nano .env.production
 ```
 
+If the repository was cloned with `root` or another user and `deploy` later runs `git pull`, Git may stop with `fatal: detected dubious ownership`. Prefer fixing ownership so the deploy user owns the working copy:
+
+```bash
+sudo chown -R deploy:deploy /srv/teshtreats/TeahTreats
+cd /srv/teshtreats/TeahTreats
+git pull origin main
+```
+
+If ownership is intentionally shared and you only need a quick unblock, add the repo to Git's safe directory list for the current user:
+
+```bash
+git config --global --add safe.directory /srv/teshtreats/TeahTreats
+git pull origin main
+```
+
 Always pass the production env file to Docker Compose:
 
 ```bash
@@ -65,14 +80,27 @@ APP_CORS_ORIGIN=https://your-vercel-domain.vercel.app
 WEB_APP_URL=https://your-vercel-domain.vercel.app
 POSTGRES_USER=snacks
 POSTGRES_PASSWORD=<strong-postgres-password>
+POSTGRES_PASSWORD_URLENCODED=<url-encoded-postgres-password>
 POSTGRES_DB=snacks_commerce
 REDIS_PASSWORD=<strong-redis-password>
+REDIS_PASSWORD_URLENCODED=<url-encoded-redis-password>
 OPENSEARCH_INITIAL_ADMIN_PASSWORD=<strong-opensearch-password>
 AUTH_ACCESS_TOKEN_SECRET=<strong-random-secret>
 AUTH_REFRESH_TOKEN_SECRET=<strong-random-secret>
 AUTH_COOKIE_SECURE=true
 AUTH_COOKIE_SAMESITE=none
 API_PUBLIC_PORT=4000
+```
+
+Use the raw password for `POSTGRES_PASSWORD` and `REDIS_PASSWORD`. Use URL-encoded values for `POSTGRES_PASSWORD_URLENCODED` and `REDIS_PASSWORD_URLENCODED`, because these are inserted into `DATABASE_URL` and `REDIS_URL`.
+
+Example:
+
+```bash
+POSTGRES_PASSWORD=FreshPie#2026!
+POSTGRES_PASSWORD_URLENCODED=FreshPie%232026%21
+REDIS_PASSWORD=FreshPie#2026!
+REDIS_PASSWORD_URLENCODED=FreshPie%232026%21
 ```
 
 Add provider secrets as needed:
@@ -143,6 +171,48 @@ docker volume rm teahtreats_postgres-data
 ```
 
 Only remove the Postgres volume on a fresh setup. If the server already contains production data, do not remove the volume. Instead, connect with the old working password or reset the database user's password from inside Postgres, then update `.env.production` to match.
+
+## Fix Prisma P1013 Invalid Database URL
+
+If migration fails with:
+
+```text
+P1013: The provided database string is invalid. invalid port number in database URL.
+```
+
+The usual cause is a special character in the password, especially `#`, `@`, `/`, `:`, or `?`. In a URL, `#` starts a fragment, so this raw connection string is invalid:
+
+```text
+postgresql://snacks:FreshPie#2026!@postgres:5432/snacks_commerce?schema=public
+```
+
+Keep the raw password for the database container, but add the URL-encoded password for Prisma:
+
+```bash
+POSTGRES_PASSWORD=FreshPie#2026!
+POSTGRES_PASSWORD_URLENCODED=FreshPie%232026%21
+REDIS_PASSWORD=FreshPie#2026!
+REDIS_PASSWORD_URLENCODED=FreshPie%232026%21
+```
+
+Then verify Compose renders a valid connection URL:
+
+```bash
+docker compose --env-file .env.production -f docker-compose.prod.yml config | grep -E "DATABASE_URL|REDIS_URL"
+```
+
+You should see:
+
+```text
+DATABASE_URL: postgresql://snacks:FreshPie%232026%21@postgres:5432/snacks_commerce?schema=public
+REDIS_URL: redis://default:FreshPie%232026%21@redis:6379
+```
+
+Now rerun migration:
+
+```bash
+docker compose --env-file .env.production -f docker-compose.prod.yml --profile migrate run --rm migrate
+```
 
 ## Vercel Frontend
 

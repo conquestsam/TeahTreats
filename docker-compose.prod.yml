@@ -61,8 +61,8 @@ services:
       NODE_ENV: production
       HOST: 0.0.0.0
       PORT: 4000
-      DATABASE_URL: postgresql://${POSTGRES_USER:-snacks}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-snacks_commerce}?schema=public
-      REDIS_URL: redis://default:${REDIS_PASSWORD}@redis:6379
+      DATABASE_URL: postgresql://${POSTGRES_USER:-snacks}:${POSTGRES_PASSWORD_URLENCODED:?POSTGRES_PASSWORD_URLENCODED is required}@postgres:5432/${POSTGRES_DB:-snacks_commerce}?schema=public
+      REDIS_URL: redis://default:${REDIS_PASSWORD_URLENCODED:?REDIS_PASSWORD_URLENCODED is required}@redis:6379
       OPENSEARCH_NODE: http://opensearch:9200
     ports:
       - "${API_PUBLIC_PORT:-4000}:4000"
@@ -89,8 +89,8 @@ services:
         required: false
     environment:
       NODE_ENV: production
-      DATABASE_URL: postgresql://${POSTGRES_USER:-snacks}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-snacks_commerce}?schema=public
-      REDIS_URL: redis://default:${REDIS_PASSWORD}@redis:6379
+      DATABASE_URL: postgresql://${POSTGRES_USER:-snacks}:${POSTGRES_PASSWORD_URLENCODED:?POSTGRES_PASSWORD_URLENCODED is required}@postgres:5432/${POSTGRES_DB:-snacks_commerce}?schema=public
+      REDIS_URL: redis://default:${REDIS_PASSWORD_URLENCODED:?REDIS_PASSWORD_URLENCODED is required}@redis:6379
       OPENSEARCH_NODE: http://opensearch:9200
     command: ["pnpm", "--filter", "@snacks/api", "start:worker"]
     depends_on:
@@ -105,7 +105,7 @@ services:
       - path: .env.production
         required: false
     environment:
-      DATABASE_URL: postgresql://${POSTGRES_USER:-snacks}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-snacks_commerce}?schema=public
+      DATABASE_URL: postgresql://${POSTGRES_USER:-snacks}:${POSTGRES_PASSWORD_URLENCODED:?POSTGRES_PASSWORD_URLENCODED is required}@postgres:5432/${POSTGRES_DB:-snacks_commerce}?schema=public
     command: ["pnpm", "db:deploy"]
     profiles:
       - migrate
