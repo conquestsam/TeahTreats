@@ -19,6 +19,49 @@ export class CheckoutService {
     private readonly promotions: PromotionsService,
   ) {}
 
+  async listAvailableDeliverySlots(tenantId: string, method?: string) {
+    const resolvedTenantId = await this.resolveTenantId(tenantId);
+    const slots = await this.prisma.deliverySlot.findMany({
+      where: {
+        tenantId: resolvedTenantId,
+        active: true,
+        ...(method ? { method } : {})
+      },
+      orderBy: [{ startTime: 'asc' }, { label: 'asc' }]
+    });
+    const orderCounts = await this.prisma.order.groupBy({
+      by: ['deliverySlotId'],
+      where: {
+        tenantId: resolvedTenantId,
+        deliverySlotId: { in: slots.map((slot) => slot.id) },
+        status: {
+          notIn: [OrderStatus.cancelled, OrderStatus.expired, OrderStatus.refunded]
+        }
+      },
+      _count: { _all: true }
+    });
+    const counts = new Map(orderCounts.map((row) => [row.deliverySlotId, row._count._all]));
+
+    return slots.map((slot) => {
+      const bookedCount = counts.get(slot.id) ?? 0;
+      return {
+        id: slot.id,
+        label: slot.label,
+        method: slot.method,
+        startTime: slot.startTime,
+        endTime: slot.endTime,
+        feeCents: slot.feeCents,
+        capacity: slot.capacity,
+        cutoffTime: slot.cutoffTime,
+        active: slot.active,
+        hubId: slot.hubId,
+        storeId: slot.storeId,
+        bookedCount,
+        remainingCapacity: Math.max(0, slot.capacity - bookedCount)
+      };
+    });
+  }
+
   async startCheckout(
     tenantId: string,
     sessionId: string,
@@ -104,8 +147,12 @@ export class CheckoutService {
       const customerPhone = dto.phone.trim();
       const checkoutMode = user?.userType === 'customer' ? 'account' : 'guest';
       const fulfillmentMethod = dto.fulfillmentMethod ?? 'delivery_handoff';
-      const deliveryWindowLabel = dto.deliveryDate || dto.deliveryWindow
-        ? [dto.deliveryDate, dto.deliveryWindow].filter(Boolean).join(' • ')
+      const selectedSlot = dto.deliverySlotId
+        ? await this.validateDeliverySlot(tx, resolvedTenantId, dto.deliverySlotId, fulfillmentMethod)
+        : null;
+      const deliveryWindow = selectedSlot?.label ?? dto.deliveryWindow ?? null;
+      const deliveryWindowLabel = dto.deliveryDate || deliveryWindow
+        ? [dto.deliveryDate, deliveryWindow].filter(Boolean).join(' • ')
         : null;
       const discount = await this.promotions.calculateCouponDiscount({
         tenantId: resolvedTenantId,
@@ -116,7 +163,8 @@ export class CheckoutService {
         tx
       });
       const discountCents = discount.valid ? discount.discountCents : 0;
-      const finalTotalCents = Math.max(0, totalCents - discountCents);
+      const deliveryFeeCents = selectedSlot?.feeCents ?? 0;
+      const finalTotalCents = Math.max(0, totalCents - discountCents + deliveryFeeCents);
       const order = await tx.order.create({
         data: {
           tenantId: resolvedTenantId,
@@ -127,6 +175,7 @@ export class CheckoutService {
           discountCents,
           totalCents: finalTotalCents,
           currency,
+          ...(selectedSlot ? { deliverySlotId: selectedSlot.id } : {}),
           reservationExpiresAt,
           promotionSnapshot: {
             couponCode: discount.summary.code || null,
@@ -147,7 +196,22 @@ export class CheckoutService {
             postalCode: dto.postalCode?.trim() || null,
             handoffInstructions: dto.handoffInstructions?.trim() || null,
             deliveryDate: dto.deliveryDate || null,
-            deliveryWindow: dto.deliveryWindow || null,
+            deliveryWindow,
+            deliverySlotId: selectedSlot?.id ?? null,
+            deliverySlotSnapshot: selectedSlot
+              ? {
+                  id: selectedSlot.id,
+                  label: selectedSlot.label,
+                  method: selectedSlot.method,
+                  startTime: selectedSlot.startTime,
+                  endTime: selectedSlot.endTime,
+                  feeCents: selectedSlot.feeCents,
+                  capacity: selectedSlot.capacity,
+                  cutoffTime: selectedSlot.cutoffTime,
+                  hubId: selectedSlot.hubId,
+                  storeId: selectedSlot.storeId
+                }
+              : null,
             deliveryWindowLabel
           },
           items: {
@@ -219,6 +283,7 @@ export class CheckoutService {
           phone: customerPhone,
           fulfillmentMethod,
           recipientName: dto.recipientName?.trim() || customerName,
+          ...(selectedSlot ? { deliverySlotId: selectedSlot.id } : {}),
           ...(deliveryWindowLabel ? { deliveryWindowLabel } : {})
         },
         subtotalCents: totalCents,
@@ -246,6 +311,55 @@ export class CheckoutService {
     });
 
     return result;
+  }
+
+  private async validateDeliverySlot(
+    tx: Prisma.TransactionClient,
+    tenantId: string,
+    deliverySlotId: string,
+    fulfillmentMethod: string,
+  ) {
+    const slot = await tx.deliverySlot.findFirst({
+      where: {
+        id: deliverySlotId,
+        tenantId
+      }
+    });
+
+    if (!slot || !slot.active) {
+      throw new BadRequestException('Selected delivery slot is no longer available.');
+    }
+
+    if (slot.method !== fulfillmentMethod) {
+      throw new BadRequestException('Selected delivery slot does not match the fulfillment method.');
+    }
+
+    const nowTime = new Intl.DateTimeFormat('en-US', {
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: false,
+      timeZone: 'America/New_York'
+    }).format(new Date());
+
+    if (slot.cutoffTime && nowTime > slot.cutoffTime) {
+      throw new BadRequestException('Selected delivery slot cutoff has passed.');
+    }
+
+    const bookedCount = await tx.order.count({
+      where: {
+        tenantId,
+        deliverySlotId,
+        status: {
+          notIn: [OrderStatus.cancelled, OrderStatus.expired, OrderStatus.refunded]
+        }
+      }
+    });
+
+    if (bookedCount >= slot.capacity) {
+      throw new BadRequestException('Selected delivery slot is full.');
+    }
+
+    return slot;
   }
 
   private async reserveItem(

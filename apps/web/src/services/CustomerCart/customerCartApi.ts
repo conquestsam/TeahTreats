@@ -6,6 +6,8 @@ import type {
   CheckoutStartedSummary,
   CouponValidationSummary,
   CustomerCartSummary,
+  CustomerFulfillmentMethod,
+  DeliverySlot,
   ValidateCouponInput
 } from '@snacks/shared';
 
@@ -42,6 +44,13 @@ export function startCustomerCheckout(input: CheckoutCustomerInput) {
       'idempotency-key': crypto.randomUUID()
     },
     body: JSON.stringify(input)
+  }).then((response) => response.data);
+}
+
+export function listCustomerDeliverySlots(method?: CustomerFulfillmentMethod) {
+  const query = method ? `?method=${encodeURIComponent(method)}` : '';
+  return apiFetch<ApiEnvelope<DeliverySlot[]>>(`/shop/checkout/delivery-slots${query}`, {
+    headers: tenantHeaders
   }).then((response) => response.data);
 }
 

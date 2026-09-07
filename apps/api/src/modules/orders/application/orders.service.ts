@@ -559,7 +559,42 @@ export class OrdersService {
       handoffInstructions: this.optionalCustomerString(customer.handoffInstructions),
       deliveryDate: this.optionalCustomerString(customer.deliveryDate),
       deliveryWindow: this.optionalCustomerString(customer.deliveryWindow),
+      deliverySlotId: this.optionalCustomerString(customer.deliverySlotId),
+      deliverySlotSnapshot: this.readDeliverySlotSnapshot(customer.deliverySlotSnapshot),
       deliveryWindowLabel: this.optionalCustomerString(customer.deliveryWindowLabel)
+    };
+  }
+
+  private readDeliverySlotSnapshot(value: unknown) {
+    if (!value || typeof value !== 'object' || Array.isArray(value)) {
+      return undefined;
+    }
+    const record = value as Record<string, unknown>;
+    const method = record.method;
+    if (
+      typeof record.id !== 'string' ||
+      typeof record.label !== 'string' ||
+      (method !== 'delivery_handoff' && method !== 'store_pickup' && method !== 'scheduled_delivery') ||
+      typeof record.startTime !== 'string' ||
+      typeof record.endTime !== 'string' ||
+      typeof record.feeCents !== 'number' ||
+      typeof record.capacity !== 'number' ||
+      typeof record.cutoffTime !== 'string'
+    ) {
+      return undefined;
+    }
+
+    return {
+      id: record.id,
+      label: record.label,
+      method,
+      startTime: record.startTime,
+      endTime: record.endTime,
+      feeCents: record.feeCents,
+      capacity: record.capacity,
+      cutoffTime: record.cutoffTime,
+      hubId: this.optionalCustomerString(record.hubId) ?? null,
+      storeId: this.optionalCustomerString(record.storeId) ?? null
     };
   }
 

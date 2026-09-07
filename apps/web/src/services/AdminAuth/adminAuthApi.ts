@@ -1,5 +1,12 @@
 import { apiFetch } from '@/lib/api/client';
-import type { AdminAuthResponse, AdminLoginInput, CsrfResponse, LogoutResponse } from '@snacks/shared';
+import type {
+  AdminAuthResponse,
+  AdminChangePasswordInput,
+  AdminChangePasswordResponse,
+  AdminLoginInput,
+  CsrfResponse,
+  LogoutResponse
+} from '@snacks/shared';
 
 export function getAdminCsrf() {
   return apiFetch<CsrfResponse>('/auth/csrf');
@@ -20,5 +27,12 @@ export function getCurrentAdminUser() {
 export function logoutAdmin() {
   return apiFetch<LogoutResponse>('/auth/logout', {
     method: 'POST'
+  });
+}
+
+export function changeAdminPassword(input: AdminChangePasswordInput) {
+  return apiFetch<AdminChangePasswordResponse>('/auth/change-password', {
+    method: 'POST',
+    body: JSON.stringify(input)
   });
 }

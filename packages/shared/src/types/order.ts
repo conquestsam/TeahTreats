@@ -98,6 +98,19 @@ export interface AdminOrderDetail extends AdminOrderListItem {
     handoffInstructions?: string;
     deliveryDate?: string;
     deliveryWindow?: string;
+    deliverySlotId?: string;
+    deliverySlotSnapshot?: {
+      id: string;
+      label: string;
+      method: 'delivery_handoff' | 'store_pickup' | 'scheduled_delivery';
+      startTime: string;
+      endTime: string;
+      feeCents: number;
+      capacity: number;
+      cutoffTime: string;
+      hubId?: string | null;
+      storeId?: string | null;
+    };
     deliveryWindowLabel?: string;
   };
   items: Array<{

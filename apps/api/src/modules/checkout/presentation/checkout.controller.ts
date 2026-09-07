@@ -1,4 +1,4 @@
-import { Body, Controller, Post, Req, Res, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, Post, Query, Req, Res, UseGuards } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { ApiHeader, ApiTags } from '@nestjs/swagger';
 import { ApiEndpoint } from '../../../common/decorators/openapi.decorator.js';
@@ -27,6 +27,15 @@ export class CheckoutController {
     private readonly checkout: CheckoutService,
     private readonly config: ConfigService,
   ) {}
+
+  @Get('delivery-slots')
+  @ApiEndpoint({ summary: 'List available delivery and pickup slots.', tenant: 'required', auth: 'none', status: 200 })
+  async deliverySlots(
+    @CurrentTenant() tenantId: string,
+    @Query('method') method?: string,
+  ) {
+    return { data: await this.checkout.listAvailableDeliverySlots(tenantId, method) };
+  }
 
   @Post('start')
   @RateLimit({ limit: 6, windowSeconds: 60, keyPrefix: 'checkout-start' })

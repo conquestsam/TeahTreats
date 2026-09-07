@@ -84,6 +84,16 @@ export class StartCheckoutDto {
   @MaxLength(80)
   deliveryWindow?: string;
 
+  @ApiProperty({
+    example: 'slot_evening_gala',
+    required: false,
+    description: 'Selected delivery slot id. The API validates capacity/cutoff and stores a label snapshot.'
+  })
+  @IsOptional()
+  @IsString()
+  @MaxLength(120)
+  deliverySlotId?: string;
+
   @ApiProperty({ example: 'WELCOME10', required: false })
   @IsOptional()
   @IsString()

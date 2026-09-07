@@ -12,9 +12,11 @@ import { TenantScopeGuard } from '../../../common/guards/tenant-scope.guard.js';
 import type { AuthenticatedUser } from '../../../common/types/authenticated-request.js';
 import { AdminSettingsService } from '../application/admin-settings.service.js';
 import {
+  CreateDeliverySlotDto,
   CreateManualPaymentMethodDto,
   UpdateApprovalSettingsDto,
   UpdateBusinessProfileDto,
+  UpdateDeliverySlotDto,
   UpdateManualPaymentMethodDto,
   UpdateNotificationChannelsDto
 } from './dto/admin-settings.dto.js';
@@ -120,5 +122,57 @@ export class AdminSettingsController {
     @Param('methodId') methodId: string,
   ) {
     return { data: await this.settings.setManualPaymentMethodStatus(actor, tenantId, methodId, false) };
+  }
+
+  @Get('delivery-slots')
+  @RequirePermissions(permissions.tenantsManage)
+  @ApiAdminEndpoint('List tenant delivery slots.', { tenant: 'optional' })
+  async listDeliverySlots(@CurrentTenant() tenantId: string) {
+    return { data: await this.settings.listDeliverySlots(tenantId) };
+  }
+
+  @Post('delivery-slots')
+  @RequirePermissions(permissions.tenantsManage)
+  @ApiAdminEndpoint('Create a tenant delivery slot.', { tenant: 'optional' })
+  async createDeliverySlot(
+    @CurrentUser() actor: AuthenticatedUser,
+    @CurrentTenant() tenantId: string,
+    @Body() dto: CreateDeliverySlotDto,
+  ) {
+    return { data: await this.settings.createDeliverySlot(actor, tenantId, dto) };
+  }
+
+  @Patch('delivery-slots/:slotId')
+  @RequirePermissions(permissions.tenantsManage)
+  @ApiAdminEndpoint('Update a tenant delivery slot.', { tenant: 'optional' })
+  async updateDeliverySlot(
+    @CurrentUser() actor: AuthenticatedUser,
+    @CurrentTenant() tenantId: string,
+    @Param('slotId') slotId: string,
+    @Body() dto: UpdateDeliverySlotDto,
+  ) {
+    return { data: await this.settings.updateDeliverySlot(actor, tenantId, slotId, dto) };
+  }
+
+  @Post('delivery-slots/:slotId/activate')
+  @RequirePermissions(permissions.tenantsManage)
+  @ApiAdminEndpoint('Activate a tenant delivery slot.', { tenant: 'optional' })
+  async activateDeliverySlot(
+    @CurrentUser() actor: AuthenticatedUser,
+    @CurrentTenant() tenantId: string,
+    @Param('slotId') slotId: string,
+  ) {
+    return { data: await this.settings.setDeliverySlotStatus(actor, tenantId, slotId, true) };
+  }
+
+  @Post('delivery-slots/:slotId/pause')
+  @RequirePermissions(permissions.tenantsManage)
+  @ApiAdminEndpoint('Pause a tenant delivery slot.', { tenant: 'optional' })
+  async pauseDeliverySlot(
+    @CurrentUser() actor: AuthenticatedUser,
+    @CurrentTenant() tenantId: string,
+    @Param('slotId') slotId: string,
+  ) {
+    return { data: await this.settings.setDeliverySlotStatus(actor, tenantId, slotId, false) };
   }
 }

@@ -1,11 +1,13 @@
 'use client';
 
-import { Modal, Textarea, TextInput } from '@mantine/core';
+import { Modal, Select, Textarea, TextInput } from '@mantine/core';
 import type { UseFormReturnType } from '@mantine/form';
 import { motion } from 'motion/react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { formatMoney } from '@/lib/formatters/money';
 import type { CheckoutCustomerFormValues } from '@/validation/CustomerCart/customerCartValidation';
+import type { DeliverySlot } from '@/types/CustomerCart/customerCartTypes';
 import type { CustomerUserModel } from '@/types/CustomerAuth/customerAuthTypes';
 
 interface CustomerCheckoutModalProps {
@@ -13,6 +15,8 @@ interface CustomerCheckoutModalProps {
   loading: boolean;
   form: UseFormReturnType<CheckoutCustomerFormValues>;
   currentUser?: CustomerUserModel | null | undefined;
+  deliverySlots: DeliverySlot[];
+  deliverySlotsLoading: boolean;
   onClose: () => void;
   onSubmit: () => void;
 }
@@ -22,11 +26,18 @@ export function CustomerCheckoutModal({
   loading,
   form,
   currentUser,
+  deliverySlots,
+  deliverySlotsLoading,
   onClose,
   onSubmit
 }: CustomerCheckoutModalProps) {
   const isRegistered = Boolean(currentUser);
   const fulfillmentMethod = form.values.fulfillmentMethod;
+  const selectedSlot = deliverySlots.find((slot) => slot.id === form.values.deliverySlotId);
+  const slotOptions = deliverySlots.map((slot) => ({
+    value: slot.id,
+    label: `${slot.label} (${slot.startTime}-${slot.endTime})${slot.feeCents > 0 ? ` +${formatMoney(slot.feeCents, 'USD')}` : ' Free'}`
+  }));
 
   return (
     <Modal
@@ -230,14 +241,27 @@ export function CustomerCheckoutModal({
               {...form.getInputProps('deliveryDate')}
               classNames={{ input: 'tt-auth-input', label: 'tt-auth-label' }}
             />
-            <TextInput
+            <Select
               label="Requested Handoff Window"
-              placeholder="Example: Afternoon handoff window"
+              placeholder={deliverySlotsLoading ? 'Loading live windows...' : 'Choose an available window'}
               description="This is a delivery window, not an exact arrival time."
-              {...form.getInputProps('deliveryWindow')}
+              data={slotOptions}
+              disabled={deliverySlotsLoading || slotOptions.length === 0}
+              value={form.values.deliverySlotId || null}
+              onChange={(value) => {
+                const slot = deliverySlots.find((item) => item.id === value);
+                form.setFieldValue('deliverySlotId', value ?? '');
+                form.setFieldValue('deliveryWindow', slot?.label ?? '');
+              }}
               classNames={{ input: 'tt-auth-input', label: 'tt-auth-label' }}
             />
           </div>
+          {selectedSlot ? (
+            <div className="rounded-lg border border-[#342d32] bg-[#151319] p-3 text-xs leading-5 text-[#bca6a7]">
+              <strong className="text-[#fff7e8]">{selectedSlot.label}</strong> has {selectedSlot.remainingCapacity} of {selectedSlot.capacity} spots left.
+              Cutoff is {selectedSlot.cutoffTime}. Fee: {formatMoney(selectedSlot.feeCents, 'USD')}.
+            </div>
+          ) : null}
 
           <p className="text-xs leading-5 text-[#8f7b7d]">
             Your items will be held for 15 minutes after checkout is started.

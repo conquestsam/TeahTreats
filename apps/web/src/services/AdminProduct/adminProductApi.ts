@@ -7,7 +7,8 @@ import type {
   CreateAdminProductSkuInput,
   AdminProductImageUploadSummary,
   UpdateAdminProductImageInput,
-  UpdateAdminProductInput
+  UpdateAdminProductInput,
+  UpdateAdminProductSkuInput
 } from '@snacks/shared';
 
 export function listAdminProducts() {
@@ -47,6 +48,16 @@ export function createAdminProductSku(productId: string, input: CreateAdminProdu
     `/admin/catalog/products/${productId}/skus`,
     {
       method: 'POST',
+      body: JSON.stringify(input)
+    },
+  ).then((response) => response.data);
+}
+
+export function updateAdminProductSku(productId: string, skuId: string, input: UpdateAdminProductSkuInput) {
+  return apiFetch<ApiEnvelope<AdminProductModel['skus'][number]>>(
+    `/admin/catalog/products/${productId}/skus/${skuId}`,
+    {
+      method: 'PATCH',
       body: JSON.stringify(input)
     },
   ).then((response) => response.data);

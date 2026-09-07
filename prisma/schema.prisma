@@ -164,9 +164,35 @@ model Tenant {
   groupCarts                    GroupCart[]
   roleChangeApprovals           RoleChangeApproval[]
   newsletterSubscriptions       NewsletterSubscription[]
+  deliverySlots                 DeliverySlot[]
 
   @@index([active, slug])
   @@index([active, name])
+}
+
+model DeliverySlot {
+  id          String   @id @default(uuid())
+  tenantId    String
+  label       String
+  method      String
+  startTime   String
+  endTime     String
+  feeCents    Int      @default(0)
+  capacity    Int
+  cutoffTime  String
+  active      Boolean  @default(true)
+  hubId       String?
+  storeId     String?
+  metadata    Json     @default("{}")
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  tenant      Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  orders      Order[]
+
+  @@index([tenantId, active])
+  @@index([tenantId, method, active])
+  @@index([tenantId, hubId])
+  @@index([tenantId, storeId])
 }
 
 model NewsletterSubscription {
@@ -469,6 +495,7 @@ model Order {
   subtotalCents Int      @default(0)
   discountCents Int      @default(0)
   currency    String       @default("USD")
+  deliverySlotId String?
   customer    Json
   promotionSnapshot Json  @default("{}")
   reservationExpiresAt DateTime?
@@ -476,6 +503,7 @@ model Order {
   updatedAt   DateTime     @updatedAt
   tenant      Tenant       @relation(fields: [tenantId], references: [id])
   user        User?        @relation(fields: [userId], references: [id])
+  deliverySlot DeliverySlot? @relation(fields: [deliverySlotId], references: [id])
   items       OrderItem[]
   payments    Payment[]
   history     OrderStatusHistory[]
@@ -487,6 +515,7 @@ model Order {
   @@index([tenantId, userId, createdAt])
   @@index([tenantId, userId, status])
   @@index([tenantId, checkoutMode, createdAt])
+  @@index([tenantId, deliverySlotId, createdAt])
   @@index([tenantId, reservationExpiresAt])
   @@index([tenantId, status, reservationExpiresAt])
   @@index([reservationExpiresAt])

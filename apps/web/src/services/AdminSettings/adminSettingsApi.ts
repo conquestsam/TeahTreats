@@ -2,6 +2,7 @@ import { apiFetch } from '@/lib/api/client';
 import type {
   AdminApprovalSettingsInput,
   AdminBusinessProfileInput,
+  AdminDeliverySlotInput,
   AdminManualPaymentMethodInput,
   AdminManualPaymentMethodModel,
   AdminNotificationSettingsInput,
@@ -65,6 +66,32 @@ export function activateAdminManualPaymentMethod(methodId: string) {
 
 export function deactivateAdminManualPaymentMethod(methodId: string) {
   return apiFetch<ApiEnvelope<AdminSettingsModel>>(`/admin/settings/manual-payment-methods/${methodId}/deactivate`, {
+    method: 'POST'
+  }).then((response) => response.data);
+}
+
+export function createAdminDeliverySlot(input: AdminDeliverySlotInput) {
+  return apiFetch<ApiEnvelope<AdminSettingsModel>>('/admin/settings/delivery-slots', {
+    method: 'POST',
+    body: JSON.stringify(input)
+  }).then((response) => response.data);
+}
+
+export function updateAdminDeliverySlot(slotId: string, input: Partial<AdminDeliverySlotInput>) {
+  return apiFetch<ApiEnvelope<AdminSettingsModel>>(`/admin/settings/delivery-slots/${slotId}`, {
+    method: 'PATCH',
+    body: JSON.stringify(input)
+  }).then((response) => response.data);
+}
+
+export function activateAdminDeliverySlot(slotId: string) {
+  return apiFetch<ApiEnvelope<AdminSettingsModel>>(`/admin/settings/delivery-slots/${slotId}/activate`, {
+    method: 'POST'
+  }).then((response) => response.data);
+}
+
+export function pauseAdminDeliverySlot(slotId: string) {
+  return apiFetch<ApiEnvelope<AdminSettingsModel>>(`/admin/settings/delivery-slots/${slotId}/pause`, {
     method: 'POST'
   }).then((response) => response.data);
 }

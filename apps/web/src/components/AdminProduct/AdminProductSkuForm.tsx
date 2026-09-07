@@ -1,6 +1,6 @@
 'use client';
 
-import { Button, Group, NumberInput, SimpleGrid, Stack, Switch, Text, TextInput } from '@mantine/core';
+import { Button, Group, NumberInput, Select, SimpleGrid, Stack, Switch, Text, TextInput } from '@mantine/core';
 import type { UseFormReturnType } from '@mantine/form';
 
 type AdminProductSkuFormType = UseFormReturnType<{
@@ -22,6 +22,8 @@ export function AdminProductSkuForm({
   loading,
   onSubmit
 }: Readonly<{ form: AdminProductSkuFormType; loading: boolean; onSubmit: () => void }>) {
+  const selectedCurrency = form.values.currency || 'USD';
+
   return (
     <form onSubmit={form.onSubmit(onSubmit)}>
       <Stack>
@@ -29,12 +31,24 @@ export function AdminProductSkuForm({
         <SimpleGrid cols={{ base: 1, sm: 2 }}>
           <TextInput label="Option name" placeholder="Single box" {...form.getInputProps('name')} />
           <NumberInput
-            label="Price (USD)"
+            label="Selling price"
             min={0.01}
             decimalScale={2}
             fixedDecimalScale
-            prefix="$"
+            prefix={selectedCurrency === 'USD' ? '$' : ''}
             {...form.getInputProps('priceCents')}
+          />
+          <Select
+            label="Currency"
+            data={[
+              { value: 'USD', label: 'USD - US Dollar' },
+              { value: 'NGN', label: 'NGN - Nigerian Naira' },
+              { value: 'GBP', label: 'GBP - British Pound' },
+              { value: 'EUR', label: 'EUR - Euro' }
+            ]}
+            searchable
+            allowDeselect={false}
+            {...form.getInputProps('currency')}
           />
           <TextInput label="Size" placeholder="6 oz" {...form.getInputProps('size')} />
           <NumberInput label="Pack count" min={1} {...form.getInputProps('packCount')} />

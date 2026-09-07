@@ -62,6 +62,7 @@ export interface AdminManualPaymentMethodSummary {
 export interface AdminSettingsSummary {
   tenant: TenantSummary;
   manualPaymentMethods: AdminManualPaymentMethodSummary[];
+  deliverySlots: AdminDeliverySlotSummary[];
 }
 
 export interface AdminBusinessProfileInput {
@@ -86,6 +87,38 @@ export interface AdminManualPaymentMethodInput {
   label: string;
   instructions: string;
   active?: boolean;
+}
+
+export interface AdminDeliverySlotSummary {
+  id: string;
+  tenantId: string;
+  label: string;
+  method: 'delivery_handoff' | 'store_pickup' | 'scheduled_delivery';
+  startTime: string;
+  endTime: string;
+  feeCents: number;
+  capacity: number;
+  cutoffTime: string;
+  active: boolean;
+  hubId: string | null;
+  storeId: string | null;
+  bookedCount: number;
+  remainingCapacity: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface AdminDeliverySlotInput {
+  label: string;
+  method: 'delivery_handoff' | 'store_pickup' | 'scheduled_delivery';
+  startTime: string;
+  endTime: string;
+  feeCents: number;
+  capacity: number;
+  cutoffTime: string;
+  active?: boolean;
+  hubId?: string;
+  storeId?: string;
 }
 
 export interface AdminTenantInput {

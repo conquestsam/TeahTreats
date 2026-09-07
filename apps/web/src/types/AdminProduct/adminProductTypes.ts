@@ -8,7 +8,8 @@ export type {
   CreateAdminProductInput,
   CreateAdminProductSkuInput,
   UpdateAdminProductImageInput,
-  UpdateAdminProductInput
+  UpdateAdminProductInput,
+  UpdateAdminProductSkuInput
 } from '@snacks/shared';
 
 export type AdminProductModalMode =

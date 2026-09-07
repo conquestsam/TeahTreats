@@ -43,7 +43,7 @@ const seededStorefrontProducts: StorefrontSeedProduct[] = [
     category: 'Signature Drinks',
     flavor: 'Sorrel fruit',
     occasion: 'Everyday refreshment',
-    priceCents: 350000,
+    priceCents: 650,
     skuName: '330 ml can',
     quantity: 120,
     size: '330 ml',
@@ -74,7 +74,7 @@ const seededStorefrontProducts: StorefrontSeedProduct[] = [
     category: 'Fresh Pastries',
     flavor: 'Sweet golden dough',
     occasion: 'Party tray',
-    priceCents: 1200000,
+    priceCents: 4500,
     skuName: 'Small tray',
     quantity: 45,
     size: 'small tray',
@@ -105,7 +105,7 @@ const seededStorefrontProducts: StorefrontSeedProduct[] = [
     category: 'Party Trays',
     flavor: 'Savory spiced vegetable',
     occasion: 'Events and meetings',
-    priceCents: 1550000,
+    priceCents: 5200,
     skuName: 'Assorted tray',
     quantity: 34,
     size: 'assorted tray',
@@ -136,7 +136,7 @@ const seededStorefrontProducts: StorefrontSeedProduct[] = [
     category: 'Fresh Pastries',
     flavor: 'Savory beef',
     occasion: 'Lunch and events',
-    priceCents: 1800000,
+    priceCents: 3800,
     skuName: 'Dozen tray',
     quantity: 40,
     size: '12 pieces',
@@ -167,7 +167,7 @@ const seededStorefrontProducts: StorefrontSeedProduct[] = [
     category: 'Fresh Pastries',
     flavor: 'Seasoned beef and egg',
     occasion: 'Brunch and party trays',
-    priceCents: 900000,
+    priceCents: 1800,
     skuName: 'Six piece pack',
     quantity: 38,
     size: '6 pieces',
@@ -198,7 +198,7 @@ const seededStorefrontProducts: StorefrontSeedProduct[] = [
     category: 'Party Trays',
     flavor: 'Sweet and savory mix',
     occasion: 'Parties and office planning',
-    priceCents: 2650000,
+    priceCents: 8500,
     skuName: 'Large combo tray',
     quantity: 28,
     size: 'large tray',
@@ -233,7 +233,7 @@ const seededStorefrontProducts: StorefrontSeedProduct[] = [
     category: 'African Celebration Cakes',
     flavor: 'Vanilla and malt sponge',
     occasion: 'Owambe celebration',
-    priceCents: 6500000,
+    priceCents: 18000,
     skuName: 'Two-tier cake',
     quantity: 12,
     size: 'two-tier',
@@ -268,7 +268,7 @@ const seededStorefrontProducts: StorefrontSeedProduct[] = [
     category: 'African Celebration Cakes',
     flavor: 'Coconut and vanilla sponge',
     occasion: 'Family celebration',
-    priceCents: 9500000,
+    priceCents: 26000,
     skuName: 'Custom tiered cake',
     quantity: 8,
     size: 'custom tiered',
@@ -299,7 +299,7 @@ const seededStorefrontProducts: StorefrontSeedProduct[] = [
     category: 'African Celebration Cakes',
     flavor: 'Vanilla and coconut celebration',
     occasion: 'Kids birthday',
-    priceCents: 4200000,
+    priceCents: 14500,
     skuName: 'One-tier custom cake',
     quantity: 10,
     size: 'one-tier',
@@ -326,7 +326,7 @@ const seededStorefrontProducts: StorefrontSeedProduct[] = [
     category: 'African Celebration Cakes',
     flavor: 'Custom African-inspired flavor',
     occasion: 'Made-to-order African celebration',
-    priceCents: 5000000,
+    priceCents: 12000,
     skuName: 'Starting custom order',
     quantity: 15,
     size: 'custom',
@@ -393,7 +393,7 @@ async function main() {
       active: true,
       delegatedRoleApprovalRequired: true,
       manualPaymentEnabled: true,
-      defaultCurrency: 'NGN',
+      defaultCurrency: 'USD',
       timezone: 'Africa/Lagos',
       metadata: {
         businessAddress: {
@@ -414,7 +414,7 @@ async function main() {
       active: true,
       delegatedRoleApprovalRequired: true,
       manualPaymentEnabled: true,
-      defaultCurrency: 'NGN',
+      defaultCurrency: 'USD',
       timezone: 'Africa/Lagos',
       metadata: {
         businessAddress: {
@@ -432,6 +432,74 @@ async function main() {
   const tenant = await prisma.tenant.findUniqueOrThrow({
     where: { slug: 'platform' }
   });
+
+  const platformDeliverySlots = [
+    {
+      id: 'slot-platform-morning-pickup',
+      label: 'Morning Pickup Window',
+      method: 'store_pickup',
+      startTime: '09:00',
+      endTime: '12:00',
+      feeCents: 0,
+      capacity: 20,
+      cutoffTime: '08:30',
+      storeId: 'atlanta-main'
+    },
+    {
+      id: 'slot-platform-afternoon-handoff',
+      label: 'Afternoon Handoff Window',
+      method: 'delivery_handoff',
+      startTime: '13:00',
+      endTime: '16:00',
+      feeCents: 1500,
+      capacity: 12,
+      cutoffTime: '11:00',
+      hubId: 'atlanta-central'
+    },
+    {
+      id: 'slot-platform-evening-gala',
+      label: 'Evening Gala Window',
+      method: 'scheduled_delivery',
+      startTime: '16:00',
+      endTime: '19:00',
+      feeCents: 2500,
+      capacity: 8,
+      cutoffTime: '14:00',
+      hubId: 'atlanta-central'
+    }
+  ];
+
+  for (const slot of platformDeliverySlots) {
+    await prisma.deliverySlot.upsert({
+      where: { id: slot.id },
+      update: {
+        label: slot.label,
+        method: slot.method,
+        startTime: slot.startTime,
+        endTime: slot.endTime,
+        feeCents: slot.feeCents,
+        capacity: slot.capacity,
+        cutoffTime: slot.cutoffTime,
+        active: true,
+        hubId: slot.hubId ?? null,
+        storeId: slot.storeId ?? null
+      },
+      create: {
+        id: slot.id,
+        tenantId: tenant.id,
+        label: slot.label,
+        method: slot.method,
+        startTime: slot.startTime,
+        endTime: slot.endTime,
+        feeCents: slot.feeCents,
+        capacity: slot.capacity,
+        cutoffTime: slot.cutoffTime,
+        active: true,
+        hubId: slot.hubId ?? null,
+        storeId: slot.storeId ?? null
+      }
+    });
+  }
 
   const superAdminRole = await prisma.role.upsert({
     where: {
@@ -578,7 +646,7 @@ async function main() {
       active: true,
       delegatedRoleApprovalRequired: true,
       manualPaymentEnabled: true,
-      defaultCurrency: 'NGN',
+      defaultCurrency: 'USD',
       timezone: 'Africa/Lagos',
       metadata: {
         businessAddress: {
@@ -599,7 +667,7 @@ async function main() {
       active: true,
       delegatedRoleApprovalRequired: true,
       manualPaymentEnabled: true,
-      defaultCurrency: 'NGN',
+      defaultCurrency: 'USD',
       timezone: 'Africa/Lagos',
       metadata: {
         businessAddress: {
@@ -773,8 +841,8 @@ async function main() {
           {
             tenantId: tenant.id,
             name: 'Single pie',
-            priceCents: 180000,
-            currency: 'NGN',
+            priceCents: 450,
+            currency: 'USD',
             active: true,
             metadata: {
               size: '6 oz',
@@ -932,7 +1000,7 @@ async function main() {
           where: { id: existingSku.id },
           data: {
             priceCents: seedProduct.priceCents,
-            currency: 'NGN',
+            currency: 'USD',
             active: true,
             metadata: skuMetadata
           }
@@ -943,7 +1011,7 @@ async function main() {
             productId: product.id,
             name: seedProduct.skuName,
             priceCents: seedProduct.priceCents,
-            currency: 'NGN',
+            currency: 'USD',
             active: true,
             metadata: skuMetadata
           }
@@ -1110,8 +1178,8 @@ async function main() {
           {
             tenantId: vendorTenant.id,
             name: 'Snack pouch',
-            priceCents: 250000,
-            currency: 'NGN',
+            priceCents: 650,
+            currency: 'USD',
             active: true,
             metadata: {
               size: '120 g',

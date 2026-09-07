@@ -118,6 +118,21 @@ export interface CreateAdminProductSkuInput {
   perishableOverride?: boolean;
 }
 
+export interface UpdateAdminProductSkuInput {
+  name?: string;
+  priceCents?: number;
+  currency?: string;
+  active?: boolean;
+  metadata?: Record<string, unknown>;
+  size?: string | null;
+  packCount?: number | null;
+  unitLabel?: string | null;
+  barcode?: string | null;
+  weight?: string | null;
+  dimensions?: string | null;
+  perishableOverride?: boolean | null;
+}
+
 export interface CreateAdminProductImageUploadInput {
   contentType: ProductImageContentType;
   sizeBytes?: number;

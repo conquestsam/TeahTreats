@@ -12,6 +12,7 @@ import type { AuthenticatedUser } from '../../../common/types/authenticated-requ
 import { AdminMfaService } from '../application/admin-mfa.service.js';
 import { AuthCookieService } from '../application/auth-cookie.service.js';
 import { AuthService } from '../application/auth.service.js';
+import { ChangePasswordDto } from './dto/change-password.dto.js';
 import { LoginDto } from './dto/login.dto.js';
 import { VerifyAdminMfaDto } from './dto/mfa.dto.js';
 
@@ -107,6 +108,14 @@ export class AuthController {
   @ApiAdminEndpoint('Verify admin TOTP MFA code.', { csrf: true, status: 201 })
   async verifyMfa(@CurrentUser() user: AuthenticatedUser, @Body() dto: VerifyAdminMfaDto) {
     return { data: await this.mfa.verify(user.id, dto.code) };
+  }
+
+  @Post('change-password')
+  @ApiCookieAuth('access_token')
+  @UseGuards(JwtAccessAuthGuard, CsrfGuard)
+  @ApiAdminEndpoint('Change the current admin password after verifying the existing password.', { csrf: true, status: 201 })
+  async changePassword(@CurrentUser() user: AuthenticatedUser, @Body() dto: ChangePasswordDto) {
+    return { data: await this.auth.changePassword(user.id, user.sessionId, dto) };
   }
 
   @Post('mfa/disable')

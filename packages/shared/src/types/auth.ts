@@ -20,6 +20,11 @@ export interface AdminLoginInput {
   password: string;
 }
 
+export interface AdminChangePasswordInput {
+  currentPassword: string;
+  newPassword: string;
+}
+
 export interface CustomerLoginInput {
   email: string;
   password: string;
@@ -31,6 +36,7 @@ export interface CustomerSignupInput extends CustomerLoginInput {
 }
 
 export type AdminAuthResponse = ApiEnvelope<AdminAuthUser>;
+export type AdminChangePasswordResponse = ApiEnvelope<{ ok: true; otherSessionsRevoked: number }>;
 export type CustomerAuthResponse = ApiEnvelope<CustomerAuthUser>;
 export type CsrfResponse = ApiEnvelope<{ csrfToken: string }>;
 export type LogoutResponse = ApiEnvelope<{ ok: true; revoked?: boolean }>;

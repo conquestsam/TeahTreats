@@ -4,7 +4,12 @@ import { Badge, Button, Group, Image, Modal, Paper, SimpleGrid, Stack, Tabs, Tex
 import type { UseFormReturnType } from '@mantine/form';
 import { AdminProductSkuForm } from './AdminProductSkuForm';
 import { AdminProductSkuTable } from './AdminProductSkuTable';
-import type { AdminProductImageModel, AdminProductModel } from '@/types/AdminProduct/adminProductTypes';
+import type {
+  AdminProductImageModel,
+  AdminProductModel,
+  AdminProductSkuModel,
+  UpdateAdminProductSkuInput
+} from '@/types/AdminProduct/adminProductTypes';
 
 type AdminProductSkuFormType = UseFormReturnType<{
   name: string;
@@ -51,6 +56,7 @@ export function AdminProductDetailsModal({
   productLoading,
   onClose,
   onAddSku,
+  onUpdateSku,
   onSaveSnackDetails,
   onSaveSeo,
   onCreateImage,
@@ -65,6 +71,7 @@ export function AdminProductDetailsModal({
   productLoading: boolean;
   onClose: () => void;
   onAddSku: () => void;
+  onUpdateSku: (sku: AdminProductSkuModel, input: UpdateAdminProductSkuInput) => void;
   onSaveSnackDetails: () => void;
   onSaveSeo: () => void;
   onCreateImage: (product: AdminProductModel) => void;
@@ -113,7 +120,7 @@ export function AdminProductDetailsModal({
             <Tabs.Panel value="skus" pt="md">
               <Stack>
                 <AdminProductSkuForm form={skuForm} loading={skuLoading} onSubmit={onAddSku} />
-                <AdminProductSkuTable product={product} />
+                <AdminProductSkuTable product={product} loading={skuLoading} onUpdateSku={onUpdateSku} />
               </Stack>
             </Tabs.Panel>
 

@@ -4,8 +4,8 @@ import { notifications } from '@mantine/notifications';
 import { useMutation } from '@tanstack/react-query';
 import { useRouter } from 'next/navigation';
 import { queryClient } from '@/lib/query/query-client';
-import { loginAdmin, logoutAdmin } from '@/services/AdminAuth/adminAuthApi';
-import type { AdminLoginInput } from '@/types/AdminAuth/adminAuthTypes';
+import { changeAdminPassword, loginAdmin, logoutAdmin } from '@/services/AdminAuth/adminAuthApi';
+import type { AdminChangePasswordInput, AdminLoginInput } from '@/types/AdminAuth/adminAuthTypes';
 import { adminAuthQueryKeys } from '@/constants/AdminAuth/adminAuthConstants';
 import { authRedirects } from '@/lib/auth/auth-routes';
 
@@ -50,6 +50,29 @@ export function useAdminLogoutMutation() {
         color: 'red',
         title: 'Sign out failed',
         message: error instanceof Error ? error.message : 'Please try again.'
+      });
+    }
+  });
+}
+
+export function useAdminChangePasswordMutation() {
+  return useMutation({
+    mutationFn: (input: AdminChangePasswordInput) => changeAdminPassword(input),
+    onSuccess: (response) => {
+      notifications.show({
+        color: 'green',
+        title: 'Password changed',
+        message:
+          response.data.otherSessionsRevoked > 0
+            ? 'Your password was updated and other active sessions were signed out.'
+            : 'Your password was updated.'
+      });
+    },
+    onError: (error) => {
+      notifications.show({
+        color: 'red',
+        title: 'Password not changed',
+        message: error instanceof Error ? error.message : 'Check your current password and try again.'
       });
     }
   });

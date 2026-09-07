@@ -233,6 +233,55 @@ export class AuthService {
     return { ok: true as const, revoked: result.count > 0 };
   }
 
+  async changePassword(userId: string, sessionId: string, dto: { currentPassword: string; newPassword: string }) {
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId }
+    });
+
+    if (!user?.passwordHash || user.deletedAt || user.userType !== UserType.admin) {
+      throw authExceptions.invalidCredentials();
+    }
+
+    const passwordMatches = await argon2.verify(user.passwordHash, dto.currentPassword);
+    if (!passwordMatches) {
+      throw authExceptions.invalidCredentials();
+    }
+
+    const passwordHash = await argon2.hash(dto.newPassword);
+    const result = await this.prisma.$transaction(async (tx) => {
+      await tx.user.update({
+        where: { id: user.id },
+        data: { passwordHash }
+      });
+
+      const revoked = await tx.session.updateMany({
+        where: {
+          userId: user.id,
+          id: { not: sessionId },
+          revokedAt: null
+        },
+        data: { revokedAt: new Date() }
+      });
+
+      return revoked;
+    });
+
+    void this.outbox.enqueue({
+      id: randomUUID(),
+      name: domainEvents.adminUserUpdated,
+      tenantId: null,
+      aggregateId: user.id,
+      payload: {
+        userId: user.id,
+        reason: 'password-change',
+        otherSessionsRevoked: result.count
+      },
+      occurredAt: new Date().toISOString()
+    });
+
+    return { ok: true as const, otherSessionsRevoked: result.count };
+  }
+
   safeUser(user: AccessClaims) {
     return {
       id: user.sub,

@@ -9,6 +9,7 @@ import {
   removeAdminProductImage,
   requestAdminProductImageUpload,
   restoreAdminProduct,
+  updateAdminProductSku,
   updateAdminProductImage,
   updateAdminProduct
 } from '@/services/AdminProduct/adminProductApi';
@@ -18,7 +19,8 @@ import type {
   CreateAdminProductInput,
   CreateAdminProductSkuInput,
   UpdateAdminProductImageInput,
-  UpdateAdminProductInput
+  UpdateAdminProductInput,
+  UpdateAdminProductSkuInput
 } from '@/types/AdminProduct/adminProductTypes';
 
 function notifySuccess(message: string) {
@@ -92,6 +94,17 @@ export function useAdminProductMutations(input: {
     onError: () => notifyError('Could not add price option.')
   });
 
+  const updateSkuMutation = useMutation({
+    mutationFn: (payload: { productId: string; skuId: string; sku: UpdateAdminProductSkuInput }) =>
+      updateAdminProductSku(payload.productId, payload.skuId, payload.sku),
+    onSuccess: async () => {
+      await invalidateProducts();
+      notifySuccess('Price option updated.');
+      input.onSkuSaved();
+    },
+    onError: () => notifyError('Could not update price option.')
+  });
+
   const imageUploadMutation = useMutation({
     mutationFn: (payload: { productId: string; contentType: string }) =>
       requestAdminProductImageUpload(payload.productId, payload.contentType),
@@ -135,6 +148,7 @@ export function useAdminProductMutations(input: {
     archiveMutation,
     restoreMutation,
     skuMutation,
+    updateSkuMutation,
     imageUploadMutation,
     imageCreateMutation,
     imageUpdateMutation,

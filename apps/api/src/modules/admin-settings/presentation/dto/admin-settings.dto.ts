@@ -4,11 +4,13 @@ import {
   IsBoolean,
   IsEmail,
   IsIn,
+  IsInt,
   IsObject,
   IsOptional,
   IsString,
   Matches,
   MaxLength,
+  Min,
   MinLength
 } from 'class-validator';
 
@@ -125,3 +127,59 @@ export class CreateManualPaymentMethodDto {
 }
 
 export class UpdateManualPaymentMethodDto extends PartialType(CreateManualPaymentMethodDto) {}
+
+export class CreateDeliverySlotDto {
+  @ApiProperty({ example: 'Afternoon Handoff Window' })
+  @IsString()
+  @MinLength(2)
+  @MaxLength(120)
+  label!: string;
+
+  @ApiProperty({ example: 'delivery_handoff', enum: ['delivery_handoff', 'store_pickup', 'scheduled_delivery'] })
+  @IsIn(['delivery_handoff', 'store_pickup', 'scheduled_delivery'])
+  method!: 'delivery_handoff' | 'store_pickup' | 'scheduled_delivery';
+
+  @ApiProperty({ example: '13:00' })
+  @IsString()
+  @Matches(/^([01]\d|2[0-3]):[0-5]\d$/)
+  startTime!: string;
+
+  @ApiProperty({ example: '16:00' })
+  @IsString()
+  @Matches(/^([01]\d|2[0-3]):[0-5]\d$/)
+  endTime!: string;
+
+  @ApiProperty({ example: 1500 })
+  @IsInt()
+  @Min(0)
+  feeCents!: number;
+
+  @ApiProperty({ example: 12 })
+  @IsInt()
+  @Min(1)
+  capacity!: number;
+
+  @ApiProperty({ example: '11:00' })
+  @IsString()
+  @Matches(/^([01]\d|2[0-3]):[0-5]\d$/)
+  cutoffTime!: string;
+
+  @ApiPropertyOptional({ default: true })
+  @IsOptional()
+  @IsBoolean()
+  active?: boolean;
+
+  @ApiPropertyOptional({ example: 'atlanta-central' })
+  @IsOptional()
+  @IsString()
+  @MaxLength(80)
+  hubId?: string;
+
+  @ApiPropertyOptional({ example: 'atlanta-main' })
+  @IsOptional()
+  @IsString()
+  @MaxLength(80)
+  storeId?: string;
+}
+
+export class UpdateDeliverySlotDto extends PartialType(CreateDeliverySlotDto) {}

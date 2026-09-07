@@ -346,6 +346,77 @@ sudo ufw allow 443/tcp
 sudo ufw status
 ```
 
+## Fix API HTTPS Connection Reset
+
+If local or browser requests fail with:
+
+```text
+curl: (35) Recv failure: Connection reset by peer
+```
+
+verify the path in this order.
+
+First confirm DNS points the API host to Contabo:
+
+```bash
+dig +short api.teshtreats.com A
+```
+
+Expected:
+
+```text
+62.169.16.51
+```
+
+Then confirm the API works on the VPS before TLS:
+
+```bash
+ssh deploy@62.169.16.51
+cd /srv/teshtreats/TeahTreats
+curl -fsS http://127.0.0.1:4000/api/v1/health
+docker compose --env-file .env.production -f docker-compose.prod.yml ps
+```
+
+Confirm Caddy is installed, listening, and has loaded the API domain:
+
+```bash
+sudo systemctl status caddy --no-pager
+sudo caddy validate --config /etc/caddy/Caddyfile
+sudo ss -ltnp | grep -E ':80|:443|:4000'
+sudo journalctl -u caddy -n 120 --no-pager
+```
+
+The Caddyfile should contain:
+
+```caddyfile
+api.teshtreats.com {
+  reverse_proxy 127.0.0.1:4000
+}
+```
+
+Reload Caddy after edits:
+
+```bash
+sudo systemctl reload caddy
+```
+
+Confirm the firewall allows HTTPS:
+
+```bash
+sudo ufw allow 80/tcp
+sudo ufw allow 443/tcp
+sudo ufw status
+```
+
+Finally test TLS:
+
+```bash
+curl -vkI https://api.teshtreats.com/api/v1/health
+openssl s_client -connect api.teshtreats.com:443 -servername api.teshtreats.com </dev/null
+```
+
+If DNS is proxied through Cloudflare, set the `api` record to DNS only until Caddy has issued a certificate successfully. After HTTPS works directly, Cloudflare proxying can be enabled if desired.
+
 ## CI/CD Secrets
 
 GitHub repository secrets:

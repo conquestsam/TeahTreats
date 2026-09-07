@@ -37,6 +37,7 @@ export interface CheckoutStartedSummary {
     phone: string;
     recipientName?: string;
     fulfillmentMethod?: CustomerFulfillmentMethod;
+    deliverySlotId?: string;
     deliveryWindowLabel?: string;
   };
   subtotalCents: number;
@@ -75,11 +76,28 @@ export interface CheckoutCustomerInput {
   handoffInstructions?: string;
   deliveryDate?: string;
   deliveryWindow?: string;
+  deliverySlotId?: string;
   couponCode?: string;
 }
 
 export type CustomerFulfillmentMethod = 'delivery_handoff' | 'store_pickup' | 'scheduled_delivery';
 export type CustomerCheckoutMode = 'guest' | 'account';
+
+export interface DeliverySlot {
+  id: string;
+  label: string;
+  method: CustomerFulfillmentMethod;
+  startTime: string;
+  endTime: string;
+  feeCents: number;
+  capacity: number;
+  cutoffTime: string;
+  active: boolean;
+  hubId?: string | null;
+  storeId?: string | null;
+  bookedCount: number;
+  remainingCapacity: number;
+}
 
 export interface ValidateCouponInput {
   code: string;

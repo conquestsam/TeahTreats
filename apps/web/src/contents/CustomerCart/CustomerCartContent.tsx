@@ -15,7 +15,7 @@ import { useCurrentCustomerQuery } from '@/hooks/CustomerAuth/useCustomerAuthQue
 import { useCustomerCheckoutForm } from '@/hooks/CustomerCart/useCustomerCartForm';
 import { useCustomerCartModals } from '@/hooks/CustomerCart/useCustomerCartModals';
 import { useCustomerCartMutations } from '@/hooks/CustomerCart/useCustomerCartMutations';
-import { useCustomerCartQuery } from '@/hooks/CustomerCart/useCustomerCartQuery';
+import { useCustomerCartQuery, useCustomerDeliverySlotsQuery } from '@/hooks/CustomerCart/useCustomerCartQuery';
 import { formatMoney } from '@/lib/formatters/money';
 import type { CheckoutCustomerInput, CheckoutStartedModel, CustomerCouponPreviewModel } from '@/types/CustomerCart/customerCartTypes';
 import type { CheckoutCustomerFormValues } from '@/validation/CustomerCart/customerCartValidation';
@@ -31,6 +31,7 @@ export function CustomerCartContent() {
   const [groupCartOpened, setGroupCartOpened] = useState(false);
   const [checkoutWasGuest, setCheckoutWasGuest] = useState(false);
   const mutations = useCustomerCartMutations(modals.closeModal);
+  const deliverySlotsQuery = useCustomerDeliverySlotsQuery(checkoutForm.values.fulfillmentMethod);
   const cart = cartQuery.data;
   const activeDiscount = couponPreview?.valid ? couponPreview : null;
   const displaySubtotal = activeDiscount?.subtotalCents ?? cart?.subtotalCents ?? cart?.totalCents ?? 0;
@@ -244,6 +245,8 @@ export function CustomerCartContent() {
         loading={mutations.checkoutMutation.isPending}
         form={checkoutForm}
         currentUser={currentCustomerQuery.data}
+        deliverySlots={deliverySlotsQuery.data ?? []}
+        deliverySlotsLoading={deliverySlotsQuery.isLoading}
         onClose={modals.closeModal}
         onSubmit={() =>
           mutations.checkoutMutation.mutate(buildCheckoutPayload(checkoutForm.values, activeDiscount?.code), {
@@ -291,7 +294,8 @@ function buildCheckoutPayload(values: CheckoutCustomerFormValues, couponCode?: s
     'postalCode',
     'handoffInstructions',
     'deliveryDate',
-    'deliveryWindow'
+    'deliveryWindow',
+    'deliverySlotId'
   ] as const;
 
   optionalFields.forEach((field) => {

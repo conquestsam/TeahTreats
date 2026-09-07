@@ -7,8 +7,10 @@ import { OutboxService } from '../../outbox/application/outbox.service.js';
 import type { AuthenticatedUser } from '../../../common/types/authenticated-request.js';
 import type {
   CreateManualPaymentMethodDto,
+  CreateDeliverySlotDto,
   UpdateApprovalSettingsDto,
   UpdateBusinessProfileDto,
+  UpdateDeliverySlotDto,
   UpdateManualPaymentMethodDto,
   UpdateNotificationChannelsDto
 } from '../presentation/dto/admin-settings.dto.js';
@@ -27,9 +29,11 @@ export class AdminSettingsService {
     this.ensureCanReadSettings(actor);
     const tenant = await this.findTenantOrThrow(tenantId);
     const manualPaymentMethods = await this.listManualPaymentMethods(tenant.id);
+    const deliverySlots = await this.listDeliverySlots(tenant.id);
     return {
       tenant: this.toTenantSettingsSummary(tenant),
-      manualPaymentMethods
+      manualPaymentMethods,
+      deliverySlots
     };
   }
 
@@ -251,6 +255,109 @@ export class AdminSettingsService {
     return this.getSettings(actor, tenantId);
   }
 
+  async listDeliverySlots(tenantId: string) {
+    await this.findTenantOrThrow(tenantId);
+    const slots = await this.prisma.deliverySlot.findMany({
+      where: { tenantId },
+      orderBy: [{ active: 'desc' }, { startTime: 'asc' }, { label: 'asc' }]
+    });
+    const orderCounts = await this.prisma.order.groupBy({
+      by: ['deliverySlotId'],
+      where: {
+        tenantId,
+        deliverySlotId: { in: slots.map((slot) => slot.id) },
+        status: {
+          notIn: ['cancelled', 'expired', 'refunded']
+        }
+      },
+      _count: { _all: true }
+    });
+    const counts = new Map(orderCounts.map((row) => [row.deliverySlotId, row._count._all]));
+
+    return slots.map((slot) => {
+      const bookedCount = counts.get(slot.id) ?? 0;
+      return {
+        id: slot.id,
+        tenantId: slot.tenantId,
+        label: slot.label,
+        method: slot.method as 'delivery_handoff' | 'store_pickup' | 'scheduled_delivery',
+        startTime: slot.startTime,
+        endTime: slot.endTime,
+        feeCents: slot.feeCents,
+        capacity: slot.capacity,
+        cutoffTime: slot.cutoffTime,
+        active: slot.active,
+        hubId: slot.hubId,
+        storeId: slot.storeId,
+        bookedCount,
+        remainingCapacity: Math.max(0, slot.capacity - bookedCount),
+        createdAt: slot.createdAt.toISOString(),
+        updatedAt: slot.updatedAt.toISOString()
+      };
+    });
+  }
+
+  async createDeliverySlot(actor: AuthenticatedUser, tenantId: string, dto: CreateDeliverySlotDto) {
+    await this.findTenantOrThrow(tenantId);
+    const slot = await this.prisma.deliverySlot.create({
+      data: this.deliverySlotData(tenantId, dto)
+    });
+
+    await this.writeAuditAndEvent({
+      actorId: actor.id,
+      tenantId,
+      action: 'settings.delivery_slot.created',
+      target: slot.id,
+      eventName: domainEvents.settingsBusinessProfileUpdated,
+      payload: { tenantId, slotId: slot.id }
+    });
+
+    return this.getSettings(actor, tenantId);
+  }
+
+  async updateDeliverySlot(
+    actor: AuthenticatedUser,
+    tenantId: string,
+    slotId: string,
+    dto: UpdateDeliverySlotDto,
+  ) {
+    await this.ensureDeliverySlotBelongsToTenant(tenantId, slotId);
+    const slot = await this.prisma.deliverySlot.update({
+      where: { id: slotId },
+      data: this.deliverySlotUpdateData(dto)
+    });
+
+    await this.writeAuditAndEvent({
+      actorId: actor.id,
+      tenantId,
+      action: 'settings.delivery_slot.updated',
+      target: slot.id,
+      eventName: domainEvents.settingsBusinessProfileUpdated,
+      payload: { tenantId, slotId: slot.id }
+    });
+
+    return this.getSettings(actor, tenantId);
+  }
+
+  async setDeliverySlotStatus(actor: AuthenticatedUser, tenantId: string, slotId: string, active: boolean) {
+    await this.ensureDeliverySlotBelongsToTenant(tenantId, slotId);
+    const slot = await this.prisma.deliverySlot.update({
+      where: { id: slotId },
+      data: { active }
+    });
+
+    await this.writeAuditAndEvent({
+      actorId: actor.id,
+      tenantId,
+      action: active ? 'settings.delivery_slot.activated' : 'settings.delivery_slot.paused',
+      target: slot.id,
+      eventName: domainEvents.settingsBusinessProfileUpdated,
+      payload: { tenantId, slotId: slot.id, active }
+    });
+
+    return this.getSettings(actor, tenantId);
+  }
+
   private async ensureManualPaymentMethodBelongsToTenant(tenantId: string, methodId: string) {
     const method = await this.prisma.manualPaymentMethod.findFirst({
       where: { id: methodId, tenantId },
@@ -259,6 +366,47 @@ export class AdminSettingsService {
     if (!method) {
       throw new NotFoundException('Payment method was not found.');
     }
+  }
+
+  private async ensureDeliverySlotBelongsToTenant(tenantId: string, slotId: string) {
+    const slot = await this.prisma.deliverySlot.findFirst({
+      where: { id: slotId, tenantId },
+      select: { id: true }
+    });
+    if (!slot) {
+      throw new NotFoundException('Delivery slot was not found.');
+    }
+  }
+
+  private deliverySlotData(tenantId: string, dto: CreateDeliverySlotDto) {
+    return {
+      tenantId,
+      label: dto.label.trim(),
+      method: dto.method,
+      startTime: dto.startTime,
+      endTime: dto.endTime,
+      feeCents: dto.feeCents,
+      capacity: dto.capacity,
+      cutoffTime: dto.cutoffTime,
+      active: dto.active ?? true,
+      hubId: dto.hubId?.trim() || null,
+      storeId: dto.storeId?.trim() || null
+    };
+  }
+
+  private deliverySlotUpdateData(dto: UpdateDeliverySlotDto) {
+    return {
+      ...(dto.label !== undefined ? { label: dto.label.trim() } : {}),
+      ...(dto.method !== undefined ? { method: dto.method } : {}),
+      ...(dto.startTime !== undefined ? { startTime: dto.startTime } : {}),
+      ...(dto.endTime !== undefined ? { endTime: dto.endTime } : {}),
+      ...(dto.feeCents !== undefined ? { feeCents: dto.feeCents } : {}),
+      ...(dto.capacity !== undefined ? { capacity: dto.capacity } : {}),
+      ...(dto.cutoffTime !== undefined ? { cutoffTime: dto.cutoffTime } : {}),
+      ...(dto.active !== undefined ? { active: dto.active } : {}),
+      ...(dto.hubId !== undefined ? { hubId: dto.hubId.trim() || null } : {}),
+      ...(dto.storeId !== undefined ? { storeId: dto.storeId.trim() || null } : {})
+    };
   }
 
   private ensureCanReadSettings(actor: AuthenticatedUser) {

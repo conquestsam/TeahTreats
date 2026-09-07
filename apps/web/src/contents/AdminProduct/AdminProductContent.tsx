@@ -17,7 +17,7 @@ import { useAdminProductModals } from '@/hooks/AdminProduct/useAdminProductModal
 import { useAdminProductMutations } from '@/hooks/AdminProduct/useAdminProductMutations';
 import { useAdminProductQuery } from '@/hooks/AdminProduct/useAdminProductQuery';
 import { useAdminProductSkuForm } from '@/hooks/AdminProduct/useAdminProductSkuForm';
-import type { AdminProductModel } from '@/types/AdminProduct/adminProductTypes';
+import type { AdminProductModel, AdminProductSkuModel, UpdateAdminProductSkuInput } from '@/types/AdminProduct/adminProductTypes';
 import { MetricCard } from '@/components/ui/metric-card';
 import { AdminProductEmptyState } from './AdminProductEmptyState';
 import { AdminProductHeader } from './AdminProductHeader';
@@ -259,7 +259,7 @@ export function AdminProductContent() {
       sku: {
         name: skuForm.values.name,
         priceCents: Math.round(skuForm.values.priceCents * 100),
-        currency: 'USD',
+        currency: skuForm.values.currency,
         active: skuForm.values.active,
         ...(skuForm.values.size ? { size: skuForm.values.size } : {}),
         ...(skuForm.values.packCount ? { packCount: skuForm.values.packCount } : {}),
@@ -269,6 +269,18 @@ export function AdminProductContent() {
         ...(skuForm.values.dimensions ? { dimensions: skuForm.values.dimensions } : {}),
         perishableOverride: skuForm.values.perishableOverride
       }
+    });
+  };
+
+  const updateSku = (sku: AdminProductSkuModel, input: UpdateAdminProductSkuInput) => {
+    if (!selectedFreshProduct) {
+      return;
+    }
+
+    mutations.updateSkuMutation.mutate({
+      productId: selectedFreshProduct.id,
+      skuId: sku.id,
+      sku: input
     });
   };
 
@@ -433,11 +445,12 @@ export function AdminProductContent() {
         opened={modals.mode === 'details'}
         product={selectedFreshProduct}
         skuForm={skuForm}
-        skuLoading={mutations.skuMutation.isPending}
+        skuLoading={mutations.skuMutation.isPending || mutations.updateSkuMutation.isPending}
         productForm={productForm}
         productLoading={mutations.updateMutation.isPending}
         onClose={resetAndClose}
         onAddSku={addSku}
+        onUpdateSku={updateSku}
         onSaveSnackDetails={saveSnackDetails}
         onSaveSeo={saveSeo}
         onCreateImage={openCreateImage}
@@ -608,7 +621,7 @@ function ProductQuickPanel({
               <Text fw={850}>{sku.name}</Text>
               <Text size="xs" style={{ color: 'var(--tt-cream-muted)' }}>{sku.stockStatusLabel} • {sku.available} available</Text>
             </div>
-            <Text fw={900} style={{ color: '#ffd98a' }}>{formatUsd(sku.priceCents)}</Text>
+            <Text fw={900} style={{ color: '#ffd98a' }}>{formatMoney(sku.priceCents, sku.currency)}</Text>
           </div>
         ))}
         {product.skus.length === 0 ? (
@@ -687,10 +700,10 @@ function keyValueLines(value: string): Record<string, string> {
   return Object.fromEntries(entries);
 }
 
-function formatUsd(cents: number) {
+function formatMoney(cents: number, currency: string) {
   return new Intl.NumberFormat('en-US', {
     style: 'currency',
-    currency: 'USD'
+    currency: currency || 'USD'
   }).format(cents / 100);
 }
 

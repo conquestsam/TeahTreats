@@ -14,7 +14,8 @@ export const checkoutCustomerSchema = z.object({
   postalCode: z.string().trim().max(20, 'Use 20 characters or less.').optional(),
   handoffInstructions: z.string().trim().max(500, 'Use 500 characters or less.').optional(),
   deliveryDate: z.string().trim().max(32, 'Use 32 characters or less.').optional(),
-  deliveryWindow: z.string().trim().max(80, 'Use 80 characters or less.').optional()
+  deliveryWindow: z.string().trim().max(80, 'Use 80 characters or less.').optional(),
+  deliverySlotId: z.string().trim().max(120, 'Choose a valid delivery slot.').optional()
 });
 
 export type CheckoutCustomerFormValues = z.infer<typeof checkoutCustomerSchema>;

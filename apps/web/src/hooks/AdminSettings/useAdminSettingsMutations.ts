@@ -4,17 +4,22 @@ import { notifications } from '@mantine/notifications';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { adminSettingsQueryKey } from '@/constants/AdminSettings/adminSettingsConstants';
 import {
+  activateAdminDeliverySlot,
   activateAdminManualPaymentMethod,
+  createAdminDeliverySlot,
   createAdminManualPaymentMethod,
   deactivateAdminManualPaymentMethod,
+  pauseAdminDeliverySlot,
   updateAdminApprovalSettings,
   updateAdminBusinessProfile,
+  updateAdminDeliverySlot,
   updateAdminManualPaymentMethod,
   updateAdminNotificationSettings
 } from '@/services/AdminSettings/adminSettingsApi';
 import type {
   AdminApprovalSettingsInput,
   AdminBusinessProfileInput,
+  AdminDeliverySlotInput,
   AdminManualPaymentMethodInput,
   AdminNotificationSettingsInput
 } from '@/types/AdminSettings/adminSettingsTypes';
@@ -102,6 +107,47 @@ export function useAdminSettingsMutations(onDone: () => void) {
     onError: () => showError('Could not deactivate payment method.')
   });
 
+  const createDeliverySlotMutation = useMutation({
+    mutationFn: (input: AdminDeliverySlotInput) => createAdminDeliverySlot(input),
+    onSuccess: async () => {
+      await invalidate();
+      showSuccess('Delivery slot created.');
+      onDone();
+    },
+    onError: () => showError('Could not create delivery slot.')
+  });
+
+  const updateDeliverySlotMutation = useMutation({
+    mutationFn: (payload: { slotId: string; input: Partial<AdminDeliverySlotInput> }) =>
+      updateAdminDeliverySlot(payload.slotId, payload.input),
+    onSuccess: async () => {
+      await invalidate();
+      showSuccess('Delivery slot saved.');
+      onDone();
+    },
+    onError: () => showError('Could not save delivery slot.')
+  });
+
+  const activateDeliverySlotMutation = useMutation({
+    mutationFn: (slotId: string) => activateAdminDeliverySlot(slotId),
+    onSuccess: async () => {
+      await invalidate();
+      showSuccess('Delivery slot activated.');
+      onDone();
+    },
+    onError: () => showError('Could not activate delivery slot.')
+  });
+
+  const pauseDeliverySlotMutation = useMutation({
+    mutationFn: (slotId: string) => pauseAdminDeliverySlot(slotId),
+    onSuccess: async () => {
+      await invalidate();
+      showSuccess('Delivery slot paused.');
+      onDone();
+    },
+    onError: () => showError('Could not pause delivery slot.')
+  });
+
   return {
     businessProfileMutation,
     approvalSettingsMutation,
@@ -109,6 +155,10 @@ export function useAdminSettingsMutations(onDone: () => void) {
     createManualMethodMutation,
     updateManualMethodMutation,
     activateManualMethodMutation,
-    deactivateManualMethodMutation
+    deactivateManualMethodMutation,
+    createDeliverySlotMutation,
+    updateDeliverySlotMutation,
+    activateDeliverySlotMutation,
+    pauseDeliverySlotMutation
   };
 }

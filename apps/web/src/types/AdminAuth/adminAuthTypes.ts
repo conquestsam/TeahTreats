@@ -1,1 +1,7 @@
-export type { AdminAuthResponse, AdminAuthUser, AdminLoginInput } from '@snacks/shared';
+export type {
+  AdminAuthResponse,
+  AdminAuthUser,
+  AdminChangePasswordInput,
+  AdminChangePasswordResponse,
+  AdminLoginInput
+} from '@snacks/shared';
