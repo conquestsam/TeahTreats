@@ -127,10 +127,23 @@ cd /srv/teshtreats/TeahTreats
 docker compose --env-file .env.production -f docker-compose.prod.yml build api
 docker compose --env-file .env.production -f docker-compose.prod.yml up -d postgres redis opensearch
 docker compose --env-file .env.production -f docker-compose.prod.yml --profile migrate run --rm migrate
+docker compose --env-file .env.production -f docker-compose.prod.yml run --rm migrate pnpm prisma db push
 docker compose --env-file .env.production -f docker-compose.prod.yml up -d api worker
 docker compose --env-file .env.production -f docker-compose.prod.yml ps
 curl -fsS http://127.0.0.1:4000/api/v1/health
 ```
+
+`prisma migrate deploy` is the correct production command once `prisma/migrations` contains committed migration files. At the moment this repository has no migration files, so a fresh database still needs `prisma db push` once to create the current schema before seeding.
+
+If `docker compose up -d api worker` reports `dependency failed to start: container teahtreats-api-1 is unhealthy`, check whether the API is actually serving traffic:
+
+```bash
+curl -fsS http://127.0.0.1:4000/api/v1/health
+docker inspect teahtreats-api-1 --format '{{json .State.Health}}'
+docker compose --env-file .env.production -f docker-compose.prod.yml logs --tail=200 api
+```
+
+On first boot the API image may spend time enabling Corepack and preparing pnpm before Nest starts. The production Compose healthcheck includes a startup grace period so Docker does not mark the API unhealthy before it is ready.
 
 ## Seed Production Data
 
@@ -139,6 +152,14 @@ After schema deployment, seed the first tenant, roles, admin users, catalog, inv
 ```bash
 cd /srv/teshtreats/TeahTreats
 docker compose --env-file .env.production -f docker-compose.prod.yml build api
+docker compose --env-file .env.production -f docker-compose.prod.yml run --rm migrate pnpm prisma db push
+docker compose --env-file .env.production -f docker-compose.prod.yml run --rm migrate pnpm db:seed
+```
+
+If seeding fails with `The table public.Permission does not exist`, the database schema has not been created yet. Run:
+
+```bash
+docker compose --env-file .env.production -f docker-compose.prod.yml run --rm migrate pnpm prisma db push
 docker compose --env-file .env.production -f docker-compose.prod.yml run --rm migrate pnpm db:seed
 ```
 
