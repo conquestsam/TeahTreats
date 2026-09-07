@@ -132,6 +132,24 @@ docker compose --env-file .env.production -f docker-compose.prod.yml ps
 curl -fsS http://127.0.0.1:4000/api/v1/health
 ```
 
+## Seed Production Data
+
+After schema deployment, seed the first tenant, roles, admin users, catalog, inventory, and payment defaults:
+
+```bash
+cd /srv/teshtreats/TeahTreats
+docker compose --env-file .env.production -f docker-compose.prod.yml build api
+docker compose --env-file .env.production -f docker-compose.prod.yml run --rm migrate pnpm db:seed
+```
+
+If seeding fails with `Cannot find module '../packages/shared/src/permissions/index.ts'`, the server is running an older image or older code. Pull the latest code, rebuild the API image, and rerun the seed command:
+
+```bash
+git pull origin main
+docker compose --env-file .env.production -f docker-compose.prod.yml build api
+docker compose --env-file .env.production -f docker-compose.prod.yml run --rm migrate pnpm db:seed
+```
+
 ## Fix Prisma P1000 During Migration
 
 If migration fails with:

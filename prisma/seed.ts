@@ -1,5 +1,5 @@
 import { PrismaClient } from '@prisma/client';
-import { permissions } from '../packages/shared/src/permissions/index.ts';
+import { permissions } from '@snacks/shared';
 import { createRequire } from 'node:module';
 
 const prisma = new PrismaClient();
