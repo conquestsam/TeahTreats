@@ -68,13 +68,17 @@ export class StartCheckoutDto {
   @MaxLength(500)
   handoffInstructions?: string;
 
-  @ApiProperty({ example: '2026-09-06', required: false })
+  @ApiProperty({ example: '2026-09-06', required: false, description: 'Requested delivery or handoff date.' })
   @IsOptional()
   @IsString()
   @MaxLength(32)
   deliveryDate?: string;
 
-  @ApiProperty({ example: '4:00 PM - 7:00 PM', required: false })
+  @ApiProperty({
+    example: 'Afternoon window',
+    required: false,
+    description: 'Requested delivery or handoff window. This is not an exact delivery time.'
+  })
   @IsOptional()
   @IsString()
   @MaxLength(80)

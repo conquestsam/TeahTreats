@@ -16,7 +16,7 @@ export const checkoutCustomerInitialValues: CheckoutCustomerFormValues = {
   postalCode: '',
   handoffInstructions: '',
   deliveryDate: '',
-  deliveryWindow: '4:00 PM - 7:00 PM'
+  deliveryWindow: ''
 };
 
 export const customerTenantId = process.env.NEXT_PUBLIC_TEMP_TENANT_ID ?? 'platform';

@@ -225,14 +225,15 @@ export function CustomerCheckoutModal({
 
           <div className="grid gap-3 sm:grid-cols-2">
             <TextInput
-              label="Delivery Date"
-              placeholder="Today"
+              label="Requested Handoff Date"
+              placeholder="Select or enter a delivery date"
               {...form.getInputProps('deliveryDate')}
               classNames={{ input: 'tt-auth-input', label: 'tt-auth-label' }}
             />
             <TextInput
-              label="Delivery Window"
-              placeholder="4:00 PM - 7:00 PM"
+              label="Requested Handoff Window"
+              placeholder="Example: Afternoon handoff window"
+              description="This is a delivery window, not an exact arrival time."
               {...form.getInputProps('deliveryWindow')}
               classNames={{ input: 'tt-auth-input', label: 'tt-auth-label' }}
             />
