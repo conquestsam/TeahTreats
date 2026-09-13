@@ -68,6 +68,17 @@ export class AdjustInventoryBatchDto {
   reason!: string;
 }
 
+export class UpdateInventoryBatchExpiryDto {
+  @ApiProperty({ example: '2026-09-20T18:00:00.000Z' })
+  @IsDateString()
+  expiresAt!: string;
+
+  @ApiProperty({ example: 'Extended after freshness review.' })
+  @IsString()
+  @MinLength(2)
+  reason!: string;
+}
+
 export class ReserveInventoryDto {
   @ApiProperty()
   @IsUUID()

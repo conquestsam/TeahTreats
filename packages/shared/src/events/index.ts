@@ -54,6 +54,8 @@ export const domainEvents = {
   settingsManualPaymentMethodStatusChanged: 'settings.manual-payment-method-status-changed',
   vendorAccessChanged: 'vendor.access-changed',
   inventoryBatchCreated: 'inventory.batch-created',
+  inventoryBatchExpiryUpdated: 'inventory.batch-expiry-updated',
+  inventoryBatchExpiringSoon: 'inventory.batch-expiring-soon',
   inventoryQuantityAdjusted: 'inventory.quantity-adjusted',
   inventoryBatchExpired: 'inventory.batch-expired',
   inventoryReservationCreated: 'inventory.reservation-created',

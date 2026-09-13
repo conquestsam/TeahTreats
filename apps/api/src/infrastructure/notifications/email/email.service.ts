@@ -2,6 +2,9 @@ import { Injectable, Logger } from "@nestjs/common";
 import { Resend } from 'resend';
 import * as nodemailer from 'nodemailer';
 import { ConfigService } from "@nestjs/config";
+
+type ResendEmailResponse = Awaited<ReturnType<Resend['emails']['send']>>;
+
 @Injectable()
 export class EmailService {
   private readonly logger = new Logger(EmailService.name);
@@ -15,9 +18,9 @@ export class EmailService {
     const gmailUser = config.get<string>('GMAIL_USER');
     const gmailPass = config.get<string>('GMAIL_APP_PASSWORD');
     this.fromEmail =
-      config.get<string>('RESEND_FROM_EMAIL') ||
-      config.get<string>('GMAIL_FROM_EMAIL') ||
-      gmailUser ||
+      this.string(config.get<string>('RESEND_FROM_EMAIL')) ||
+      this.string(config.get<string>('GMAIL_FROM_EMAIL')) ||
+      this.string(gmailUser) ||
       'TeshTreats <orders@teshtreats.local>';
     this.resend = resendApiKey ? new Resend(resendApiKey) : null;
 
@@ -39,9 +42,13 @@ export class EmailService {
           subject: input.subject,
           html: input.html
         });
+        this.ensureResendSuccess(result);
         return { provider: 'resend', result };
       } catch (err: any) {
         this.logger.warn(`Resend email delivery failed: ${err.message}. Attempting Gmail fallback...`);
+        if (!this.gmailTransporter) {
+          throw err;
+        }
       }
     }
     if (this.gmailTransporter) {
@@ -60,5 +67,18 @@ export class EmailService {
       }
     }
     throw new Error('No email provider configured.');
+  }
+
+  private ensureResendSuccess(result: ResendEmailResponse) {
+    if (!result.error) {
+      return;
+    }
+
+    const status = result.error.statusCode ? ` (${result.error.statusCode})` : '';
+    throw new Error(`Resend rejected email: ${result.error.name}${status} - ${result.error.message}`);
+  }
+
+  private string(value: string | undefined) {
+    return value?.trim() || undefined;
   }
 }

@@ -6,12 +6,14 @@ import { AdminInventoryAdjustModal } from '@/components/AdminInventory/AdminInve
 import { AdminInventoryConfirmModal } from '@/components/AdminInventory/AdminInventoryConfirmModal';
 import { AdminInventoryCreateBatchModal } from '@/components/AdminInventory/AdminInventoryCreateBatchModal';
 import { AdminInventoryDetailsModal } from '@/components/AdminInventory/AdminInventoryDetailsModal';
+import { AdminInventoryExpiryModal } from '@/components/AdminInventory/AdminInventoryExpiryModal';
 import { AdminInventoryMobileCard } from '@/components/AdminInventory/AdminInventoryMobileCard';
 
 import { AdminInventoryTable } from '@/components/AdminInventory/AdminInventoryTable';
 import {
   useAdjustInventoryBatchForm,
-  useCreateInventoryBatchForm
+  useCreateInventoryBatchForm,
+  useUpdateInventoryBatchExpiryForm
 } from '@/hooks/AdminInventory/useAdminInventoryForms';
 import { useAdminInventoryModals } from '@/hooks/AdminInventory/useAdminInventoryModals';
 import { useAdminInventoryMutations } from '@/hooks/AdminInventory/useAdminInventoryMutations';
@@ -20,6 +22,7 @@ import {
   useAdminInventorySkuQuery
 } from '@/hooks/AdminInventory/useAdminInventoryQuery';
 import { MetricCard } from '@/components/ui/metric-card';
+import type { AdminInventoryBatchModel } from '@/types/AdminInventory/adminInventoryTypes';
 import { AdminInventoryEmptyState } from './AdminInventoryEmptyState';
 import { AdminInventoryHeader } from './AdminInventoryHeader';
 import { AdminInventoryLoadingState } from './AdminInventoryLoadingState';
@@ -30,10 +33,12 @@ export function AdminInventoryContent() {
   const skuQuery = useAdminInventorySkuQuery();
   const createForm = useCreateInventoryBatchForm();
   const adjustForm = useAdjustInventoryBatchForm();
+  const expiryForm = useUpdateInventoryBatchExpiryForm();
 
   const resetAndClose = () => {
     createForm.reset();
     adjustForm.reset();
+    expiryForm.reset();
     modals.closeModal();
   };
 
@@ -55,6 +60,14 @@ export function AdminInventoryContent() {
       qualityChecked: true
     });
     modals.openCreate();
+  };
+
+  const openExpiry = (batch: AdminInventoryBatchModel) => {
+    expiryForm.setValues({
+      expiresAt: batch.expiresAt ? toDateTimeLocalValue(batch.expiresAt) : '',
+      reason: 'Extended after freshness review.'
+    });
+    modals.openExpiry(batch);
   };
 
   const filteredBatches = useMemo(() => {
@@ -129,6 +142,7 @@ export function AdminInventoryContent() {
                   batch={batch}
                   onDetails={modals.openDetails}
                   onAdjust={modals.openAdjust}
+                  onUpdateExpiry={openExpiry}
                   onExpire={modals.openExpire}
                 />
               ))}
@@ -138,6 +152,7 @@ export function AdminInventoryContent() {
                 batches={filteredBatches}
                 onDetails={modals.openDetails}
                 onAdjust={modals.openAdjust}
+                onUpdateExpiry={openExpiry}
                 onExpire={modals.openExpire}
               />
             </div>
@@ -190,6 +205,25 @@ export function AdminInventoryContent() {
         onClose={resetAndClose}
       />
 
+      <AdminInventoryExpiryModal
+        opened={modals.mode === 'expiry'}
+        loading={mutations.updateExpiryMutation.isPending}
+        batch={modals.selectedBatch}
+        form={expiryForm}
+        onClose={resetAndClose}
+        onSubmit={() => {
+          if (modals.selectedBatch) {
+            mutations.updateExpiryMutation.mutate({
+              batchId: modals.selectedBatch.id,
+              expiry: {
+                expiresAt: new Date(expiryForm.values.expiresAt).toISOString(),
+                reason: expiryForm.values.reason
+              }
+            });
+          }
+        }}
+      />
+
       <AdminInventoryConfirmModal
         opened={modals.mode === 'expire'}
         loading={mutations.expireMutation.isPending}
@@ -205,4 +239,10 @@ export function AdminInventoryContent() {
       />
     </div>
   );
+}
+
+function toDateTimeLocalValue(value: string) {
+  const date = new Date(value);
+  const offsetMs = date.getTimezoneOffset() * 60 * 1000;
+  return new Date(date.getTime() - offsetMs).toISOString().slice(0, 16);
 }

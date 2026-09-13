@@ -14,7 +14,8 @@ import { InventoryService } from '../application/inventory.service.js';
 import {
   AdjustInventoryBatchDto,
   CreateInventoryBatchDto,
-  ReserveInventoryDto
+  ReserveInventoryDto,
+  UpdateInventoryBatchExpiryDto
 } from './dto/inventory.dto.js';
 
 @ApiTags('admin/inventory')
@@ -82,6 +83,18 @@ export class InventoryController {
     @Param('batchId') batchId: string,
   ) {
     return { data: await this.inventory.expireBatch(actor, tenantId, batchId) };
+  }
+
+  @Post('batches/:batchId/expiry')
+  @RequirePermissions(permissions.inventoryWrite)
+  @ApiAdminEndpoint('Update an inventory batch expiry date.', { tenant: 'optional' })
+  async updateBatchExpiry(
+    @CurrentUser() actor: AuthenticatedUser,
+    @CurrentTenant() tenantId: string,
+    @Param('batchId') batchId: string,
+    @Body() dto: UpdateInventoryBatchExpiryDto,
+  ) {
+    return { data: await this.inventory.updateBatchExpiry(actor, tenantId, batchId, dto) };
   }
 
   @Post('reservations')

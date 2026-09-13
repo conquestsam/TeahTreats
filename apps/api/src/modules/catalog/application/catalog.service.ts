@@ -103,7 +103,12 @@ export class CatalogService {
           name: domainEvents.productCreated,
           tenantId: resolvedTenantId,
           aggregateId: product.id,
-          payload: this.toJson({ productId: product.id, slug: product.slug })
+          payload: this.toJson({
+            productId: product.id,
+            slug: product.slug,
+            name: product.name,
+            status: product.status
+          })
         }
       });
 
@@ -147,7 +152,13 @@ export class CatalogService {
           name: domainEvents.productUpdated,
           tenantId: resolvedTenantId,
           aggregateId: product.id,
-          payload: this.toJson({ productId: product.id, status: product.status })
+          payload: this.toJson({
+            productId: product.id,
+            name: product.name,
+            previousStatus: existing.status,
+            status: product.status,
+            statusChanged: existing.status !== product.status
+          })
         }
       });
 
@@ -158,7 +169,7 @@ export class CatalogService {
   async archiveProduct(tenantId: string, productId: string) {
     ProductPolicy.ensureTenantContext(tenantId);
     const resolvedTenantId = await this.resolveTenantId(tenantId);
-    await this.getProduct(resolvedTenantId, productId);
+    const existing = await this.getProduct(resolvedTenantId, productId);
 
     return this.prisma.$transaction(async (tx) => {
       const product = await tx.product.update({
@@ -172,7 +183,12 @@ export class CatalogService {
           name: domainEvents.productArchived,
           tenantId: resolvedTenantId,
           aggregateId: product.id,
-          payload: this.toJson({ productId: product.id })
+          payload: this.toJson({
+            productId: product.id,
+            name: product.name,
+            previousStatus: existing.status,
+            status: product.status
+          })
         }
       });
 
@@ -197,7 +213,12 @@ export class CatalogService {
           name: domainEvents.productRestored,
           tenantId: resolvedTenantId,
           aggregateId: product.id,
-          payload: this.toJson({ productId: product.id })
+          payload: this.toJson({
+            productId: product.id,
+            name: product.name,
+            previousStatus: ProductStatus.archived,
+            status: product.status
+          })
         }
       });
 
@@ -230,7 +251,13 @@ export class CatalogService {
           name: domainEvents.skuCreated,
           tenantId: resolvedTenantId,
           aggregateId: productId,
-          payload: this.toJson({ productId, skuId: sku.id })
+          payload: this.toJson({
+            productId,
+            skuId: sku.id,
+            productName: product.name,
+            skuName: sku.name,
+            active: sku.active
+          })
         }
       });
 
@@ -272,7 +299,15 @@ export class CatalogService {
           name: domainEvents.skuUpdated,
           tenantId: resolvedTenantId,
           aggregateId: productId,
-          payload: this.toJson({ productId, skuId: sku.id })
+          payload: this.toJson({
+            productId,
+            skuId: sku.id,
+            productName: product.name,
+            skuName: sku.name,
+            previousActive: existingSku.active,
+            active: sku.active,
+            activeChanged: existingSku.active !== sku.active
+          })
         }
       });
 

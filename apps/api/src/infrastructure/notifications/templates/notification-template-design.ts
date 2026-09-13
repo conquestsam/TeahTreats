@@ -4,6 +4,7 @@ export interface NotificationEmailDesignInput {
   body: string;
   supportEmail?: string | null;
   supportPhone?: string | null;
+  logoUrl?: string | null;
   actionUrl?: string;
   actionLabel?: string;
 }
@@ -14,6 +15,7 @@ export function renderNotificationEmailHtml(input: NotificationEmailDesignInput)
   const body = escapeHtml(input.body);
   const supportEmail = input.supportEmail ? escapeHtml(input.supportEmail) : '';
   const supportPhone = input.supportPhone ? escapeHtml(input.supportPhone) : '';
+  const logoUrl = input.logoUrl ? escapeHtml(input.logoUrl) : '';
   const actionUrl = input.actionUrl ? escapeHtml(input.actionUrl) : '';
   const actionLabel = escapeHtml(input.actionLabel || 'Open TeahTreats');
   const supportLine = supportEmail || supportPhone
@@ -28,6 +30,11 @@ export function renderNotificationEmailHtml(input: NotificationEmailDesignInput)
       <div style="max-width:640px;margin:0 auto;padding:32px 18px;">
         <div style="border:1px solid rgba(247,197,103,.24);background:#17151b;border-radius:12px;overflow:hidden;">
           <div style="padding:28px 30px;text-align:center;border-bottom:1px solid rgba(247,197,103,.14);">
+            ${
+              logoUrl
+                ? `<img src="${logoUrl}" alt="${brandName}" width="168" style="display:block;width:168px;max-width:70%;height:auto;margin:0 auto 14px;border:0;outline:none;text-decoration:none;" />`
+                : ''
+            }
             <div style="font-family:Georgia,'Times New Roman',serif;font-size:28px;font-weight:700;color:#fff8f4;">${brandName}</div>
             <div style="width:44px;height:2px;background:#f7c567;margin:16px auto 0;"></div>
           </div>

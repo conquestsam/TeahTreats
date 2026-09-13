@@ -6,6 +6,7 @@ interface AdminInventoryTableProps {
   batches: AdminInventoryBatchModel[];
   onDetails: (batch: AdminInventoryBatchModel) => void;
   onAdjust: (batch: AdminInventoryBatchModel) => void;
+  onUpdateExpiry: (batch: AdminInventoryBatchModel) => void;
   onExpire: (batch: AdminInventoryBatchModel) => void;
 }
 
@@ -13,6 +14,7 @@ export function AdminInventoryTable({
   batches,
   onDetails,
   onAdjust,
+  onUpdateExpiry,
   onExpire
 }: AdminInventoryTableProps) {
   return (
@@ -60,6 +62,11 @@ export function AdminInventoryTable({
                     <Button size="xs" onClick={() => onAdjust(batch)}>
                       Adjust Stock
                     </Button>
+                    {batch.expiresAt ? (
+                      <Button size="xs" variant="light" onClick={() => onUpdateExpiry(batch)}>
+                        Update Expiry
+                      </Button>
+                    ) : null}
                     {!batch.expiredAt ? (
                       <Button size="xs" color="red" variant="light" onClick={() => onExpire(batch)}>
                         Mark Expired

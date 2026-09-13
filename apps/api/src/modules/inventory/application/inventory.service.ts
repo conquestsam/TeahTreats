@@ -12,7 +12,8 @@ import { InventoryPolicy } from '../domain/inventory-policy.js';
 import type {
   AdjustInventoryBatchDto,
   CreateInventoryBatchDto,
-  ReserveInventoryDto
+  ReserveInventoryDto,
+  UpdateInventoryBatchExpiryDto
 } from '../presentation/dto/inventory.dto.js';
 
 const batchInclude = {
@@ -149,13 +150,22 @@ export class InventoryService {
         actorId: actor.id,
         action: 'inventory.batch-created',
         target: created.id,
-        payload: { batchId: created.id, skuId: sku.id, quantity: dto.quantity }
+        payload: { batchId: created.id, skuId: sku.id, productId: sku.productId, quantity: dto.quantity }
       });
       await this.writeOutbox(tx, {
         tenantId: resolvedTenantId,
         aggregateId: created.id,
         name: domainEvents.inventoryBatchCreated,
-        payload: { batchId: created.id, skuId: sku.id, quantity: dto.quantity }
+        payload: {
+          batchId: created.id,
+          skuId: sku.id,
+          productId: sku.productId,
+          title: `${sku.product.name} - ${sku.name}`,
+          message: `${sku.product.name} ${sku.name} received ${dto.quantity} ${this.textFromMetadata(sku.metadata, 'unitLabel') ?? 'units'} into inventory.`,
+          quantity: dto.quantity,
+          expiresAt: created.expiresAt?.toISOString() ?? null,
+          batchCode: this.shortBatchCode(created.id)
+        }
       });
       await this.writeInventoryChangedOutbox(tx, resolvedTenantId, sku.productId, sku.id);
 
@@ -213,13 +223,22 @@ export class InventoryService {
         actorId: actor.id,
         action: 'inventory.quantity-adjusted',
         target: batch.id,
-        payload: { batchId: batch.id, quantityDelta: dto.quantityDelta }
+        payload: { batchId: batch.id, skuId: batch.skuId, productId: batch.sku.productId, quantityDelta: dto.quantityDelta }
       });
       await this.writeOutbox(tx, {
         tenantId: resolvedTenantId,
         aggregateId: batch.id,
         name: domainEvents.inventoryQuantityAdjusted,
-        payload: { batchId: batch.id, skuId: batch.skuId, quantityDelta: dto.quantityDelta }
+        payload: {
+          batchId: batch.id,
+          skuId: batch.skuId,
+          productId: batch.sku.productId,
+          title: `${batch.sku.product.name} - ${batch.sku.name}`,
+          message: `${batch.sku.product.name} ${batch.sku.name} stock was adjusted by ${dto.quantityDelta} ${this.textFromMetadata(batch.sku.metadata, 'unitLabel') ?? 'units'}.`,
+          quantityDelta: dto.quantityDelta,
+          reason: dto.reason.trim(),
+          batchCode: this.textFromRecord(this.objectRecord(batch.metadata), 'batchCode') ?? this.shortBatchCode(batch.id)
+        }
       });
       await this.writeInventoryChangedOutbox(tx, resolvedTenantId, batch.sku.productId, batch.skuId);
 
@@ -262,13 +281,100 @@ export class InventoryService {
         actorId: actor.id,
         action: 'inventory.batch-expired',
         target: batch.id,
-        payload: { batchId: batch.id, skuId: batch.skuId }
+        payload: { batchId: batch.id, skuId: batch.skuId, productId: batch.sku.productId }
       });
       await this.writeOutbox(tx, {
         tenantId: resolvedTenantId,
         aggregateId: batch.id,
         name: domainEvents.inventoryBatchExpired,
-        payload: { batchId: batch.id, skuId: batch.skuId }
+        payload: {
+          batchId: batch.id,
+          skuId: batch.skuId,
+          productId: batch.sku.productId,
+          title: `${batch.sku.product.name} - ${batch.sku.name}`,
+          message: `${batch.sku.product.name} ${batch.sku.name} batch ${this.textFromRecord(this.objectRecord(batch.metadata), 'batchCode') ?? this.shortBatchCode(batch.id)} was marked expired and is no longer sellable.`,
+          batchCode: this.textFromRecord(this.objectRecord(batch.metadata), 'batchCode') ?? this.shortBatchCode(batch.id)
+        }
+      });
+      await this.writeInventoryChangedOutbox(tx, resolvedTenantId, batch.sku.productId, batch.skuId);
+
+      return nextBatch;
+    });
+
+    return this.toBatchSummary(updated);
+  }
+
+  async updateBatchExpiry(
+    actor: AuthenticatedUser,
+    tenantId: string,
+    batchId: string,
+    dto: UpdateInventoryBatchExpiryDto,
+  ) {
+    InventoryPolicy.ensureTenantContext(tenantId);
+    const resolvedTenantId = await this.resolveTenantId(tenantId);
+    const batch = InventoryPolicy.ensureFound(
+      await this.prisma.inventoryBatch.findFirst({
+        where: { id: batchId, tenantId: resolvedTenantId },
+        include: batchInclude
+      }),
+    );
+    const expiresAt = new Date(dto.expiresAt);
+    InventoryPolicy.ensureExpiry({
+      isPerishable: this.isPerishable(batch.sku.metadata, batch.sku.product.metadata),
+      expiresAt
+    });
+
+    const previousExpiresAt = batch.expiresAt;
+    const batchCode = this.textFromRecord(this.objectRecord(batch.metadata), 'batchCode') ?? this.shortBatchCode(batch.id);
+    const updated = await this.prisma.$transaction(async (tx) => {
+      const nextBatch = await tx.inventoryBatch.update({
+        where: { id: batch.id },
+        data: {
+          expiresAt,
+          expiredAt: null
+        },
+        include: batchInclude
+      });
+
+      await tx.inventoryAdjustment.create({
+        data: {
+          batchId: batch.id,
+          tenantId: resolvedTenantId,
+          skuId: batch.skuId,
+          actorId: actor.id,
+          type: InventoryAdjustmentType.correction,
+          quantityDelta: 0,
+          reason: dto.reason.trim()
+        }
+      });
+      await this.writeAudit(tx, {
+        tenantId: resolvedTenantId,
+        actorId: actor.id,
+        action: 'inventory.batch-expiry-updated',
+        target: batch.id,
+        payload: {
+          batchId: batch.id,
+          skuId: batch.skuId,
+          productId: batch.sku.productId,
+          previousExpiresAt: previousExpiresAt?.toISOString() ?? null,
+          expiresAt: expiresAt.toISOString()
+        }
+      });
+      await this.writeOutbox(tx, {
+        tenantId: resolvedTenantId,
+        aggregateId: batch.id,
+        name: domainEvents.inventoryBatchExpiryUpdated,
+        payload: {
+          batchId: batch.id,
+          skuId: batch.skuId,
+          productId: batch.sku.productId,
+          title: `${batch.sku.product.name} - ${batch.sku.name}`,
+          message: `${batch.sku.product.name} ${batch.sku.name} batch ${batchCode} expiry was updated to ${expiresAt.toISOString()}.`,
+          reason: dto.reason.trim(),
+          previousExpiresAt: previousExpiresAt?.toISOString() ?? null,
+          expiresAt: expiresAt.toISOString(),
+          batchCode
+        }
       });
       await this.writeInventoryChangedOutbox(tx, resolvedTenantId, batch.sku.productId, batch.skuId);
 

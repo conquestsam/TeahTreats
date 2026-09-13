@@ -44,6 +44,7 @@ import { WebhooksModule } from './webhooks/webhooks.module.js';
   imports: [
     ConfigModule.forRoot({
       isGlobal: true,
+      envFilePath: ['.env', '../../.env'],
       validate: validateEnv
     }),
     SecurityCommonModule,

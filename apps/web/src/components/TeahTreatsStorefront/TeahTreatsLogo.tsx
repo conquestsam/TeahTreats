@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import Image from 'next/image';
 
 interface TeahTreatsLogoProps {
   href?: string;
@@ -9,12 +10,13 @@ interface TeahTreatsLogoProps {
 
 function LogoContent() {
   return (
-    <img
-      src="/brand/teshtreats-logo.jpeg"
+    <Image
+      src="/brand/teshtreats-logo.jpg"
       alt="TeshTreats LLC Signature"
       className="tt-logo-image"
       width={168}
-      height={104}
+      height={64}
+      priority
     />
   );
 }

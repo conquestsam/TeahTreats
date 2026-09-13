@@ -17,8 +17,14 @@ export const adjustInventoryBatchSchema = z.object({
   reason: z.string().trim().min(2, 'Reason is required.')
 });
 
+export const updateInventoryBatchExpirySchema = z.object({
+  expiresAt: z.string().min(1, 'Choose an expiry date.'),
+  reason: z.string().trim().min(2, 'Reason is required.')
+});
+
 export type CreateInventoryBatchFormValues = z.infer<typeof createInventoryBatchSchema>;
 export type AdjustInventoryBatchFormValues = z.infer<typeof adjustInventoryBatchSchema>;
+export type UpdateInventoryBatchExpiryFormValues = z.infer<typeof updateInventoryBatchExpirySchema>;
 
 export function validateWithSchema<TValues extends Record<string, unknown>>(
   schema: z.ZodType<TValues>,

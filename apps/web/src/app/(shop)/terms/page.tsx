@@ -1,5 +1,13 @@
+import type { Metadata } from 'next';
 import { AppShell } from '../../../components/layout/app-shell';
 import { LegalPageContent } from '../../../contents/Legal/LegalPageContent';
+import { createPageMetadata } from '../../../lib/seo/metadata';
+
+export const metadata: Metadata = createPageMetadata({
+  title: 'Terms of Service | TeshTreats',
+  description: 'Review the terms for using TeshTreats ordering, payments, accounts, and support.',
+  path: '/terms'
+});
 
 export default function TermsPage() {
   return (

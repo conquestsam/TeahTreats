@@ -79,6 +79,11 @@ export interface AdjustInventoryBatchInput {
   reason: string;
 }
 
+export interface UpdateInventoryBatchExpiryInput {
+  expiresAt: string;
+  reason: string;
+}
+
 export interface ReserveInventoryInput {
   skuId: string;
   quantity: number;

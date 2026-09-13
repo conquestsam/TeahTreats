@@ -23,5 +23,6 @@ export const realtimeEventTypes = {
 export const workerJobs = {
   processOutbox: 'process-outbox',
   deliverNotifications: 'deliver-notifications',
-  releaseExpiredReservations: 'release-expired-reservations'
+  releaseExpiredReservations: 'release-expired-reservations',
+  checkInventoryExpiryAlerts: 'check-inventory-expiry-alerts'
 } as const;

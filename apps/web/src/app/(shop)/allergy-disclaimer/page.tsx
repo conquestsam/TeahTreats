@@ -1,5 +1,13 @@
+import type { Metadata } from 'next';
 import { AppShell } from '../../../components/layout/app-shell';
 import { LegalPageContent } from '../../../contents/Legal/LegalPageContent';
+import { createPageMetadata } from '../../../lib/seo/metadata';
+
+export const metadata: Metadata = createPageMetadata({
+  title: 'Allergy Disclaimer | TeshTreats',
+  description: 'Review allergy and cross-contact guidance before ordering TeshTreats snacks, cakes, and drinks.',
+  path: '/allergy-disclaimer'
+});
 
 export default function AllergyDisclaimerPage() {
   return (

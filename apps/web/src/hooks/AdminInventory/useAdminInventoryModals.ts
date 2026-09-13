@@ -31,6 +31,10 @@ export function useAdminInventoryModals() {
       setSelectedBatch(batch);
       setMode('expire');
     },
+    openExpiry: (batch: AdminInventoryBatchModel) => {
+      setSelectedBatch(batch);
+      setMode('expiry');
+    },
     closeModal
   };
 }

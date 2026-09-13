@@ -1,5 +1,13 @@
+import type { Metadata } from 'next';
 import { AppShell } from '../../../components/layout/app-shell';
 import { LegalPageContent } from '../../../contents/Legal/LegalPageContent';
+import { createPageMetadata } from '../../../lib/seo/metadata';
+
+export const metadata: Metadata = createPageMetadata({
+  title: 'Refund Policy | TeshTreats',
+  description: 'Understand TeshTreats refund rules for fresh snacks, custom cakes, manual payments, and prepared orders.',
+  path: '/refund-policy'
+});
 
 export default function RefundPolicyPage() {
   return (

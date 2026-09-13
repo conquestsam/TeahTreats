@@ -4,7 +4,7 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "next dev --port 3000",
+    "dev": "node ../../scripts/dev-web.mjs",
     "build": "next build --webpack",
     "lint": "eslint src",
     "typecheck": "tsc -p tsconfig.json --noEmit",

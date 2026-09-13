@@ -36,13 +36,14 @@ export function AdminNotificationContent() {
         />
 
         <Alert color="yellow" variant="light" title="Email smoke test">
-          Use this before testing guest checkout. A green result means Gmail or Resend accepted the message; a failed row will show the provider error in the table.
+          Use this before testing guest checkout. A supplied recipient is used for this test only; blank falls back to the tenant admin email.
         </Alert>
 
         <Group justify="flex-end" align="end">
           <TextInput
-            label="Send test email to"
-            placeholder="admin@example.com, or leave blank for tenant email"
+            label="Test recipient email"
+            description="Overrides the tenant email for this test only."
+            placeholder="name@example.com"
             value={testEmail}
             onChange={(event) => setTestEmail(event.currentTarget.value)}
             className="min-w-[280px] flex-1 sm:flex-none"

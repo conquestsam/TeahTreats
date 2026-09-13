@@ -1,31 +1,100 @@
-name: Database Backup
+name: Daily Server Database Backup
 
 on:
   workflow_dispatch:
   schedule:
     - cron: '0 7 * * *'
 
+concurrency:
+  group: daily-server-database-backup
+  cancel-in-progress: false
+
 jobs:
   backup:
+    name: Backup Postgres On Server And Send To Telegram
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 22
-      - name: Install PostgreSQL client
-        run: sudo apt-get update && sudo apt-get install -y postgresql-client
-      - name: Run backup and notifications
+      - name: Install SSH key
+        run: |
+          set -euo pipefail
+          mkdir -p ~/.ssh
+          printf '%s\n' "$SSH_PRIVATE_KEY" > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+          ssh-keyscan -H "$SSH_HOST" >> ~/.ssh/known_hosts
         env:
-          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          SSH_HOST: ${{ secrets.SSH_HOST }}
+          SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
+
+      - name: Create backup on server
+        id: server-backup
+        run: |
+          set -euo pipefail
+          backup_path="$(
+            ssh -i ~/.ssh/deploy_key "$SSH_USER@$SSH_HOST" \
+              "APP_DIR='$APP_DIR' COMPOSE_FILE='$COMPOSE_FILE' RETENTION_DAYS='$RETENTION_DAYS' bash -s" <<'REMOTE'
+                set -euo pipefail
+                cd "$APP_DIR"
+                test -f .env.production
+                mkdir -p backups
+                timestamp="$(date -u +%Y%m%d-%H%M%S)"
+                backup_file="backups/teshtreats-${timestamp}.sql.gz"
+                docker compose --env-file .env.production -f "${COMPOSE_FILE:-docker-compose.prod.yml}" exec -T postgres \
+                  sh -c 'PGPASSWORD="$POSTGRES_PASSWORD" pg_dump -U "${POSTGRES_USER:-snacks}" -d "${POSTGRES_DB:-snacks_commerce}" --no-owner --no-privileges' \
+                  | gzip -9 > "$backup_file"
+                test -s "$backup_file"
+                find backups -type f -name 'teshtreats-*.sql.gz' -mtime "+${RETENTION_DAYS:-14}" -delete
+                printf '%s/%s\n' "$APP_DIR" "$backup_file"
+          REMOTE
+          )"
+          echo "backup_path=${backup_path}" >> "$GITHUB_OUTPUT"
+          echo "backup_name=$(basename "$backup_path")" >> "$GITHUB_OUTPUT"
+        env:
+          SSH_HOST: ${{ secrets.SSH_HOST }}
+          SSH_USER: ${{ secrets.SSH_USER }}
+          APP_DIR: ${{ vars.SERVER_APP_DIR }}
+          COMPOSE_FILE: ${{ vars.SERVER_COMPOSE_FILE || 'docker-compose.prod.yml' }}
+          RETENTION_DAYS: ${{ vars.BACKUP_RETENTION_DAYS || '14' }}
+
+      - name: Download backup artifact from server
+        run: |
+          set -euo pipefail
+          mkdir -p backups
+          scp -i ~/.ssh/deploy_key "$SSH_USER@$SSH_HOST:$BACKUP_PATH" "backups/$BACKUP_NAME"
+          test -s "backups/$BACKUP_NAME"
+        env:
+          SSH_HOST: ${{ secrets.SSH_HOST }}
+          SSH_USER: ${{ secrets.SSH_USER }}
+          BACKUP_PATH: ${{ steps.server-backup.outputs.backup_path }}
+          BACKUP_NAME: ${{ steps.server-backup.outputs.backup_name }}
+
+      - name: Send backup to Telegram
+        run: |
+          set -euo pipefail
+          size="$(du -h "backups/$BACKUP_NAME" | awk '{print $1}')"
+          curl -fsS -X POST "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendDocument" \
+            -F "chat_id=${TELEGRAM_CHAT_ID}" \
+            -F "caption=TeshTreats production database backup: ${BACKUP_NAME} (${size})" \
+            -F "document=@backups/${BACKUP_NAME}"
+        env:
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
-          DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
-          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
-          TEAMS_WEBHOOK_URL: ${{ secrets.TEAMS_WEBHOOK_URL }}
-        run: node scripts/backup-postgres.mjs
-      - uses: actions/upload-artifact@v4
+          BACKUP_NAME: ${{ steps.server-backup.outputs.backup_name }}
+
+      - name: Upload short-lived GitHub artifact
+        uses: actions/upload-artifact@v4
         with:
-          name: postgres-backup
+          name: postgres-backup-${{ steps.server-backup.outputs.backup_name }}
           path: backups/*.sql.gz
-          retention-days: 7
+          retention-days: 3
+
+      - name: Notify Telegram on failure
+        if: failure()
+        run: |
+          set -euo pipefail
+          curl -fsS -X POST "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage" \
+            -d "chat_id=${TELEGRAM_CHAT_ID}" \
+            --data-urlencode "text=TeshTreats database backup failed. Check GitHub Actions: ${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}"
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}

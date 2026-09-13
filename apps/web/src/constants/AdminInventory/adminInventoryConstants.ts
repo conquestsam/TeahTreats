@@ -17,3 +17,8 @@ export const adjustInventoryBatchInitialValues = {
   quantityDelta: 0,
   reason: ''
 };
+
+export const updateInventoryBatchExpiryInitialValues = {
+  expiresAt: '',
+  reason: ''
+};

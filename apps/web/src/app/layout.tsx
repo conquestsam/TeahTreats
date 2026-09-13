@@ -5,13 +5,73 @@ import '../styles/globals.css';
 
 import type { Metadata } from 'next';
 import { AppProviders } from '../providers/app-providers';
+import { absoluteUrl, seoConfig } from '../lib/seo/metadata';
 
 export const metadata: Metadata = {
-  title: 'TeahTreats — Premium Curated Snacks',
-  description: 'Discover premium curated snacks for personal treats, office planning, gifting, and curated discovery. Shop fresh bites, smart bundles, and artisan favorites at TeahTreats.'
+  metadataBase: new URL(seoConfig.siteUrl),
+  applicationName: seoConfig.siteName,
+  title: {
+    default: seoConfig.defaultTitle,
+    template: `%s | ${seoConfig.siteName}`
+  },
+  description: seoConfig.defaultDescription,
+  keywords: [...seoConfig.keywords],
+  icons: {
+    icon: seoConfig.logoPath,
+    apple: seoConfig.logoPath
+  },
+  openGraph: {
+    type: 'website',
+    siteName: seoConfig.siteName,
+    title: seoConfig.defaultTitle,
+    description: seoConfig.defaultDescription,
+    url: absoluteUrl('/'),
+    images: [
+      {
+        url: absoluteUrl(seoConfig.logoPath),
+        width: 1200,
+        height: 630,
+        alt: `${seoConfig.siteName} logo`
+      }
+    ]
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: seoConfig.defaultTitle,
+    description: seoConfig.defaultDescription,
+    images: [absoluteUrl(seoConfig.logoPath)]
+  }
 };
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
+  const structuredData = {
+    '@context': 'https://schema.org',
+    '@graph': [
+      {
+        '@type': 'Organization',
+        '@id': `${seoConfig.siteUrl}/#organization`,
+        name: seoConfig.siteName,
+        url: seoConfig.siteUrl,
+        logo: absoluteUrl(seoConfig.logoPath),
+        email: 'info@mail.teshtreats.com'
+      },
+      {
+        '@type': 'WebSite',
+        '@id': `${seoConfig.siteUrl}/#website`,
+        name: seoConfig.siteName,
+        url: seoConfig.siteUrl,
+        publisher: {
+          '@id': `${seoConfig.siteUrl}/#organization`
+        },
+        potentialAction: {
+          '@type': 'SearchAction',
+          target: `${seoConfig.siteUrl}/search?q={search_term_string}`,
+          'query-input': 'required name=search_term_string'
+        }
+      }
+    ]
+  };
+
   return (
     <html lang="en">
       <head>
@@ -20,6 +80,10 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
         <link
           href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=Playfair+Display:wght@400;500;600;700;800&family=Inter:wght@300;400;500;600;700;800;900&display=swap"
           rel="stylesheet"
+        />
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData) }}
         />
       </head>
       <body>

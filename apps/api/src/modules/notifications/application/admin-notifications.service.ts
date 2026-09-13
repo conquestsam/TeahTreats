@@ -88,9 +88,15 @@ export class AdminNotificationsService {
   ) {
     const tenantId = await this.resolveTenantId(tenantIdOrSlug);
     const tenant = await this.prisma.tenant.findUnique({ where: { id: tenantId } });
-    const channels = input.channels?.length ? input.channels : (['email'] satisfies NotificationChannel[]);
+    const testEmail = this.string(input.email);
+    const tenantMetadata = this.object(tenant?.metadata ?? {});
+    const tenantAdminEmail = this.string(tenantMetadata.adminEmail);
+    const channels = testEmail
+      ? (['email'] satisfies NotificationChannel[])
+      : input.channels?.length ? input.channels : (['email'] satisfies NotificationChannel[]);
+    const deliveryScope = `smoke:${Date.now()}`;
     const recipients: Partial<Record<NotificationChannel, string | null | undefined>> = {
-      email: input.email ?? tenant?.businessEmail,
+      email: testEmail ?? tenant?.businessEmail ?? tenantAdminEmail,
       sms: input.phone ?? tenant?.businessPhone,
       whatsapp: input.phone ?? tenant?.businessPhone,
       in_app: tenantId
@@ -104,17 +110,31 @@ export class AdminNotificationsService {
         title: 'TeshTreats smoke test',
         message: 'This is a TeshTreats notification smoke test from the admin panel.'
       },
-      metadata: { source: 'admin-smoke-test' },
-      deliveryScope: `smoke:${Date.now()}`
+      metadata: {
+        source: 'admin-smoke-test',
+        deliveryScope,
+        testRecipientOverride: Boolean(testEmail)
+      },
+      deliveryScope
     });
 
     const notifications = await this.prisma.notification.findMany({
       where: {
         tenantId,
-        metadata: {
-          path: ['source'],
-          equals: 'admin-smoke-test'
-        }
+        AND: [
+          {
+            metadata: {
+              path: ['source'],
+              equals: 'admin-smoke-test'
+            }
+          },
+          {
+            metadata: {
+              path: ['deliveryScope'],
+              equals: deliveryScope
+            }
+          }
+        ]
       },
       orderBy: { createdAt: 'desc' },
       take: channels.length
@@ -230,5 +250,9 @@ export class AdminNotificationsService {
     return result && typeof result === 'object' && 'reason' in result && typeof result.reason === 'string'
       ? result.reason
       : 'Provider is not configured.';
+  }
+
+  private string(value: unknown) {
+    return typeof value === 'string' && value.trim() ? value.trim() : undefined;
   }
 }

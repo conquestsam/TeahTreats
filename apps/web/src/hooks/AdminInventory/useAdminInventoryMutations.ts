@@ -6,11 +6,13 @@ import { adminInventoryBatchQueryKey } from '@/constants/AdminInventory/adminInv
 import {
   adjustInventoryBatch,
   createInventoryBatch,
-  expireInventoryBatch
+  expireInventoryBatch,
+  updateInventoryBatchExpiry
 } from '@/services/AdminInventory/adminInventoryApi';
 import type {
   AdjustInventoryBatchInput,
-  CreateInventoryBatchInput
+  CreateInventoryBatchInput,
+  UpdateInventoryBatchExpiryInput
 } from '@/types/AdminInventory/adminInventoryTypes';
 
 function notifySuccess(message: string) {
@@ -60,5 +62,16 @@ export function useAdminInventoryMutations(onDone: () => void) {
     onError: (error) => notifyError(error, 'Could not expire batch.')
   });
 
-  return { createMutation, adjustMutation, expireMutation };
+  const updateExpiryMutation = useMutation({
+    mutationFn: (input: { batchId: string; expiry: UpdateInventoryBatchExpiryInput }) =>
+      updateInventoryBatchExpiry(input.batchId, input.expiry),
+    onSuccess: async () => {
+      await invalidate();
+      notifySuccess('Batch expiry updated.');
+      onDone();
+    },
+    onError: (error) => notifyError(error, 'Could not update batch expiry.')
+  });
+
+  return { createMutation, adjustMutation, expireMutation, updateExpiryMutation };
 }

@@ -25,6 +25,8 @@ export const notificationTemplateKeys = {
   settingsUpdate: 'settings-update',
   vendorAccessUpdate: 'vendor-access-update',
   inventoryAlert: 'inventory-alert',
+  inventoryExpiringSoonAdminAlert: 'inventory-expiring-soon-admin-alert',
+  inventoryExpiryUpdated: 'inventory-expiry-updated',
   refundPlaceholder: 'refund-placeholder',
   passwordResetPlaceholder: 'password-reset-placeholder'
 } as const;
@@ -35,6 +37,7 @@ export type NotificationChannel = 'email' | 'sms' | 'whatsapp' | 'in_app';
 
 export interface NotificationTemplateContext {
   brandName: string;
+  logoUrl?: string | null;
   supportEmail?: string | null;
   supportPhone?: string | null;
   customerName?: string;
@@ -59,6 +62,7 @@ type TemplateRenderer = (context: NotificationTemplateContext) => RenderedNotifi
 function render(subject: string, body: string, context?: NotificationTemplateContext): RenderedNotificationTemplate {
   const emailContext = {
     brandName: context?.brandName ?? 'TeahTreats',
+    ...(context?.logoUrl ? { logoUrl: context.logoUrl } : {}),
     subject,
     body,
     ...(context?.supportEmail ? { supportEmail: context.supportEmail } : {}),
@@ -79,6 +83,10 @@ function customer(context: NotificationTemplateContext) {
 
 function order(context: NotificationTemplateContext) {
   return context.orderId ? `Order ${context.orderId}` : 'Your order';
+}
+
+function inventoryItem(context: NotificationTemplateContext) {
+  return context.title ?? 'Inventory batch';
 }
 
 export const notificationTemplateRegistry: Record<NotificationTemplateKey, TemplateRenderer> = {
@@ -128,6 +136,18 @@ export const notificationTemplateRegistry: Record<NotificationTemplateKey, Templ
     render('Partner access update', context.message ?? 'Partner access was updated.', context),
   [notificationTemplateKeys.inventoryAlert]: (context) =>
     render('Inventory alert', context.message ?? 'Inventory needs review.', context),
+  [notificationTemplateKeys.inventoryExpiringSoonAdminAlert]: (context) =>
+    render(
+      'Inventory expiring soon',
+      context.message ?? `${inventoryItem(context)} is almost expired. Review the batch expiry or adjust sellable stock before it becomes unavailable.`,
+      context,
+    ),
+  [notificationTemplateKeys.inventoryExpiryUpdated]: (context) =>
+    render(
+      'Inventory expiry updated',
+      context.message ?? `${inventoryItem(context)} had its expiry date updated.${context.reason ? ` Reason: ${context.reason}` : ''}`,
+      context,
+    ),
   [notificationTemplateKeys.refundPlaceholder]: (context) =>
     render('Refund update', `${order(context)} has a refund update that may need review.`, context),
   [notificationTemplateKeys.passwordResetPlaceholder]: (context) =>
@@ -176,6 +196,9 @@ export const domainEventNotificationTemplates: Partial<Record<string, Notificati
   [domainEvents.settingsManualPaymentMethodUpdated]: notificationTemplateKeys.settingsUpdate,
   [domainEvents.settingsManualPaymentMethodStatusChanged]: notificationTemplateKeys.settingsUpdate,
   [domainEvents.vendorAccessChanged]: notificationTemplateKeys.vendorAccessUpdate,
+  [domainEvents.inventoryBatchCreated]: notificationTemplateKeys.inventoryAlert,
+  [domainEvents.inventoryBatchExpiryUpdated]: notificationTemplateKeys.inventoryExpiryUpdated,
+  [domainEvents.inventoryBatchExpiringSoon]: notificationTemplateKeys.inventoryExpiringSoonAdminAlert,
   [domainEvents.inventoryBatchExpired]: notificationTemplateKeys.inventoryAlert,
   [domainEvents.inventoryQuantityAdjusted]: notificationTemplateKeys.inventoryAlert
 };

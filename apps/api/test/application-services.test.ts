@@ -9,8 +9,10 @@ import {
 import { domainEvents } from '@snacks/shared';
 import { PaymentReconciliationService } from '../src/modules/payments/application/payment-reconciliation.service.js';
 import { PromotionsService } from '../src/modules/promotions/application/promotions.service.js';
+import { AdminNotificationsService } from '../src/modules/notifications/application/admin-notifications.service.js';
 import { NotificationTemplateService } from '../src/modules/notifications/application/notification-template.service.js';
 import { CacheInvalidationProcessor } from '../src/workers/processors/cache-invalidation.processor.js';
+import { NotificationsProcessor } from '../src/workers/processors/notifications.processor.js';
 
 test('payment webhook reconciliation returns duplicate for already processed provider event', async () => {
   const processedAt = new Date();
@@ -168,6 +170,8 @@ test('notification service maps order ready outbox event to customer notificatio
     order: {
       findFirst: async () => ({
         id: 'order-1',
+        totalCents: 1200,
+        currency: 'USD',
         customer: { name: 'Customer', email: 'customer@example.com', phone: '5551112222' },
       }),
     },
@@ -196,6 +200,168 @@ test('notification service maps order ready outbox event to customer notificatio
   assert.equal(result.created, 2);
   assert.equal(created[0]?.recipient, 'customer@example.com');
   assert.equal(created[1]?.recipient, '5551112222');
+});
+
+test('notification service maps inventory expiry update to admin email notification', async () => {
+  const created: Array<{ deliveryKey: string; recipient: string | null; status: string; templateKey: string | null }> = [];
+  const service = new NotificationTemplateService({
+    tenant: {
+      findUnique: async () => ({
+        id: 'tenant-1',
+        name: 'Snack House',
+        businessEmail: null,
+        businessPhone: null,
+        metadata: { adminEmail: 'ops@example.com' },
+      }),
+    },
+    order: {
+      findFirst: async () => null,
+    },
+    notification: {
+      upsert: async ({
+        where,
+        create,
+      }: {
+        where: { deliveryKey: string };
+        create: { recipient: string | null; status: string; templateKey: string | null };
+      }) => {
+        created.push({
+          deliveryKey: where.deliveryKey,
+          recipient: create.recipient,
+          status: create.status,
+          templateKey: create.templateKey,
+        });
+        return {};
+      },
+    },
+  } as never);
+
+  const result = await service.createFromDomainEvent({
+    id: 'outbox-inventory-1',
+    name: domainEvents.inventoryBatchExpiryUpdated,
+    tenantId: 'tenant-1',
+    aggregateId: 'batch-1',
+    payload: {
+      batchId: 'batch-1',
+      title: 'Puff Puff - Regular',
+      message: 'Expiry updated after review.',
+    },
+  });
+
+  assert.equal(result.created, 1);
+  assert.equal(created[0]?.recipient, 'ops@example.com');
+  assert.equal(created[0]?.status, 'pending');
+  assert.equal(created[0]?.templateKey, 'inventory-expiry-updated');
+  assert.equal(
+    created[0]?.deliveryKey,
+    'tenant-1:outbox-inventory-1:inventory-expiry-updated:email:ops@example.com',
+  );
+});
+
+test('notification worker delivers pending email notifications', async () => {
+  const notification = {
+    id: 'notification-1',
+    channel: 'email',
+    recipient: 'ops@example.com',
+    subject: 'Inventory expiring soon',
+    body: 'Review stock.',
+    metadata: { html: '<p>Review stock.</p>' },
+    attempts: 0,
+  };
+  const updates: unknown[] = [];
+  const sent: unknown[] = [];
+  const processor = new NotificationsProcessor(
+    {
+      notification: {
+        findMany: async () => [notification],
+        updateMany: async () => ({ count: 1 }),
+        findUniqueOrThrow: async () => notification,
+        update: async (input: unknown) => {
+          updates.push(input);
+          return {};
+        },
+      },
+    } as never,
+    {
+      sendTransactionalEmail: async (input: unknown) => {
+        sent.push(input);
+        return { provider: 'test' };
+      },
+    } as never,
+    {} as never,
+    {} as never,
+    new NotificationTemplateService({} as never),
+  );
+
+  const result = await processor.process({
+    name: 'deliver-notifications',
+    data: { limit: 10 },
+  } as never);
+
+  assert.deepEqual(result, { sent: 1, skipped: 0, failed: 0 });
+  assert.deepEqual(sent, [
+    {
+      to: 'ops@example.com',
+      subject: 'Inventory expiring soon',
+      html: '<p>Review stock.</p>',
+    },
+  ]);
+  assert.equal(
+    updates.some((input) => {
+      const data = (input as { data?: { status?: string } }).data;
+      return data?.status === 'sent';
+    }),
+    true,
+  );
+});
+
+test('admin notification retry requeues failed notifications with a recipient', async () => {
+  const updates: unknown[] = [];
+  const service = new AdminNotificationsService(
+    {
+      tenant: {
+        findFirst: async () => ({ id: 'tenant-1' }),
+      },
+      notification: {
+        findFirst: async () => ({
+          id: 'notification-1',
+          tenantId: 'tenant-1',
+          status: 'failed',
+          recipient: 'ops@example.com',
+          metadata: {},
+        }),
+        update: async (input: unknown) => {
+          updates.push(input);
+          return {
+            id: 'notification-1',
+            status: 'pending',
+            attempts: 1,
+            lastError: null,
+          };
+        },
+      },
+    } as never,
+    {} as never,
+    {} as never,
+    {} as never,
+    {} as never,
+  );
+
+  const result = await service.retry('tenant-1', 'notification-1');
+
+  assert.deepEqual(result, {
+    id: 'notification-1',
+    status: 'pending',
+    attempts: 1,
+    lastError: null,
+  });
+  assert.equal(
+    updates.some((input) => {
+      const data = (input as { data?: { status?: string; lastError?: string | null } }).data;
+      return data?.status === 'pending' && data.lastError === null;
+    }),
+    true,
+  );
 });
 
 test('cache invalidation processor exposes retry-safe placeholder result', async () => {

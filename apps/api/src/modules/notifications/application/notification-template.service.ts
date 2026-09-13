@@ -1,4 +1,5 @@
 import { Injectable } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { Prisma, type Notification, type Tenant } from '@prisma/client';
 import { PrismaService } from '../../../infrastructure/database/prisma.service.js';
 import {
@@ -21,7 +22,10 @@ interface CreateTemplateNotificationInput {
 
 @Injectable()
 export class NotificationTemplateService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly config?: ConfigService,
+  ) {}
 
   async createFromDomainEvent(event: {
     id: string;
@@ -101,6 +105,7 @@ export class NotificationTemplateService {
     const branding = this.branding(tenant);
     const template = notificationTemplateRegistry[input.templateKey]({
       brandName: branding.brandName,
+      logoUrl: branding.logoUrl,
       supportEmail: branding.supportEmail,
       supportPhone: branding.supportPhone,
       ...input.context
@@ -117,6 +122,7 @@ export class NotificationTemplateService {
         to: recipient ?? null,
         html: template.html,
         brandName: branding.brandName,
+        logoUrl: branding.logoUrl,
         supportEmail: branding.supportEmail,
         supportPhone: branding.supportPhone
       };
@@ -160,9 +166,20 @@ export class NotificationTemplateService {
     const metadata = this.object(tenant?.metadata ?? {});
     return {
       brandName: typeof metadata.brandName === 'string' ? metadata.brandName : tenant?.name ?? 'TeahTreats',
+      logoUrl: this.string(metadata.logoUrl) ?? this.emailLogoUrl(),
       supportEmail: tenant?.businessEmail ?? (typeof metadata.supportEmail === 'string' ? metadata.supportEmail : null),
       supportPhone: tenant?.businessPhone ?? (typeof metadata.supportPhone === 'string' ? metadata.supportPhone : null)
     };
+  }
+
+  private emailLogoUrl() {
+    const configured = this.string(this.config?.get<string>('EMAIL_LOGO_URL'));
+    if (configured) {
+      return configured;
+    }
+
+    const webAppUrl = this.string(this.config?.get<string>('WEB_APP_URL'));
+    return webAppUrl ? `${webAppUrl.replace(/\/+$/, '')}/brand/teshtreats-logo.jpg` : null;
   }
 
   private tenantSettings(tenant: Tenant | null): {
@@ -204,7 +221,9 @@ export class NotificationTemplateService {
       'tenant-update',
       'settings-update',
       'vendor-access-update',
-      'inventory-alert'
+      'inventory-alert',
+      'inventory-expiring-soon-admin-alert',
+      'inventory-expiry-updated'
     ].includes(templateKey);
   }
 

@@ -6,6 +6,7 @@ interface AdminInventoryMobileCardProps {
   batch: AdminInventoryBatchModel;
   onDetails: (batch: AdminInventoryBatchModel) => void;
   onAdjust: (batch: AdminInventoryBatchModel) => void;
+  onUpdateExpiry: (batch: AdminInventoryBatchModel) => void;
   onExpire: (batch: AdminInventoryBatchModel) => void;
 }
 
@@ -13,6 +14,7 @@ export function AdminInventoryMobileCard({
   batch,
   onDetails,
   onAdjust,
+  onUpdateExpiry,
   onExpire
 }: AdminInventoryMobileCardProps) {
   return (
@@ -53,6 +55,11 @@ export function AdminInventoryMobileCard({
           History
         </Button>
       </div>
+      {batch.expiresAt ? (
+        <Button variant="light" onClick={() => onUpdateExpiry(batch)}>
+          Update Expiry
+        </Button>
+      ) : null}
       {batch.status !== 'expired' ? (
         <Button color="red" variant="light" onClick={() => onExpire(batch)}>
           Quarantine & Discard

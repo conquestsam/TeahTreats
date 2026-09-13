@@ -4,7 +4,8 @@ import type {
   AdjustInventoryBatchInput,
   AdminInventoryBatchSummary,
   AdminInventorySkuOption,
-  CreateInventoryBatchInput
+  CreateInventoryBatchInput,
+  UpdateInventoryBatchExpiryInput
 } from '@snacks/shared';
 
 export function listInventoryBatches() {
@@ -40,5 +41,15 @@ export function expireInventoryBatch(batchId: string) {
   return apiFetch<ApiEnvelope<AdminInventoryBatchSummary>>(
     `/admin/inventory/batches/${batchId}/expire`,
     { method: 'POST' },
+  ).then((response) => response.data);
+}
+
+export function updateInventoryBatchExpiry(batchId: string, input: UpdateInventoryBatchExpiryInput) {
+  return apiFetch<ApiEnvelope<AdminInventoryBatchSummary>>(
+    `/admin/inventory/batches/${batchId}/expiry`,
+    {
+      method: 'POST',
+      body: JSON.stringify(input)
+    },
   ).then((response) => response.data);
 }

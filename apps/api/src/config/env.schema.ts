@@ -1,5 +1,16 @@
 import { z } from 'zod';
 
+const emailAddress = /^[^\s@<>]+@[^\s@<>]+\.[^\s@<>]+$/;
+const emailSender = /^(?:[^<>"]+\s+)?<?[^\s@<>]+@[^\s@<>]+\.[^\s@<>]+>?$/;
+const optionalEmail = z.preprocess((value) => value === '' ? undefined : value, z.string().email().optional());
+const optionalEmailSender = z.preprocess(
+  (value) => typeof value === 'string' && value.trim() === '' ? undefined : value,
+  z.string().trim().refine(
+    (value) => emailAddress.test(value) || emailSender.test(value),
+    'Expected an email address or sender in the format "Name <email@example.com>".',
+  ).optional(),
+);
+
 const envSchema = z.object({
   NODE_ENV: z.enum(['development', 'test', 'production']).default('development'),
   HOST: z.string().default('0.0.0.0'),
@@ -27,7 +38,7 @@ const envSchema = z.object({
   CLOUDINARY_API_KEY: z.string().optional(),
   CLOUDINARY_API_SECRET: z.string().optional(),
   RESEND_API_KEY: z.string().optional(),
-  RESEND_FROM_EMAIL: z.string().optional(),
+  RESEND_FROM_EMAIL: optionalEmailSender,
   TWILIO_ACCOUNT_SID: z.string().optional(),
   TWILIO_AUTH_TOKEN: z.string().optional(),
   TWILIO_FROM_SMS: z.string().optional(),
@@ -40,7 +51,11 @@ const envSchema = z.object({
   PAYPAL_WEBHOOK_ID: z.string().optional(),
   GMAIL_USER: z.string().optional(),
   GMAIL_APP_PASSWORD: z.string().optional(),
-  GMAIL_FROM_EMAIL: z.string().optional(),
+  GMAIL_FROM_EMAIL: optionalEmailSender,
+  EMAIL_LOGO_URL: z.string().url().optional(),
+  ADMIN_ALERT_EMAIL: optionalEmail,
+  INVENTORY_EXPIRY_ALERT_DAYS: z.coerce.number().int().positive().default(3),
+  INVENTORY_EXPIRY_ALERT_INTERVAL_MS: z.coerce.number().int().positive().default(3_600_000),
   WEB_APP_URL: z.string().url().default('http://localhost:3000'),
   OAUTH_GOOGLE_CLIENT_ID: z.string().optional(),
   OAUTH_GOOGLE_CLIENT_SECRET: z.string().optional(),
