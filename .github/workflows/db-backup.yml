@@ -35,11 +35,11 @@ jobs:
               "APP_DIR='$APP_DIR' COMPOSE_FILE='$COMPOSE_FILE' RETENTION_DAYS='$RETENTION_DAYS' bash -s" <<'REMOTE'
                 set -euo pipefail
                 cd "$APP_DIR"
-                test -f .env.production
+                test -f .env
                 mkdir -p backups
                 timestamp="$(date -u +%Y%m%d-%H%M%S)"
                 backup_file="backups/teshtreats-${timestamp}.sql.gz"
-                docker compose --env-file .env.production -f "${COMPOSE_FILE:-docker-compose.prod.yml}" exec -T postgres \
+                docker compose --env-file .env -f "${COMPOSE_FILE:-docker-compose.prod.yml}" exec -T postgres \
                   sh -c 'PGPASSWORD="$POSTGRES_PASSWORD" pg_dump -U "${POSTGRES_USER:-snacks}" -d "${POSTGRES_DB:-snacks_commerce}" --no-owner --no-privileges' \
                   | gzip -9 > "$backup_file"
                 test -s "$backup_file"

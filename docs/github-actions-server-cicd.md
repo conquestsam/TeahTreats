@@ -36,7 +36,7 @@ git branch --show-current
 - Production env must exist on the server:
 
 ```bash
-/srv/teshtreats/TeahTreats/.env.production
+/srv/teshtreats/TeahTreats/.env
 ```
 
 - Production compose file must exist on the server:
@@ -53,9 +53,9 @@ git branch --show-current
   - `worker`
   - `migrate`
 
-## Required `.env.production` Values On The Server
+## Required `.env` Values On The Server
 
-The server `.env.production` must include at minimum:
+The server `.env` must include at minimum:
 
 ```env
 POSTGRES_USER=snacks
@@ -121,6 +121,61 @@ Notes:
 - `TELEGRAM_BOT_TOKEN` comes from BotFather.
 - `TELEGRAM_CHAT_ID` is the chat, group, or channel ID that should receive backup files.
 
+## Creating The GitHub Actions SSH Key
+
+`SSH_PRIVATE_KEY` is not copied from GitHub. You create a dedicated SSH key pair for GitHub Actions.
+
+Create the key on your local machine:
+
+```bash
+ssh-keygen -t ed25519 -C "github-actions-teshtreats" -f ~/.ssh/teshtreats_github_actions
+```
+
+When asked for a passphrase, press enter to leave it empty. GitHub Actions cannot type an interactive passphrase during deploy.
+
+This creates two files:
+
+```txt
+~/.ssh/teshtreats_github_actions
+~/.ssh/teshtreats_github_actions.pub
+```
+
+Put the public key on the server:
+
+```bash
+ssh deploy@your-server
+mkdir -p ~/.ssh
+chmod 700 ~/.ssh
+nano ~/.ssh/authorized_keys
+chmod 600 ~/.ssh/authorized_keys
+```
+
+Paste the contents of `~/.ssh/teshtreats_github_actions.pub` into `authorized_keys`.
+
+Put the private key in GitHub:
+
+```bash
+cat ~/.ssh/teshtreats_github_actions
+```
+
+Copy the full output, including:
+
+```txt
+-----BEGIN OPENSSH PRIVATE KEY-----
+...
+-----END OPENSSH PRIVATE KEY-----
+```
+
+Save that value as GitHub secret `SSH_PRIVATE_KEY`.
+
+Test it locally before relying on Actions:
+
+```bash
+ssh -i ~/.ssh/teshtreats_github_actions deploy@your-server "hostname && docker compose version"
+```
+
+The server also needs permission to pull the repository from GitHub during deploy. If the repo is private, add a separate GitHub deploy key or GitHub machine-user SSH key on the server for `git fetch origin main`.
+
 ## GitHub Repository Variables
 
 Set these in GitHub:
@@ -178,25 +233,25 @@ git reset --hard origin/main
 4. Start infrastructure services:
 
 ```bash
-docker compose --env-file .env.production -f docker-compose.prod.yml up -d postgres redis opensearch
+docker compose --env-file .env -f docker-compose.prod.yml up -d postgres redis opensearch
 ```
 
 5. Build the API image:
 
 ```bash
-docker compose --env-file .env.production -f docker-compose.prod.yml build api
+docker compose --env-file .env -f docker-compose.prod.yml build api
 ```
 
 6. Run migrations:
 
 ```bash
-docker compose --env-file .env.production -f docker-compose.prod.yml --profile migrate run --rm migrate
+docker compose --env-file .env -f docker-compose.prod.yml --profile migrate run --rm migrate
 ```
 
 7. Restart API and worker:
 
 ```bash
-docker compose --env-file .env.production -f docker-compose.prod.yml up -d api worker
+docker compose --env-file .env -f docker-compose.prod.yml up -d api worker
 ```
 
 8. Health-check the API container.
@@ -233,11 +288,11 @@ docker ps
 
 ```bash
 cd /srv/teshtreats/TeahTreats
-docker compose --env-file .env.production -f docker-compose.prod.yml up -d postgres redis opensearch
-docker compose --env-file .env.production -f docker-compose.prod.yml build api
-docker compose --env-file .env.production -f docker-compose.prod.yml --profile migrate run --rm migrate
-docker compose --env-file .env.production -f docker-compose.prod.yml up -d api worker
-docker compose --env-file .env.production -f docker-compose.prod.yml exec -T api wget -qO- http://127.0.0.1:4000/api/v1/health
+docker compose --env-file .env -f docker-compose.prod.yml up -d postgres redis opensearch
+docker compose --env-file .env -f docker-compose.prod.yml build api
+docker compose --env-file .env -f docker-compose.prod.yml --profile migrate run --rm migrate
+docker compose --env-file .env -f docker-compose.prod.yml up -d api worker
+docker compose --env-file .env -f docker-compose.prod.yml exec -T api wget -qO- http://127.0.0.1:4000/api/v1/health
 ```
 
 3. Run `Daily Server Database Backup` manually from GitHub Actions.
