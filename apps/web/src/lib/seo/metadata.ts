@@ -2,7 +2,7 @@ import type { Metadata } from 'next';
 
 export const seoConfig = {
   siteName: 'TeshTreats',
-  siteUrl: normalizeSiteUrl(process.env.NEXT_PUBLIC_SITE_URL ?? process.env.WEB_APP_URL ?? 'http://localhost:3000'),
+  siteUrl: normalizeSiteUrl(process.env.NEXT_PUBLIC_SITE_URL ?? process.env.WEB_APP_URL ?? defaultSiteUrl()),
   logoPath: '/brand/teshtreats-logo.jpg',
   defaultTitle: 'TeshTreats | African Snacks, Custom Cakes, and Signature Zobo',
   defaultDescription:
@@ -157,5 +157,14 @@ export function absoluteUrl(path: string) {
 }
 
 function normalizeSiteUrl(url: string) {
-  return url.replace(/\/+$/, '');
+  const value = url.trim().replace(/\/+$/, '');
+  if (!/^https?:\/\//i.test(value)) {
+    return `https://${value}`;
+  }
+
+  return value;
+}
+
+function defaultSiteUrl() {
+  return process.env.NODE_ENV === 'production' ? 'https://teshtreats.com' : 'http://localhost:3000';
 }
