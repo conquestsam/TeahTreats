@@ -17,8 +17,25 @@ export const metadata: Metadata = {
   description: seoConfig.defaultDescription,
   keywords: [...seoConfig.keywords],
   icons: {
-    icon: seoConfig.logoPath,
-    apple: seoConfig.logoPath
+    icon: [
+      {
+        url: '/favicon.png',
+        type: 'image/png',
+        sizes: '48x48'
+      },
+      {
+        url: '/icon.png',
+        type: 'image/png',
+        sizes: '512x512'
+      }
+    ],
+    apple: [
+      {
+        url: '/apple-icon.png',
+        type: 'image/png',
+        sizes: '180x180'
+      }
+    ]
   },
   openGraph: {
     type: 'website',
@@ -52,7 +69,13 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
         '@id': `${seoConfig.siteUrl}/#organization`,
         name: seoConfig.siteName,
         url: seoConfig.siteUrl,
-        logo: absoluteUrl(seoConfig.logoPath),
+        logo: {
+          '@type': 'ImageObject',
+          url: absoluteUrl(seoConfig.logoPath),
+          width: 738,
+          height: 279
+        },
+        image: absoluteUrl(seoConfig.logoPath),
         email: 'info@mail.teshtreats.com'
       },
       {
